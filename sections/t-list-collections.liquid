@@ -1,0 +1,109 @@
+{%- render 'inc-stylesheet', src: 's-sections.css' -%}
+
+{%- assign prodXpage = section.settings.prodXpage -%}
+{%- paginate collections by prodXpage -%}
+<div class="listing-page" {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}>
+<div class="brands">
+<section class="product">
+<x-grid id="ajaxSection" columns="3" columns-s="1">
+{% for collection in collections %}
+	<x-cell span="row">
+	<a href="{{ collection.url }}" title="{{ collection.title | escape }}" class="no-style">
+	<x-grid columns="3" columns-s="2" class="brand">
+		<x-cell class="center-axyz">
+			<picture>
+            {%- liquid 
+                assign img = collection.featured_image
+                if img
+                    assign alt = collection.title | escape
+                    assign width = 1280
+                    assign widths = '450,550,750,950,1100,1280'
+                    assign sizes = '(max-width:777px) 50vw, (min-width:778px) 100vw, 100vw'
+                    assign loading = 'lazy'
+
+                    echo img | image_url: width: width | image_tag: widths: widths, sizes: sizes, loading: loading, alt: alt
+                else 
+                    echo 'image' | placeholder_svg_tag: 'svg-placeholder'
+                endif 
+            -%}
+			</picture>
+		</x-cell>
+		<x-cell class="center-axyz" class="text-center"><h2>{{ collection.title | escape }}</h2></x-cell>
+		<x-cell class="large-only center-axyz"><div>&rarr;</div></x-cell>
+	</x-grid>
+	</a>
+	</x-cell>
+{% endfor %}
+</x-grid>
+</section>
+    {%- comment -%} Pagination {%- endcomment -%}
+    {%- render 'global-pagination', paginate: paginate, section: section -%}
+</div>
+</div>
+{%- if section.settings.pagination != 'classic' -%}
+<script type="module">
+import { InfiniScroll } from '{{ 'infiniscroll.min.js' | asset_url }}';
+
+InfiniScroll({
+    itemsContainerSelector: '#ajaxSection',
+    paginationContainerSelector: '#ajaxPagination',
+    loadingText: '{{ 'collection.loading' | t }}',
+    debug: false,
+}).start();
+</script>
+{%- endif -%}
+{%- endpaginate -%}
+
+{% schema %}
+{
+  "name": "Collection list",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Pagination"
+    },
+    {
+      "type": "select",
+      "id": "pagination",
+      "label": "Type",
+      "default": "classic",
+      "options": [
+        {
+          "value": "classic",
+          "label": "Numbers"
+        },
+        {
+          "value": "scroll",
+          "label": "Load on scroll"
+        }
+      ]
+    },
+    {
+      "type": "range",
+      "label": "Collections per page",
+      "id": "prodXpage",
+      "min": 3,
+      "max": 30,
+      "step": 3,
+      "default": 9
+    },
+    {
+        "type": "header",
+        "content": "Appearance"
+    },
+    {
+        "type": "checkbox",
+        "id": "global_color_scheme",
+        "label": "Use global color scheme",
+        "default": true
+    },
+    {
+        "type": "color_scheme",
+        "id": "color_scheme",
+        "label": "Color scheme",
+        "default": "coretex-1",
+        "visible_if": "{{ section.settings.global_color_scheme == false }}"
+    }
+  ]
+}
+{% endschema %}

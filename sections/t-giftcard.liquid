@@ -1,0 +1,128 @@
+{% layout 'gift_card' %}
+{%- assign formatted_initial_value = gift_card.initial_value | money_without_trailing_zeros: gift_card.currency -%}
+{%- assign formatted_initial_value_stripped = formatted_initial_value | strip_html -%}
+
+<style>
+main { width: 100%; max-width: 600px;  margin: var(--margin) auto; text-align: center; }
+footer { margin-top: var(--margin); border-top: var(--globalBorder); padding: var(--padding); text-align:center; }
+.bogo { --logoImageSize: 60px }
+
+x-grid.gc-wrapper { gap: var(--globalBorderWidth) }
+x-grid.gc-wrapper > x-cell { outline: var(--globalBorder); padding: var(--padding) }
+
+#qr-code img { text-align:center; margin: 0 auto }
+
+@media only print { .noprint { display: none; } }
+</style>
+
+<header id="header">
+<x-flex direction="column" jc="between" ai="center">
+    <x-cell class="bogo">
+        {%- assign img = section.settings.logoImage -%}
+        {%- if img != blank -%}
+            {{ img | image_url: width: 600 | image_tag: widths: '200,400,600', class: 'logo', alt: shop.name | escape }}
+        {%- else -%}
+            <div class="logo"><h4>{{ shop.name }}</h4></div>
+        {%- endif -%}
+    </x-cell>
+
+    <x-cell>
+        <h2>{{ 'gift_card.issued.subtext' | t }}</h2>
+        {%- unless gift_card.enabled -%}
+        <p>{{ 'gift_card.issued.disabled' | t }}</p>
+        {%- endunless -%}
+    </x-cell>
+
+    <x-cell>
+        {% assign gift_card_expiry_date = gift_card.expires_on | date: format: "basic" %}
+        {% if gift_card.expired and gift_card.enabled %}
+            <p>{{ 'gift_card.issued.expired' | t: expiry: gift_card_expiry_date }}</p>
+        {% endif %}
+
+        {% if gift_card.expired != true and gift_card.expires_on and gift_card.enabled %}
+            <p>{{ 'gift_card.issued.active' | t: expiry: gift_card_expiry_date }}</p>
+        {% endif %}
+    </x-cell>
+</x-flex>
+</header>
+
+<main id="mainContent">
+    <x-grid columns="2" columns-s="1" class="gc-wrapper">
+         <x-cell span="row" class="gift_card_image">
+             {%- assign img = section.settings.giftImage -%}
+             {%- if img != blank -%}
+                 {{ img | image_url: width: 900 | image_tag: widths: '200,400,600,900', alt: shop.name | escape }}
+             {%- else -%}
+                 <img src="{{ 'gift-card/card.jpg' | shopify_asset_url }}" width="500" height="500" loading="eager" alt="Gift card">
+             {%- endif -%}
+         </x-cell>
+
+        <x-cell span="row">
+            <p class="text-center">{{ 'gift_card.issued.redeem_html' | t: value: formatted_initial_value_stripped }}</p>
+        </x-cell>
+
+        <x-cell x-flex direction="column" ai="start" jc="start">
+            <x-cell><label class="gift-card__label text-uppercase">Value</label></x-cell>
+            <x-cell class="gift-card__value">    
+                {% # theme-check-disable %}
+                {%- assign initial_value_size = formatted_initial_value | size -%}
+                {% # theme-check-enable %}
+                {% if gift_card.balance != gift_card.initial_value %}
+                <span><span>{{ 'gift_card.issued.remaining_html' | t: balance: gift_card.balance | money }}</span></span>
+                {% endif %}
+                <strong>{{ formatted_initial_value }}</strong>
+            </x-cell>
+        </x-cell>
+
+        <x-cell x-flex direction="column" ai="start" jc="start">
+            <x-cell><label class="gift-card__label text-uppercase">Redeem Code</label></x-cell>
+            <x-cell class="gift-card__code">
+                {% # theme-check-disable %}
+                {%- assign code_size = gift_card.code | format_code | size -%}
+                {% # theme-check-enable %}
+                <label for="GiftCardDigits" class="visually-hidden">Your gift card number</label>
+                <input type="text" id="GiftCardDigits" value="{{ gift_card.code | format_code }}" readonly>
+            </x-cell>
+        </x-cell>
+
+        <x-cell span="row" id="qr-code"></x-cell>
+   </x-grid>
+
+   <script>new QRCode(document.getElementById("qr-code"), { text: "{{ gift_card.qr_identifier }}", width: 200, height: 200 });</script>
+</main>
+
+<footer class="noprint">
+   <ul class="inline">
+      <li class="giftcard-action-list__item">
+         <a href="{{ shop.url }}" target="_blank" rel="noopener" class="button">{{ 'gift_card.issued.shop_link' | t }}</a>
+      </li>
+      <li>
+         <a href="#" onclick="window.print(); return false;" class="button">{{ 'gift_card.issued.print' | t }}</a>
+      </li>
+   </ul>
+   {% if gift_card.pass_url %}
+   <p class="text-center">
+      <a class="giftcard__apple-wallet" href="{{ gift_card.pass_url }}">
+      <img class="giftcard__apple-wallet-image" src="{{ 'gift-card/add-to-apple-wallet.svg' | shopify_asset_url }}" width="120" height="40" loading="lazy" alt="{{ 'gift_card.issued.add_to_apple_wallet' | t }}">
+      </a>
+   </p>
+   {% endif %}
+</footer>
+
+{% schema %}
+{
+  "name": "Gift card",
+  "settings": [
+    {
+      "type": "image_picker",
+      "id": "logoImage",
+      "label": "Logo"
+    },
+    {
+      "type": "image_picker",
+      "id": "giftImage",
+      "label": "Gift card"
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,136 @@
+.image-before-after {
+    --heroHeight-f: calc(100dvh - calc(var(--headerHeight, 0px) + var(--marqueeHeight, 0px)));
+    border-block-end: var(--globalBorder);
+}
+
+.image-comparison img { width: 100%; object-fit: cover; height: var(--hHeight, 100vh) }
+@media (max-width: 777px) { .image-comparison img { height: var(--hHeightMob, 400px) } }
+
+.image-comparison input[type="range"] {
+    position: absolute;
+    isolation: isolate;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    inset: 0;
+    opacity: 0;
+}
+
+.image-comparison {
+    display: block;
+    position: relative;
+    overflow: hidden;
+    --percent: 50%
+}
+
+.image-comparison .imageAfter {
+    position: absolute;
+    z-index: 1;
+    inset: 0;
+    overflow: hidden
+}
+
+.image-comparison[data-orient="horizontal"] .imageAfter { clip-path: inset(0px 0px 0px var(--percent)) }
+.image-comparison[data-orient="vertical"] .imageAfter { clip-path: inset(var(--percent) 0px 0px 0px) }
+
+.image-comparison .separationLine {
+    position: absolute;
+    isolation: isolate;
+    z-index: 1;
+    color: inherit;
+    border: none;
+    background: transparent;
+    pointer-events: none;
+}
+
+.image-comparison[data-orient="horizontal"] .separationLine {
+    top: 0;
+    left: var(--percent);
+    width: 2.8rem;
+    height: 100%;
+    margin-left: -1.4rem;
+}
+
+.image-comparison[data-orient="vertical"] .separationLine {
+    left: 0;
+    top: var(--percent);
+    width: 100%;
+    height: 2.8rem;
+    margin-top: -1.4rem;
+}
+
+.image-comparison .separationLine:before,
+.image-comparison .separationLine:after {
+    content: "";
+    position: absolute;
+    background: var(--bg);
+    pointer-events: none
+}
+
+.image-comparison[data-orient="horizontal"] .separationLine:before,
+.image-comparison[data-orient="horizontal"] .separationLine:after {
+    width: .3rem;
+    height: 50%;
+    left: 50%;
+    margin-left: -.15rem
+}
+
+.image-comparison[data-orient="vertical"] .separationLine:before,
+.image-comparison[data-orient="vertical"] .separationLine:after {
+    width: 50%;
+    height: .3rem;
+    top: 50%;
+    margin-top: -.15rem
+}
+
+.image-comparison[data-orient="horizontal"] .separationLine:before { top: 0; margin-top: -2rem; border-inline: var(--globalBorder) }
+.image-comparison[data-orient="horizontal"] .separationLine:after { bottom: 0; margin-bottom: -2rem; border-inline: var(--globalBorder) }
+.image-comparison[data-orient="vertical"] .separationLine:before { left: 0; margin-left: -2rem; border-block: var(--globalBorder) }
+.image-comparison[data-orient="vertical"] .separationLine:after { right: 0; margin-right: -2rem; border-block: var(--globalBorder) }
+
+.image-comparison .separationLine span {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 2.8rem;
+    height: 4.8rem;
+    margin-left: -1.4rem;
+    margin-top: -2.4rem;
+    border-radius: 4rem;
+    background: var(--bg);
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: var(--globalBorder);
+    z-index: 1;
+}
+
+.image-comparison[data-orient="vertical"] .separationLine span { transform: rotate(90deg) }
+.image-comparison .separationLine .icon { height: 1.6rem; width: auto }
+
+.image-comparison .label {
+    z-index: 1;
+    pointer-events: none;
+    transition: opacity 300ms ease-in-out;
+    max-height: 100vh;
+}
+
+.image-comparison .label > span {
+    display: block;
+    background: var(--bg);
+    color: var(--color, inherit);
+    width: fit-content;
+    padding: var(--margin);
+    margin: var(--padding);
+    border-radius: var(--radius);
+    border: var(--globalBorder);
+}
+
+.image-comparison.sliding .label { opacity: 0 }
+
+.image-before-after input[type="range"]:focus-visible + button.separationLine {
+    outline: var(--a11yOutline);
+    outline-offset: var(--a11yOffset);
+    box-shadow: var(--a11yShadow);
+}

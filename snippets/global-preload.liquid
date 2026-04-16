@@ -1,0 +1,5 @@
+{% # theme-check-disable AssetPreload %}
+{%- unless settings.bodyFontFamily.system? and settings.headingsFontFamily.system? -%}<link rel="preconnect" href="https://fonts.shopifycdn.com" crossorigin>{%- endunless -%}
+{%- unless settings.bodyFontFamily.system? -%}<link rel="preload" as="font" href="{{ settings.bodyFontFamily | font_url }}" type="font/woff2" crossorigin>{%- endunless -%}
+{%- unless settings.headingsFontFamily.system? -%}<link rel="preload" as="font" href="{{ settings.headingsFontFamily | font_url }}" type="font/woff2" crossorigin>{%- endunless -%}
+{% # theme-check-enable AssetPreload %}

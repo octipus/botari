@@ -1,0 +1,141 @@
+{%- render 'inc-stylesheet', src: 's-sections.css' -%}
+
+{%- capture placeholder_logo -%} 
+<svg width="100%" height="333" xmlns="http://www.w3.org/2000/svg" class="dynamicSVGLogo">
+    <text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle">{{ shop.name }}</text>
+</svg>
+{%- endcapture -%}
+
+<section class="hero-logo" 
+    style="padding-block:{{ section.settings.paddingStart | append: 'rem' }} 
+    {{ section.settings.paddingEnd | append: 'rem' }}" {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}
+>
+    <x-flex jc="{{ section.settings.alignment | replace: 'left', 'start' | replace: 'right', 'end' }}">
+        <x-cell class="block" style="{{ section.settings.size | prepend: '--_size:' | append: '%;' }} {{ section.settings.size_s | prepend: '--_size-s:' | append: '%;' }}">
+        {%- if section.settings.url != nil -%}<a href="{{ section.settings.url }}">{%- endif -%}
+        {%- liquid 
+            assign img = section.settings.image
+            if img != blank
+
+                assign img = section.settings.image
+                assign width = 1426
+                assign widths = '200,300,400,500,750,1000,1280,1426'
+                assign mediaLoader = false
+                assign class = 'noRadius'
+            
+                render 'inc-img' img: img, width: width, widths: widths, mediaLoader: mediaLoader, fallback: true, class: class
+
+            elsif section.settings.logoSVG != empty
+                echo section.settings.logoSVG
+
+            else 
+                # If no image or SVG is set, show a placeholder
+                echo placeholder_logo
+            endif
+        -%}
+        {%- if section.settings.url != nil -%}</a>{%- endif -%}
+        </x-cell>
+    </x-flex>
+</section>
+
+{% schema %}
+{
+  "name": "Hero logo",
+  "disabled_on": { "groups": ["aside"] },
+  "presets": [ { "name": "Hero logo", "category": "Banners" } ],
+  "settings": [
+    {
+      "type": "header",
+      "content": "Image"
+    },
+    {
+        "type": "image_picker",
+        "id": "image",
+        "label": "Logo"
+    },
+    {
+        "type": "textarea",
+        "id": "logoSVG",
+        "label": "SVG",
+        "info": "SVG code only. If an image is selected, this SVG settings will be overridden.",
+        "visible_if": "{{ section.settings.image == blank }}"
+    },
+    {
+        "type": "url",
+        "id": "url",
+        "label": "Link"
+    },
+    {
+      "type": "header",
+      "content": "Size"
+    },
+    {
+        "type": "range",
+        "label": "Desktop",
+        "id": "size",
+        "min": 5,
+        "max": 100,
+        "step": 5,
+        "unit": "%",
+        "default": 95
+    },
+    {
+        "type": "range",
+        "label": "Mobile",
+        "id": "size_s",
+        "min": 5,
+        "max": 100,
+        "step": 5,
+        "unit": "%",
+        "default": 95
+    },
+    {
+        "type": "text_alignment",
+        "id": "alignment",
+        "label": "Align",
+        "default": "center"
+     },
+    {
+        "type": "header",
+        "content": "Spacing"
+    },
+    {
+        "type": "range",
+        "label": "Top",
+        "id": "paddingStart",
+        "min": 0,
+        "max": 50,
+        "step": 5,
+        "unit": "%",
+        "default": 0
+    },
+    {
+        "type": "range",
+        "label": "Bottom",
+        "id": "paddingEnd",
+        "min": 0,
+        "max": 50,
+        "step": 5,
+        "unit": "%",
+        "default": 0
+    },
+    {
+      "type": "header",
+      "content": "Appearance"
+    },
+    {
+        "type": "checkbox",
+        "id": "global_color_scheme",
+        "label": "Use global color scheme",
+        "default": true
+    },
+    {
+        "type": "color_scheme",
+        "id": "color_scheme",
+        "label": "Color scheme",
+        "default": "coretex-1",
+        "visible_if": "{{ section.settings.global_color_scheme == false }}"
+    }
+  ]
+}
+{% endschema %}

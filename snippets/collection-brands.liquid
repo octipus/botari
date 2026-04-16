@@ -1,0 +1,38 @@
+{% for link in linklist.links %}
+
+{%- liquid
+    assign link_item = link.object
+    assign link_image = nil
+    capture link_title
+        echo link.title | escape
+    endcapture
+
+    if link.type == 'collection_link'
+        if link_item.image
+            assign link_image = link_item.image.src
+        else
+            assign link_image = link_item.products.first.featured_image
+        endif
+    elsif link.type == 'product_link'
+        assign link_image = link_item.featured_image
+    endif 
+-%}
+
+<x-cell span="row">
+    <a href="{{ link_item.url }}" title="{{ link_title }}" class="no-style">
+        <x-grid columns="3" columns-s="2" class="brand">
+            <x-cell class="center-axyz">
+            {%- liquid
+                if link_image
+                    assign img = link_image
+                    echo img | image_url: width: 450 | image_tag: loading: lazy, alt: link_title
+                endif 
+            -%}
+            </x-cell>
+            <x-cell class="center-axyz"><h4 class="text-center">{{ link_title }}</h4></x-cell>
+            <x-cell class="large-only center-axyz"><div>&rarr;</div></x-cell>
+        </x-grid>
+    </a>
+</x-cell>
+
+{% endfor %}

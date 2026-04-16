@@ -1,0 +1,237 @@
+{% comment %}
+    Renders a product card component with customizable display options.
+    Should be enclosed in: <x-grid class="product-grid">
+
+    @param {object} product - The product object to display
+    @param {boolean} [show_vendor] - Show/hide vendor name (defaults to settings.card_vendor)
+    @param {boolean} [show_subtitle] - Show/hide product subtitle (defaults to settings.card_subtitle)
+    @param {boolean} [show_main_price] - Show/hide product price (defaults to settings.card_main_price)
+    @param {boolean} [show_rating] - Show/hide product rating (defaults to settings.card_rating)
+    @param {boolean} [show_badges] - Show/hide product badges (defaults to settings.card_badges)
+    @param {boolean} [show_quick_buy] - Show/hide quick buy button (defaults to settings.card_quick_buy)
+    @param {string} [card_media_type] - Media display type (defaults to settings.card_media_type)
+    @param {string} [hscrollElement] - Horizontal scroll element attributes for grid layouts
+
+    @example
+    {% render 'c-prod-card' for product as product %}
+
+    @example With variables
+    {% render 'c-prod-card', product: product, show_vendor: false, show_badges: true %}
+{% endcomment %}
+
+{%- if product and product != empty -%}
+{%- liquid
+# Variables - Use global settings as defaults when no parameters passed
+	if show_vendor == null
+		assign show_vendor = settings.card_vendor
+	endif
+
+	if card_media_type == null
+		assign card_media_type = settings.card_media_type
+	endif
+
+	if show_quick_buy == null
+		assign show_quick_buy = settings.card_quick_buy
+	endif
+
+	if show_subtitle == null
+		assign show_subtitle = settings.card_subtitle
+	endif
+
+	if show_main_price == null
+		assign show_main_price = settings.card_main_price
+	endif
+
+	if show_rating == null
+		assign show_rating = settings.card_rating
+	endif
+
+	if show_badges == null
+		assign show_badges = settings.card_badges
+	endif
+
+    if show_bg == null
+        assign show_bg = settings.card_show_bg
+    endif
+
+# Show secondary media on on hover
+	if settings.card_show_secondary
+        if settings.card_show_secondary_onHover == 'both'
+            assign show_secondary_type = 'onHover'
+        else
+            assign show_secondary_type = 'onHover-m' 
+        endif
+	endif
+
+# Collection-aware link
+	capture collectionAwareUrl
+		echo 'data-href="'
+		echo product.url | within: collection
+		echo '"'
+	endcapture
+
+# Check if product has preorder tag
+# Preorder tag (normalize + handle spelling variants)
+    assign pre_order = false
+    assign tags_csv = product.tags | join: ',' | downcase
+    if tags_csv contains 'preorder' or tags_csv contains 'pre-order' or tags_csv contains 'pre order'
+        assign pre_order = true
+    endif
+-%}
+
+{% comment %} Product card badges {% endcomment %}
+{%- # If badges are disabled -%} 
+{%- assign badges_available = false -%}
+
+{%- # If badges are enabled -%}
+{%- if show_badges == true -%}
+    {%- liquid
+        # Badges position
+        if settings.card_layout == 'underneath' and settings.card_badges_overlay_top
+            assign badges_position = 'overlay'
+        endif
+    -%}
+
+    {%- capture badge_content -%}
+        {%- render 'c-badges',
+            product: product,
+            card_mode: true,
+            sale_badge_style: settings.card_sale_badge,
+            show_sale_minus: settings.card_sale_badge_minus
+        -%}
+    {%- endcapture -%}
+
+    {%- liquid 
+        # Checks if there are any badges to display 
+        if badge_content != blank
+            assign badges_available = true
+        endif
+    -%}
+{%- endif -%}
+
+{%- # Product rating -%}
+{%- liquid
+    assign ratings_available = false 
+    if show_rating and product.metafields.reviews.rating.value != blank
+        assign ratings_available = true
+        capture product_rating
+            # Loading rating stars component
+            render 'c-rating', product: product
+        endcapture
+    endif 
+-%}
+
+<product-card
+    id="pc-{{ product.id }}-{{ section.id }}"
+    class="onHover-a"
+    in-stock="{{ product.available }}"
+    pre-order="{{ pre_order }}"
+    {% if show_bg %}show-bg="true"{% endif %}
+    {% if product.metafields.openthinking.featured_product %}featured{% endif %}
+    {% unless settings.card_global_color_scheme %}color-scheme="{{ settings.card_color_scheme }}"{% endunless %}
+    {{ hscrollElement }}
+><x-flex direction="column" class="productCardContainer">
+
+    <x-cell as="center" class="media">
+        <a href="{{ product.url }}" class="no-style" tabindex="-1" aria-label="{{ product.title | escape }}" {{ collectionAwareUrl }}>
+            {%- if product.featured_media -%}
+            <x-grid columns="stack" class="{{ show_secondary_type }}">
+					{%- render 'c-prod-card-media',
+						product: product,
+						card_media_type: settings.card_media_type,
+						show_secondary: settings.card_show_secondary,
+						current_variant: current_variant,
+                        loading: loading
+					-%}
+			</x-grid>
+            {%- else -%}
+                {% # No image placeholder %}
+                {% # theme-check-disable %}
+                <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=" width="5000" height="5000" alt="No image" loading="lazy">
+                {% # theme-check-enable %}
+            {%- endif -%}
+		</a>
+	</x-cell>
+
+    {%- if badges_available and badges_position == 'overlay' -%}
+        <x-flex direction="column" wrap="wrap" class="overlayer badges text-end">{{ badge_content }}</x-flex>
+    {%- endif -%}
+
+    <x-flex direction="column" class="meta">
+        <x-flex wrap="wrap" class="header">
+			<x-flex wrap="wrap" {% if badges_available and badges_position != 'overlay' %}direction="column"{% endif %} jc="between" span="4">
+				<x-flex direction="column">
+                    {%- if show_vendor -%}<x-cell class="vendor"><span>{{ product.vendor }}</span></x-cell>{%- endif -%} 
+					<x-cell class="title"><h2 class="h4"><a href="{{ product.url }}" {{ collectionAwareUrl }}>{{ product.title }}</a></h2></x-cell>
+                    {%- if product.metafields.descriptors.subtitle.value != blank and show_subtitle == true -%}
+                    <x-cell class="subtitle"><span>{{ product.metafields.descriptors.subtitle.value }}</span></x-cell>
+                    {%- endif -%}
+				</x-flex>
+
+                {%- # Price -%}
+				{%- if show_main_price -%}
+				<x-cell class="price" ref="price">{%- render 'c-price', product: product -%}</x-cell>
+				{%- endif -%}
+
+                {%- # If prod has ratings available, render -%}
+                {%- if ratings_available -%}
+                <x-cell span="{% if badges_position != 'overlay' %}1{% else %}row{% endif %}">{{ product_rating }}</x-cell>
+                {%- endif -%}
+			</x-flex>
+
+            {%- if badges_available and badges_position != 'overlay' -%}
+                <x-flex wrap="wrap" direction="column" span="1" class="badges text-end">{{ badge_content }}</x-flex>
+            {%- endif -%}
+        </x-flex>
+
+        {%- # Quick buy -%}
+        {%- if show_quick_buy -%}
+        <x-grid columns="fit" columns-s="1" class="footer {% if settings.card_quick_buy_hover %}off{% endif %}"><component-loader>{%- render 'c-prod-card-form', product: product -%}</component-loader></x-grid>
+        {%- endif -%}
+    </x-flex>
+</x-flex></product-card>
+
+{%- else -%}
+	{% comment %}
+		ONBOARDING
+	{% endcomment %}
+
+	{% comment %}
+		=== [ CORETEX FYI ] ===
+		The card here below has to have the same layout/code as the layout above.
+		This is used for onboarding when no data is present on the store.
+	{% endcomment %}
+
+<product-card x-flex direction="column"
+    class="onHover-a"
+    placeholder="true"
+    in-stock="false"
+    pre-order="false"
+    {{ hscrollElement }}
+><x-flex direction="column" class="productCardContainer">
+
+    <x-cell as="center" class="media">{{ 'image' | placeholder_svg_tag: 'svg-placeholder' }}</x-cell>
+
+    <x-flex direction="column" class="meta">
+        <x-flex wrap="wrap" class="header">
+			<x-flex wrap="wrap" jc="between" span="4">
+				<x-flex direction="column">
+                    {%- if show_vendor -%}<x-cell class="vendor"><span>Bullet</span></x-cell>{%- endif -%} 
+					<x-cell class="title"><h2 class="h4">Product title</h2></x-cell>
+				</x-flex>
+
+                {%- # Price -%}
+				{%- if show_main_price -%}
+				<x-cell class="price" ref="price">$100</x-cell>
+				{%- endif -%}
+			</x-flex>
+        </x-flex>
+
+        {%- # Quick buy -%}
+        {%- if show_quick_buy -%}
+        <x-grid columns="fit" columns-s="1" class="footer"><component-loader>{%- render 'c-prod-card-form', product: product -%}</component-loader></x-grid>
+        {%- endif -%}
+    </x-flex>
+</x-flex></product-card>
+
+{%- endif -%}

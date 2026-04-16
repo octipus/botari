@@ -1,0 +1,55 @@
+{%- liquid
+    if section.settings.pageType == "col-1"
+        assign pageType = 'one-column'
+    else section.settings.pageType == "col-1-center"
+        assign pageType = 'one-column-central'
+    endif
+-%}
+
+<section class="general-page {{ pageType }}" {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}>
+    <x-grid columns="1" columns-s="1">
+        <x-cell data-heading="{{ section.settings.showHeading }}"><h1>{{ page.title }}</h1></x-cell>
+        <x-cell><div class="rte">{{ page.content }}</div></x-cell>
+    </x-grid>
+</section>
+
+{% schema %}
+{
+    "name": "Single column page",
+    "settings": [
+        {
+            "type": "select",
+            "id": "pageType",
+            "label": "Desktop page layout",
+            "default": "col-1",
+            "options": [
+                { "value": "col-1", "label": "Full width" },
+                { "value": "col-1-center", "label": "Fixed width, centered" }
+            ]
+        },
+        {
+            "type": "checkbox",
+            "id": "showHeading",
+            "label": "Show heading",
+            "default": true
+        },
+        {
+            "type": "header",
+            "content": "Appearance"
+        },
+        {
+            "type": "checkbox",
+            "id": "global_color_scheme",
+            "label": "Use global color scheme",
+            "default": true
+        },
+        {
+            "type": "color_scheme",
+            "id": "color_scheme",
+            "label": "Color scheme",
+            "default": "coretex-1",
+            "visible_if": "{{ section.settings.global_color_scheme == false }}"
+        }
+    ]
+}
+{% endschema %}

@@ -1,0 +1,85 @@
+{% comment %}
+	This is responsible for displaying the media of the product card.
+
+	Usage:
+	{%- render 'c-prod-card-media',
+	    product: product,
+	    card_media_type: card_media_type,
+	    show_secondary: show_secondary,
+	    current_variant: current_variant
+	    loading: loading
+	-%}
+{% endcomment %}
+
+{%- liquid
+	# Global assign for images
+	if product.featured_media and media.media_type != 'video'
+		assign width = 1426
+		assign widths = '750,950,1100,1280,1426'
+		assign sizes = '(min-width: 777px) 450px, 78.75vw'
+		assign ph = false
+		assign fallback = true
+		assign mediaLoader = true
+		assign loading = loading | default: null
+	endif
+
+    # Media type 
+	if product.featured_media
+		# Primary media
+		for media in product.media offset: 0 limit: 1
+			# === [CORETEX FYI] ==
+			# if current_variant is passed and media is not a video, use the current variant
+			# look into `c-prod-card.liquid` for more info.
+			if current_variant != empty and media.media_type != 'video'
+				assign media = current_variant
+			endif
+
+			# If show second media is not present do not add class to switch visibility
+			if product.media[1] != null and show_secondary
+				assign class = 'on'
+			endif
+
+			# If settings set to multimedia
+			if card_media_type == 'multimedia'
+				case media.media_type
+					when 'image'
+						assign img = media.image
+						render 'inc-img', img: img, width: width, widths: widths, sizes: sizes, fallback: fallback, ph: ph, mediaLoader: mediaLoader, pclass: class, loading: loading
+					when 'video'
+						assign vid = media
+						render 'global-video', vid: vid, loop: true, autoplay: true, controls: false, class: class
+					else
+						assign img = media.preview_image
+						render 'inc-img', img: img, width: width, widths: widths, sizes: sizes, fallback: fallback, ph: ph, mediaLoader: mediaLoader, pclass: class, loading: loading
+				endcase
+			else
+				assign img = media.preview_image
+				render 'inc-img', img: img, width: width, widths: widths, sizes: sizes, fallback: fallback, ph: ph, mediaLoader: mediaLoader, pclass: class, loading: loading
+			endif
+		endfor
+
+		# Secondary media
+		if product.media[1] != null and show_secondary
+			for media in product.media offset: 1 limit: 1
+				# If settings set to multimedia
+				assign class = 'off'
+				if card_media_type == 'multimedia'
+					case media.media_type
+						when 'image'
+							assign img = media.image
+							render 'inc-img', img: img, width: width, widths: widths, sizes: sizes, fallback: fallback, ph: ph, mediaLoader: mediaLoader, pclass: class, loading: loading
+						when 'video'
+							assign vid = media
+							render 'global-video', vid: vid, loop: true, autoplay: true, controls: false, class: class
+						else
+							assign img = media.preview_image
+							render 'inc-img', img: img, width: width, widths: widths, sizes: sizes, fallback: fallback, ph: ph, mediaLoader: mediaLoader, pclass: class, loading: loading
+					endcase
+				else
+					assign img = media.preview_image
+					render 'inc-img', img: img, width: width, widths: widths, sizes: sizes, fallback: fallback, ph: ph, mediaLoader: mediaLoader, pclass: class, loading: loading
+				endif
+			endfor
+		endif
+	endif
+-%}

@@ -1,0 +1,209 @@
+{%- render 'inc-stylesheet', src: 's-sections.css' -%}
+
+<section class="collage {% if section.settings.show_borders %}hasBorders{% endif %}" {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}>
+	{% if section.settings.title != empty %}<h2 class="gs-title">{{ section.settings.title }}</h2>{%- endif -%}
+
+	<x-grid {% if section.settings.horizontalScroller %}class="scroll-snap-m"{%- endif -%}>
+	{%- for block in section.blocks -%}
+	{%- case block.type -%}
+	{%- when 'text' -%}
+		<x-cell class="xcontent {% unless block.settings.hideM %}hide-m{% endunless %} {{ block.settings.align }}" {{ block.settings.span }} {% if block.settings.fullWidthM %}span-s="row"{% endif %} {{ block.shopify_attributes }}>
+			{%- if block.settings.heading != empty -%}<h2 class="h3">{{ block.settings.heading }}</h2>{%- endif -%}
+			{%- if block.settings.content != empty -%}<div class="rte">{{ block.settings.content }}</div>{%- endif -%}
+		</x-cell>
+	{%- when 'image' -%}
+		<x-cell class="ximage" crop-image="{{ block.settings.imgFullheight }}" style="--imgPosition:{{ block.settings.imgPosition }}" {{ block.settings.span }} {{ block.shopify_attributes }}>
+        {%- if block.settings.url -%}<a href="{{ block.settings.url }}" {% if block.settings.openNewWindow %}target="_blank"{% endif %} class="no-style">{%- endif -%}
+            <picture>
+            {%- liquid 
+            	assign img = block.settings.image 
+                assign alt = img.alt | escape
+                assign width = 1426
+                assign widths = '550,750,950,1100,1280,1426'
+                assign sizes = '(max-width:777px) 100vw, (min-width:778px) 40vw, 100vw'
+
+	            if img != nil
+	            	echo img | image_url: width: width | image_tag: sizes: sizes, widths: widths, alt: alt
+	            else
+					echo 'image' | placeholder_svg_tag: 'svg-placeholder'
+	            endif 
+            -%}
+            </picture>
+        {%- if block.settings.url -%}</a>{%- endif -%}
+		</x-cell>
+	{%- endcase -%}
+	{%- endfor -%}
+	</x-grid>
+</section>
+
+{% schema %}
+{
+  "name": "Collage",
+  "disabled_on": { "groups": ["header", "footer", "aside"] },
+  "presets": [
+    {
+      "name": "Collage",
+      "category": "Visual",
+      "blocks": [
+        { "type": "text", "settings": { "span": "span=1" } },
+        { "type": "image", "settings": { "span": "span=3" } },
+        { "type": "image", "settings": { "span": "span=2" } },
+        { "type": "image", "settings": { "span": "span=2" } },
+        { "type": "image", "settings": { "span": "span=1" } },
+        { "type": "image", "settings": { "span": "span=2" } },
+        { "type": "image", "settings": { "span": "span=1" } }
+      ]
+    }
+  ],
+  "settings": [
+  	{
+		"type": "text",
+		"id": "title",
+		"label": "Title",
+		"default": "Collage",
+		"info": "Leave blank to disable."
+	},
+	{
+	    "type": "checkbox",
+	    "id": "show_borders",
+	    "label": "Show borders",
+	    "default": true
+	},
+	{
+	    "type": "checkbox",
+	    "id": "horizontalScroller",
+	    "label": "Enable horizontal scroll - mobile",
+	    "default": false,
+		"info": "Content will be displayed horizontally on mobile."
+	},
+    {
+      "type": "header",
+      "content": "Appearance"
+    },
+    {
+      "type": "checkbox",
+      "id": "global_color_scheme",
+      "label": "Use global color scheme",
+      "default": true
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Color scheme",
+      "default": "coretex-1",
+      "visible_if": "{{ section.settings.global_color_scheme == false }}"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "text",
+      "name": "Text",
+      "settings": [
+		{
+			"type": "select",
+		    "id": "span",
+		    "label": "Block width - desktop",
+		    "info": "Block takes full width on mobile.",
+		    "default": "span=1",
+		    "options": [
+		        { "value": "span=1", "label": "One fourth - 1/4" },
+		        { "value": "span=2", "label": "One Half - 2/4" },
+		        { "value": "span=3", "label": "Three fourths - 3/4" },
+				{ "value": "span=row", "label": "Full - 4/4" }
+		    ]
+		},
+		{
+		    "type": "checkbox",
+		    "id": "fullWidthM",
+		    "label": "Full width - mobile",
+		    "default": true
+		},
+		{
+		    "type": "checkbox",
+		    "id": "hideM",
+		    "label": "Show - mobile",
+		    "default": true,
+		    "info": "Show or hide text block on mobile devices."
+		},
+		{
+		    "type": "header",
+		    "content": "Heading"
+		},
+        {
+          "type": "text",
+          "id": "heading",
+          "label": "Heading",
+          "default": "Heading"
+        },
+		{
+		    "type": "richtext",
+		    "id": "content",
+		    "label": "Content",
+		    "default": "<p>Content text</p>"
+		},
+		{
+			"type": "select",
+		    "id": "align",
+		    "label": "Content alignment",
+		    "default": "text-start",
+		    "options": [
+		        { "value": "text-start", "label": "Left" },
+		        { "value": "text-center", "label": "Center" },
+		        { "value": "text-end", "label": "Right" }
+		    ]
+		}
+      ]
+    },
+    {
+      "type": "image",
+      "name": "Image",
+      "settings": [
+		{
+			"type": "select",
+		    "id": "span",
+		    "label": "Block width - desktop",
+		    "info": "Block takes full width on mobile.",
+		    "default": "span=1",
+		    "options": [
+		        { "value": "span=1", "label": "One fourth - 1/4" },
+		        { "value": "span=2", "label": "One half - 2/4" },
+		        { "value": "span=3", "label": "Three fourths - 3/4" },
+				{ "value": "span=row", "label": "Full - 4/4" }
+		    ]
+		},
+		{
+		    "type": "header",
+		    "content": "Image"
+		},
+		{
+		    "type": "image_picker",
+		    "id": "image",
+		    "label": "Image"
+		},
+		{
+		    "type": "checkbox",
+		    "id": "imgFullheight",
+		    "label": "Full height",
+		    "default": true,
+		    "info": "The image is cropped to fit the available height."
+		},
+		{
+		    "type": "header",
+		    "content": "Link"
+		},
+		{
+			"type": "url",
+			"id": "url",
+			"label": "Link"
+		},
+		{
+		    "type": "checkbox",
+		    "id": "openNewWindow",
+		    "label": "Open in new tab",
+		    "default": false
+		}
+      ]
+    }
+  ]
+}
+{% endschema %}

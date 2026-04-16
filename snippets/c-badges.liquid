@@ -1,0 +1,112 @@
+{%- comment -%}
+  Renders product badges (sold out, sale, preorder, new, custom tags).
+
+  @param {object} product - The product object
+  @param {boolean} [card_mode=false] - Wraps badges in x-cell elements for product card layout
+  @param {boolean} [show_sale=true] - Show sale badges
+  @param {string} [sale_badge_style='label-percentage'] - Style: label, percentage, saved, label-percentage, label-saved, none
+  @param {boolean} [show_sale_minus=true] - Show minus sign on percentage discount
+  @param {boolean} [show_preorder=true] - Show pre-order badge
+  @param {boolean} [show_new=true] - Show new badge
+  @param {boolean} [show_custom_tags=true] - Show custom tag badges (badge:xxx)
+{%- endcomment -%}
+
+{%- liquid
+    if show_sale == null
+        assign show_sale = true
+    endif
+    if sale_badge_style == null
+        assign sale_badge_style = 'label-percentage'
+    endif
+    if sale_badge_style == 'none'
+        assign show_sale = false
+    endif
+    if show_sale_minus == null
+        assign show_sale_minus = true
+    endif
+    if show_preorder == null
+        assign show_preorder = true
+    endif
+    if show_new == null
+        assign show_new = true
+    endif
+    if show_custom_tags == null
+        assign show_custom_tags = true
+    endif
+
+    # Preorder tag (normalize + handle spelling variants)
+    assign pre_order = false
+    assign tags_csv = product.tags | join: ',' | downcase
+    if tags_csv contains 'preorder' or tags_csv contains 'pre-order' or tags_csv contains 'pre order'
+        assign pre_order = true
+    endif
+
+    # New tag
+    assign new_prod = false
+    if tags_csv contains 'new'
+        assign new_prod = true
+    endif
+-%}
+
+{%- unless product.available -%}
+    {%- if product.metafields.openthinking.custom_badge -%}
+        {%- if card_mode -%}<x-cell class="badge">{%- endif -%}<span class="product-badge custom">{{ product.metafields.openthinking.custom_badge }}</span>{%- if card_mode -%}</x-cell>{%- endif -%}
+    {%- else -%}
+        {%- if card_mode -%}<x-cell class="badge">{%- endif -%}<span class="product-badge soldout">{{ 'product.soldOut' | t }}</span>{%- if card_mode -%}</x-cell>{%- endif -%}
+    {%- endif -%}
+{%- else -%}
+    {%- if product.compare_at_price > product.price and show_sale -%}
+        {%- liquid
+            capture discount_percent
+                assign discount_sign = '-'
+                unless show_sale_minus
+                    assign discount_sign = ''
+                endunless
+                echo product.compare_at_price | minus: product.price | times: 100 | divided_by: product.compare_at_price | prepend: discount_sign | append: '%'
+            endcapture
+
+            capture amount_saved
+                assign savings_amount = product.compare_at_price | minus: product.price | money
+                echo 'product.amount_saved_html' | t: amount: savings_amount
+            endcapture
+        -%}
+
+        {%- if card_mode -%}<x-flex wrap="wrap" direction="row" jc="end" class="discount-badges" style="gap:var(--space-1)">{%- endif -%}
+            {%- case sale_badge_style -%}
+                {%- when 'label' -%}
+                    {%- if card_mode -%}<x-cell class="badge">{%- endif -%}<span class="product-badge sale">{{ 'product.sale' | t }}</span>{%- if card_mode -%}</x-cell>{%- endif -%}
+                {%- when 'percentage' -%}
+                    {%- if card_mode -%}<x-cell class="badge">{%- endif -%}<span class="product-badge percent">{{ discount_percent }}</span>{%- if card_mode -%}</x-cell>{%- endif -%}
+                {%- when 'saved' -%}
+                    {%- if card_mode -%}<x-cell class="badge">{%- endif -%}<span class="product-badge saved">{{ amount_saved }}</span>{%- if card_mode -%}</x-cell>{%- endif -%}
+                {%- when 'label-percentage' -%}
+                    {%- if card_mode -%}<x-cell class="badge">{%- endif -%}<span class="product-badge sale">{{ 'product.sale' | t }}</span>{%- if card_mode -%}</x-cell>{%- endif -%}
+                    {%- if card_mode -%}<x-cell class="badge">{%- endif -%}<span class="product-badge percent">{{ discount_percent }}</span>{%- if card_mode -%}</x-cell>{%- endif -%}
+                {%- when 'label-saved' -%}
+                    {%- if card_mode -%}<x-cell class="badge">{%- endif -%}<span class="product-badge sale">{{ 'product.sale' | t }}</span>{%- if card_mode -%}</x-cell>{%- endif -%}
+                    {%- if card_mode -%}<x-cell class="badge">{%- endif -%}<span class="product-badge saved">{{ amount_saved }}</span>{%- if card_mode -%}</x-cell>{%- endif -%}
+            {%- endcase -%}
+        {%- if card_mode -%}</x-flex>{%- endif -%}
+    {%- endif -%}
+
+    {%- if pre_order and show_preorder -%}
+        {%- if card_mode -%}<x-cell class="badge">{%- endif -%}<span class="product-badge preorder">{{ 'product.preorder' | t }}</span>{%- if card_mode -%}</x-cell>{%- endif -%}
+    {%- endif -%}
+
+    {%- if new_prod and show_new -%}
+        {%- if card_mode -%}<x-cell class="badge">{%- endif -%}<span class="product-badge new">{{ 'product.new' | t }}</span>{%- if card_mode -%}</x-cell>{%- endif -%}
+    {%- endif -%}
+
+    {%- if show_custom_tags -%}
+        {%- for tag in product.tags -%}
+            {%- if tag contains 'badge:' -%}
+                {%- assign badge_text = tag | split: 'badge:' | last | strip -%}
+                {%- assign badge_text_lower = badge_text | downcase -%}
+                {%- if badge_text_lower == 'new' and new_prod and show_new -%}
+                    {%- continue -%}
+                {%- endif -%}
+                {%- if card_mode -%}<x-cell class="badge">{%- endif -%}<span class="product-badge custom" data-badge="{{ badge_text }}">{{ badge_text }}</span>{%- if card_mode -%}</x-cell>{%- endif -%}
+            {%- endif -%}
+        {%- endfor -%}
+    {%- endif -%}
+{%- endunless -%}

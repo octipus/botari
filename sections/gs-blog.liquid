@@ -1,0 +1,156 @@
+{%- liquid 
+    assign blog = blogs[section.settings.blog]
+    assign postLimit = section.settings.post_limit
+    assign totalPosts = blog.articles_count
+
+    assign thumbnail = section.settings.show_image
+    assign date = section.settings.show_date
+    assign title = section.settings.show_title
+    assign excerpt = section.settings.show_excerpt
+
+    if blog != blank
+        assign blogTitle = blog.title
+    else 
+        assign blogTitle = 'blog.featuredArticles' | t
+    endif
+-%}
+
+<section class="blog-listing" {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}>
+<h2 class="gs-title">{{ blogTitle }}</h2>
+<x-grid columns="3" columns-s="2" class="posts">
+{%- liquid
+    assign altText = blogTitle | escape
+    paginate blog.articles by postLimit
+        for article in blog.articles limit: postLimit
+            assign img = article.image
+            render 'global-blog-card' for article as article, img: img, alt: altText, thumbnail: thumbnail, date: date, title: title, excerpt: excerpt
+        else
+            # If no posts show placeholder x3
+            for i in (1..3)
+                render 'global-blog-card' for article as article, img: img, alt: altText, thumbnail: thumbnail, date: date, title: title, excerpt: excerpt
+            endfor
+        endfor
+    endpaginate
+
+# If posts 1/4/7 or 2/5/8 show extra cell
+  if totalPosts != postLimit
+    if totalPosts == 1
+      assign subNumb = 2
+    endif
+    
+    if totalPosts == 4 and postLimit == 6
+      assign subNumb = 2
+    endif
+
+    if totalPosts == 7 and postLimit == 9
+      assign subNumb = 2
+    endif
+
+
+    if totalPosts == 2 
+      assign subNumb = 1
+    endif
+
+    if totalPosts == 5 and postLimit == 6 
+      assign subNumb = 1
+    endif
+    
+    if totalPosts == 8 and postLimit == 9
+      assign subNumb = 1
+    endif
+
+  else 
+    assign subNumb = nil
+  endif
+-%}
+
+    {%- if subNumb == 2 -%}
+    <x-cell span="2" class="large-only border-bottom"></x-cell>
+    {%- elsif subNumb == 1 -%}
+    <x-cell span="1" class="large-only border-bottom"></x-cell>
+    {%- endif -%}
+
+</x-grid>
+
+{%- if totalPosts != empty and totalPosts > postLimit -%}
+<div class="loadmore"><a href="{{ blog.url }}" class="no-style">{{ 'blog.read_all' | t }}</a></div>
+{%- endif -%}
+</section>
+
+{% schema %}
+{
+  "name": "Blog posts",
+  "disabled_on": { "groups": ["header", "footer", "aside"] },
+  "presets": [
+    {
+      "name": "Blog posts",
+      "category": "Content",
+      "settings": {
+        "blog": "News",
+        "post_limit": 3
+      }
+    }
+  ],
+  "settings": [
+    {
+      "type": "blog",
+      "id": "blog",
+      "label": "Blog"
+    },
+    {
+      "type": "range",
+      "id": "post_limit",
+      "label": "Number of posts",
+      "min": 3,
+      "max": 9,
+      "step": 3,
+      "default": 3
+    },
+    {
+        "type": "header",
+        "content": "Article card"
+    },
+    {
+        "type": "checkbox",
+        "id": "show_image",
+        "label": "Show thumbnail",
+        "default": true
+    },
+    {
+        "type": "checkbox",
+        "id": "show_date",
+        "label": "Show date",
+        "default": true
+    },
+    {
+        "type": "checkbox",
+        "id": "show_title",
+        "label": "Show title",
+        "default": true
+    },
+    {
+        "type": "checkbox",
+        "id": "show_excerpt",
+        "label": "Show excerpt",
+        "default": false
+    },
+    {
+      "type": "header",
+      "content": "Appearance"
+    },
+    {
+      "type": "checkbox",
+      "id": "global_color_scheme",
+      "label": "Use global color scheme",
+      "default": true
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Color scheme",
+      "default": "coretex-1",
+      "visible_if": "{{ section.settings.global_color_scheme == false }}"
+    }
+  ]
+}
+{% endschema %}

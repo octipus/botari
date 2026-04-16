@@ -1,0 +1,53 @@
+{% doc %}
+    Renders a product rating component with star display and optional review count.
+
+    Displays star ratings based on product metafield data. Shows visual star bar
+    with support for half-star ratings and includes accessibility features.
+    Optionally displays rating count and numerical value.
+
+    @param {product} product - The product object containing rating metafields (required)
+    @param {boolean} [rating_meta] - Whether to show detailed rating information
+
+    @example
+    {% render 'c-rating', product: product %}
+
+    @example With rating details
+    {% render 'c-rating', product: product, rating_meta: true %}
+{% enddoc %}
+
+{%- if product.metafields.reviews.rating.value != blank -%}
+{%- liquid
+    # Determine whether to show detailed rating information
+    assign rating_values = false
+    if rating_meta != null
+        assign rating_values = true
+    endif
+
+    # Calculate decimal star display for half-star ratings
+    assign rating_decimal = 0
+    assign decimal = product.metafields.reviews.rating.value.rating | modulo: 1
+
+    # Round to nearest half-star (0, 0.5, or 1)
+    if decimal >= 0.3 and decimal <= 0.7
+        assign rating_decimal = 0.5
+    elsif decimal > 0.7
+        assign rating_decimal = 1
+    endif
+-%}
+
+<coretex-rating>
+    <div role="img" class="product-badge" aria-label="{{ 'product.star_reviews_info' | t: rating_value: product.metafields.reviews.rating.value, rating_max: product.metafields.reviews.rating.value.scale_max }}">
+        <rating-bar x-flex ai="center" jc="center"
+            aria-hidden="true" 
+            style="{{ product.metafields.reviews.rating.value.rating | floor | prepend: '--rating:' | append: ';' }}{{ product.metafields.reviews.rating.value.scale_max | prepend: '--rating-max:' | append: ';' }}{{ rating_decimal | prepend: '--rating-decimal:' | append: ';' }}"
+            title="{{- product.metafields.reviews.rating.value }} / {{ product.metafields.reviews.rating.value.scale_max }} ({{ product.metafields.reviews.rating_count }} {{ 'product.total_reviews' | t -}})"
+        >&starf;&starf;&starf;&starf;&starf;</rating-bar>
+    </div>
+    {% if rating_values %}
+    <div aria-hidden="true">
+        <span>({{ product.metafields.reviews.rating_count }})</span>
+        <span>{{- product.metafields.reviews.rating.value }} / {{ product.metafields.reviews.rating.value.scale_max -}}</span>
+    </div>
+    {% endif %}
+</coretex-rating>
+{%- endif -%}

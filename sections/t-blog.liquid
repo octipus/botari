@@ -1,0 +1,130 @@
+{%- liquid 
+    assign thumbnail = section.settings.show_image
+    assign date = section.settings.show_date
+    assign title = section.settings.show_title
+    assign excerpt = section.settings.show_excerpt
+
+    assign prodXpage = section.settings.prodXpage 
+-%}
+
+{%- paginate blog.articles by prodXpage -%}
+<div class="blog-listing" {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}>
+    <section class="heading" style="padding:var(--padding)">
+        <div class="text-start"><h3>{{ blog.title }}</h3></div>
+    </section>
+
+    <section class="posts">
+        <x-grid id="ajaxSection" columns="3" columns-s="2">
+            {%- liquid 
+              for article in blog.articles
+                assign img = article.image
+
+                assign loading = 'eager'
+                if forloop.index > 6
+                    assign loading = 'lazy'
+                endif
+
+                render 'global-blog-card', article: article, img: img, alt: img.alt, loading: loading, thumbnail: thumbnail, date: date, title: title, excerpt: excerpt
+              endfor 
+            -%}
+        </x-grid>
+    </section>
+
+    {%- comment -%} Pagination {%- endcomment -%}
+    {%- render 'global-pagination', paginate: paginate, section: section -%}
+    {%- if section.settings.pagination != 'classic' -%}
+    <script type="module">
+    import { InfiniScroll } from '{{ 'infiniscroll.min.js' | asset_url }}';
+
+    InfiniScroll({
+        itemsContainerSelector: '#ajaxSection',
+        paginationContainerSelector: '#ajaxPagination',
+        loadingText: '{{ 'collection.loading' | t }}',
+        debug: false,
+    }).start();
+    </script>
+    {%- endif -%}
+</div>
+{%- endpaginate -%}
+
+{% schema %}
+{
+  "name": "Blog",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Pagination"
+    },
+    {
+      "type": "select",
+      "id": "pagination",
+      "label": "Type",
+      "default": "classic",
+      "options": [
+        {
+          "value": "classic",
+          "label": "Numbers"
+        },
+        {
+          "value": "scroll",
+          "label": "Load on scroll"
+        }
+      ]
+    },
+    {
+      "type": "range",
+      "label": "Posts per page",
+      "id": "prodXpage",
+      "min": 3,
+      "max": 30,
+      "step": 1,
+      "default": 9
+    },
+    {
+        "type": "header",
+        "content": "Article card"
+    },
+    {
+        "type": "checkbox",
+        "id": "show_image",
+        "label": "Show thumbnail",
+        "default": true
+    },
+    {
+        "type": "checkbox",
+        "id": "show_date",
+        "label": "Show date",
+        "default": true
+    },
+    {
+        "type": "checkbox",
+        "id": "show_title",
+        "label": "Show title",
+        "default": true
+    },
+    {
+        "type": "checkbox",
+        "id": "show_excerpt",
+        "label": "Show excerpt",
+        "default": false
+    },
+    {
+        "type": "header",
+        "content": "Appearance"
+    },
+    {
+        "type": "checkbox",
+        "id": "global_color_scheme",
+        "label": "Use global color scheme",
+        "default": true
+    },
+    {
+        "type": "color_scheme",
+        "id": "color_scheme",
+        "label": "Color scheme",
+        "default": "coretex-1",
+        "visible_if": "{{ section.settings.global_color_scheme == false }}"
+    }
+  ]
+}
+{% endschema %}

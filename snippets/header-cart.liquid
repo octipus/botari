@@ -1,0 +1,33 @@
+{%- liquid
+    if settings.cart_type == 'drawer-side' or settings.cart_type == 'drawer-side full'
+        assign dialogPosition = 'top right'
+    else
+        assign dialogPosition = 'center'
+    endif
+
+    # Load CSS
+    render 'inc-stylesheet', src: 'c-dialog.css', loading: 'defer'
+-%}
+
+<component-loader><coretex-dialog id="cartBox" class="coretex-dialog" data-nosdm cart-layout="{{ settings.cart_type }}" data-section-id="{{ section.id }}" {% unless settings.cart_global_color_scheme %}color-scheme="{{ settings.cart_color_scheme }}"{% endunless %}>
+    <dialog aria-label="Cart modal" dialog-position="{{ dialogPosition }}">
+        <dialog-wrapper aria-label="Cart modal" x-flex direction="column">
+            <header x-flex direction="row" ai="center" jc="between" class="sticky">
+                <x-cell><h3 class="h3 headingTitle">{{ 'cart.cart' | t }}</h3></x-cell>
+                <x-cell>
+                    <form>
+                        <button formmethod="dialog" class="is-blank" data-close>
+                            <span class="visually-hidden">{{ 'header.close' | t }}</span>
+                            {%- render 'global-icon' with 'x' -%}
+                        </button>
+                    </form>
+                </x-cell>
+            </header>
+
+            <main>
+                {%- render 'c-cart', location: location -%}
+            </main>
+            
+        </dialog-wrapper>
+    </dialog>
+</coretex-dialog></component-loader>

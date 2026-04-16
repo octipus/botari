@@ -1,0 +1,95 @@
+{%- render 'inc-stylesheet', src: 's-sections.css' -%}
+
+<section class="reviews" {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}>
+    {%- if section.settings.heading != blank %}<h2 class="gs-title">{{ section.settings.heading }}</h2>{%- endif -%}
+	<x-grid columns="2" columns-s="1">
+	{%- for block in section.blocks -%}
+		<x-grid pi="center" class="block" {{ block.shopify_attributes }}>
+            <x-flex span="1+1" direction="column" jc="center" ai="center" class="media-block text-center">
+                <x-cell class="media">
+                {%- liquid
+                    assign img = block.settings.image
+                    assign widths = '50,100,150,250'
+
+                    render 'inc-img' img: img, widths: widths, fallback: true
+                -%}
+                </x-cell>
+
+                <h3 class="name">{{ block.settings.name | escape }}</h3>
+            </x-flex>
+
+            <x-cell span="2.." class="meta">
+			    <div class="review rte">{{ block.settings.review }}</div>
+            </x-cell>
+		</x-grid>
+	{%- endfor -%}
+	</x-grid>
+</section>
+
+{% schema %}
+{
+  "name": "Testimonials",
+  "disabled_on": { "groups": ["header", "footer", "aside"] },
+  "presets": [
+    {
+      "name": "Testimonials",
+      "category": "Content",
+      "blocks": [
+        { "type": "text" },
+        { "type": "text" }
+      ]
+    }
+  ],
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Testimonials",
+      "info": "Leave blank to remove"
+    },
+    {
+      "type": "header",
+      "content": "Appearance"
+    },
+    {
+        "type": "checkbox",
+        "id": "global_color_scheme",
+        "label": "Use global color scheme",
+        "default": true
+    },
+    {
+        "type": "color_scheme",
+        "id": "color_scheme",
+        "label": "Color scheme",
+        "default": "coretex-1",
+        "visible_if": "{{ section.settings.global_color_scheme == false }}"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "text",
+      "name": "Testimonial",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Image"
+        },
+        {
+          "type": "text",
+          "id": "name",
+          "label": "Name",
+          "default": "Testimonial name"
+        },
+        {
+          "type": "richtext",
+          "id": "review",
+          "label": "Description",
+          "default": "<p>Review text</p>"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

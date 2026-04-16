@@ -1,0 +1,50 @@
+{%- render 'inc-stylesheet', src: 't-customer.css' -%}
+
+<section class="customers account-page">
+<x-grid columns="2" columns-s="1">
+    <x-cell>
+        <h1>{{ 'header.account' | t }}</h1>
+        <a href="{{ routes.account_logout_url }}">{{ 'header.logOut' | t }}</a>
+    </x-cell>
+    <x-cell>
+        {% paginate customer.orders by 20 %}
+        {% if customer.orders.size != 0 %}
+        <span class="text-hr noMargin">{{ 'account.orders' | t }}</span>
+        <section class="table">
+            {% comment %} Header {% endcomment %}
+            <x-grid columns="5" class="head">
+                <x-cell>{{ 'account.orderNumber' | t }}</x-cell>
+                <x-cell>{{ 'account.orderDate' | t }}</x-cell>
+                <x-cell>{{ 'account.orderPaymentStatus' | t }}</x-cell>
+                <x-cell>{{ 'account.orderFulfillmentStatus' | t }}</x-cell>
+                <x-cell>{{ 'cart.total' | t }}</x-cell>
+            </x-grid>
+
+            {% comment %} Body {% endcomment %}
+            {% for order in customer.orders %}
+            <x-grid columns="5" class="body">
+                <x-cell><a href="{{ order.customer_url }}">{{ order.name }}</a></x-cell>
+                <x-cell>{{ order.created_at | time_tag: format: 'date' }}</x-cell>
+                <x-cell>{{ order.financial_status_label }}</x-cell>
+                <x-cell>{{ order.fulfillment_status_label }}</x-cell>
+                <x-cell>{{ order.total_price | money_with_currency }}</x-cell>
+            </x-grid>
+            {% endfor %}
+        </section>
+        {% else %}
+        <p>{{ 'account.orderNone' | t }}</p>
+        {% endif %}
+        
+        {%- if paginate.pages > 1 -%}
+            {% render 'pagination', paginate: paginate %}
+        {%- endif -%}
+        {% endpaginate %}
+
+        <div class="addresses">
+            <span class="text-hr">{{ 'account.details' | t }}</span>
+            {{ customer.default_address | format_address }}
+            <p><a href="{{ routes.account_addresses_url }}" class="button">{{ 'account.viewAddress' | t }} ({{ customer.addresses_count }})</a></p>
+        </div>
+</x-cell>
+</x-grid>
+</section>

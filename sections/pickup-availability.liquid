@@ -1,0 +1,90 @@
+{%- assign pick_up_availabilities = product_variant.store_availabilities | where: 'pick_up_enabled', true -%}
+
+{%- if pick_up_availabilities.size > 0 -%}
+<pickup-availability-preview>
+    <x-flex style="gap:var(--padding)">
+        {%- assign closest_location = pick_up_availabilities.first -%}
+
+        {%- if closest_location.available -%}
+            <div class="dot"></div>
+        {%- endif -%}
+
+        <x-flex direction="column" class="pickup-availability-info" style="gap:var(--margin)">
+        {%- if closest_location.available -%}
+            <x-cell>{{ 'product.pick_up_available' | t: location_name: closest_location.location.name }}</x-cell>
+            <x-cell>{{ closest_location.pick_up_time }}</x-cell>
+            <x-cell>
+                <button id="ShowPickupAvailabilityDrawer" class="is-outline is-currentcolor" aria-haspopup="dialog">
+                {%- liquid 
+                    if pick_up_availabilities.size == 1
+                        echo 'product.view_store_info' | t
+                    else
+                        echo 'product.check_other_stores' | t
+                    endif 
+                -%}
+                </button>
+            </x-cell>
+        {%- else -%}
+            <x-cell>{{ 'product.pick_up_available' | t: location_name: closest_location.location.name }}</x-cell>
+            {%- if pick_up_availabilities.size > 1 -%}
+            <x-cell><button id="ShowPickupAvailabilityDrawer" class="is-outline is-currentcolor" aria-haspopup="dialog">{{ 'product.check_other_stores' | t }}</button></x-cell>
+            {%- endif -%}
+        {%- endif -%}
+        </x-flex>
+    </x-flex>
+</pickup-availability-preview>
+
+<pickup-availability-drawer tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="PickupAvailabilityHeading">
+    <header x-flex direction="row" ai="center" jc="between" class="sticky" id="PickupAvailabilityHeading">
+        <x-cell><h3 class="h3 headingTitle">{{ product_variant.product.title | escape }}</h3></x-cell>
+        <x-cell style="border-inline-start:var(--globalBorder)">
+            <form>
+                <button formmethod="dialog" class="is-blank" data-close>
+                    <span class="visually-hidden">{{ 'header.close' | t }}</span>
+                    {%- render 'global-icon' with 'x' -%}
+                </button>
+            </form>
+        </x-cell>
+    </header>
+
+    {%- unless product_variant.product.has_only_default_variant -%}
+      <p class="pickup-availability-variant">
+        {%- for product_option in product_variant.product.options_with_values -%}
+          {{ product_option.name | escape }}:&nbsp;
+          {%- for value in product_option.values -%}
+            {%- if product_option.selected_value == value -%}
+              <span>{{ value | escape }}</span>
+            {%- endif -%}
+          {%- endfor -%}
+          {%- unless forloop.last -%},&nbsp;{%- endunless forloop.last -%}
+        {%- endfor -%}
+      </p>
+    {%- endunless -%}
+
+    <x-flex direction="column" data-store-availability-drawer-content>
+    {%- for availability in pick_up_availabilities -%}
+        <x-cell class="pickup-availability-list__item">
+            <h3 class="h4">{{ availability.location.name | escape }}</h3>
+            <x-flex style="gap:var(--padding)">
+                {%- if availability.available -%}
+                <x-cell><div class="dot"></div></x-cell>
+                <x-cell>{{ 'product.pick_up_available' | t }}, {{ availability.pick_up_time | downcase }}</x-cell>
+                {%- endif -%}
+            </x-flex>
+
+            {%- assign address = availability.location.address -%}
+            <x-flex columns="2" style="gap:var(--padding)">
+                <x-cell>{% render 'global-icon' with 'pin' %}</x-cell>
+                <x-cell>
+                    <address class="pickup-availability-address">{{ address | format_address }}</address>
+                </x-cell>
+                {%- if address.phone.size > 0 -%}
+                <x-cell><p><a href="tel:{{ address.phone }}" class="no-style">{{ address.phone }}</a></p></x-cell>
+                {%- endif -%}
+            </x-flex>
+
+        </x-cell>
+    {%- endfor -%}
+    </x-flex>
+</pickup-availability-drawer>
+{%- endif -%}

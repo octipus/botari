@@ -1,0 +1,164 @@
+{%- liquid
+    # theme-check-disable
+	assign suggestedLinklist = settings.suggestedLinklist
+	assign sort_by = search.sort_by | default: search.default_sort_by
+	assign terms = search.terms | escape
+	assign search_url = '?q=' | append: terms | append: '&options%5Bprefix%5D=last&sort_by=' | append: sort_by
+	# theme-check-enable
+-%}
+
+<component-loader><coretex-dialog id="searchBox" class="coretex-dialog" data-nosdm dialog-layout="{{ settings.search_dialog_layout }}" data-section-id="{{ section.id }}" {% unless settings.search_global_color_scheme %}color-scheme="{{ settings.search_color_scheme }}"{% endunless %}>
+	<dialog aria-label="Cart modal" dialog-position="center">
+			<dialog-wrapper aria-label="Cart modal" x-flex direction="column">
+				<header x-flex direction="row" ai="center" jc="between" class="sticky">
+					<x-cell>
+						<h3 class="h3 headingTitle">{{ 'header.search' | t }}</h3>
+					</x-cell>
+					<x-cell>
+						<form>
+							<button formmethod="dialog" class="is-blank" data-close>
+								<span class="visually-hidden">{{ 'header.close' | t }}</span>
+								{%- render 'global-icon' with 'x' -%}
+							</button>
+						</form>
+					</x-cell>
+				</header>
+
+				<main>
+					<search-engine id="searchbar">
+						{%- if settings.predictive_search_enabled -%}<predictive-search data-loading-text="{{ 'general.accessibility.loading' | t }}">{%- endif -%}
+						<main-search>
+							<form action="{{ routes.search_url }}" method="get" role="search" class="search">
+								<x-flex direction="column" class="search-section">
+									<x-flex ai="center" class="search-input-stack sticky">
+										<x-cell class="button is-blank has-icon">
+                                            <label for="Search-In-Template" aria-label="{{ 'search.search' | t }}">{%- render 'global-icon' with 'search' -%}</label>
+                                        </x-cell>
+										<x-cell class="s-input fullwidth">
+											<input
+												id="Search-In-Template"
+												type="search"
+												name="q"
+                                                autofocus
+												value="{{ search.terms | escape }}"
+												placeholder="{{ 'search.search' | t }}"
+												{%- if settings.predictive_search_enabled -%}
+													aria-owns="predictive-search-results"
+													aria-controls="predictive-search-results"
+													aria-haspopup="listbox"
+													aria-autocomplete="list"
+													autocorrect="off"
+													autocomplete="off"
+													autocapitalize="off"
+													spellcheck="false"
+												{%- endif -%}
+											>
+											<input type="hidden" name="options[prefix]" value="last">
+										</x-cell>
+
+										<x-cell class="s-buttons">
+											<button
+												type="reset"
+												class="is-blank reset__button field__button {% if search.terms == blank %} hidden{% endif %}"
+												aria-label="{{ 'search.reset' | t }}"
+											>
+												<span>{%- render 'global-icon' with 'x' -%}</span>
+											</button>
+											<button type="submit" class="is-blank visually-hidden" aria-label="{{ 'search.search' | t }}">
+												<span>{{ 'search.search' | t }}</span>
+											</button>
+										</x-cell>
+									</x-flex>
+
+									{%- if settings.predictive_search_enabled -%}
+										<div class="predictive-search predictive-search--search-template" tabindex="-1" data-predictive-search>
+											<div class="predictive-search__loading-state">{{ 'general.accessibility.loading' | t }}</div>
+										</div>
+										<span class="predictive-search-status visually-hidden" role="status" aria-hidden="true"></span>
+									{%- endif -%}
+
+									{%- if linklists[suggestedLinklist].links != empty -%}
+										<suggested-links class="coverlayer">
+											<h4 class="h5">{{ 'header.suggestedSearches' | t }}</h4>
+											<ul class="linkList inline mob-scroller">
+												{%- for link in linklists[suggestedLinklist].links -%}
+													<li>
+														<a href="{{ link.url }}" class="no-style">{{ link.title }}</a>
+													</li>
+												{%- endfor -%}
+											</ul>
+										</suggested-links>
+									{%- endif -%}
+								</x-flex>
+							</form>
+						</main-search>
+						{%- if settings.predictive_search_enabled -%}</predictive-search>{%- endif -%}
+					</search-engine>
+
+                    {%- unless predictive_search.performed -%}
+                        {% if settings.search_suggested_links != blank or settings.search_suggested_products != blank %}
+                        <x-flex direction="row" direction-s="column" id="searchEmptyState">
+                            {%- # Suggested links -%}
+                            {%- if settings.search_suggested_links != blank -%}
+                            <section class="suggestedLinks">
+                                <h3 class="gs-title">{%- liquid
+                                    if settings.search_suggested_links_title != blank
+                                        echo settings.search_suggested_links_title
+                                    else
+                                        echo 'general.suggestions' | t
+                                    endif
+                                -%}</h3>
+                                <x-flex direction="column" direction-s="row" class="mob-scroller-s">
+                                {%- for link in linklists[settings.search_suggested_links].links -%}
+                                    <x-cell><a href="{{ link.url }}" class="button is-blank text-normal text-capitalize">{{ link.title }}</a></x-cell>
+                                {%- endfor -%}
+                                </x-flex>
+                            </section>
+                            {% endif %}
+
+                            {%- # Suggested products -%}
+                            {%- if settings.search_suggested_products != blank -%}
+                            {%- render 'inc-stylesheet', src: 's-sections.css' -%}
+                            <section class="suggestedProducts fullwidth">
+
+                            <component-loader><hscroll-slider>
+                                <div class="gs-title">
+                                    <h3>{%- liquid
+                                        if settings.search_suggested_products_title != blank
+                                            echo settings.search_suggested_products_title
+                                        else
+                                            echo collections[settings.search_suggested_products].title
+                                        endif
+                                    -%}</h3>
+                                </div>
+
+                                <div class="product-grid-contained">
+                                    <x-grid columns="5" columns-m="3" columns-s="2"
+                                            class="product-grid card scroll-snap scroll-snap-m"
+                                            card-layout="underlay"
+                                            clip-meta="true"
+                                            card-media-radius="false"
+                                            card-media-padding="false"
+                                            card-quickbuy-unfloat="false"
+                                            card-font-size="small"
+                                    >
+                                        {%- liquid
+                                            assign collection = collections[settings.search_suggested_products]
+                                            assign productLimit = settings.search_suggested_products_limit
+                                            for product in collection.products limit: productLimit
+                                                render 'c-prod-card', product: product, show_quick_buy: false, show_badges: false, show_rating: false, hscrollElement: 'hscroll-slide', show_main_price: settings.predictive_search_show_price, show_vendor: settings.predictive_search_show_vendor
+                                            endfor
+                                        -%}
+                                    </x-grid>
+                                </div>
+                            </hscroll-slider></component-loader>
+
+                            </section>
+                            {% endif %}
+                        </x-flex>
+                        {% endif %}
+                    {%- endunless -%}
+				</main>
+			</dialog-wrapper>
+	</dialog>
+</coretex-dialog></component-loader>

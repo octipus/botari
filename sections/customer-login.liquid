@@ -1,0 +1,74 @@
+{%- render 'inc-stylesheet', src: 't-customer.css' -%}
+
+<section class="general-page customers login-page">
+<x-grid columns="2" columns-s="1">
+    <x-cell><h1>{{ 'login.login' | t }}</h1></x-cell>
+    <x-cell>
+    <span class="text-hr" id="recover" tabindex="-1">{{ 'login.forgotPassword' | t }}</span>
+    <div>
+        {%- comment -%} Reset password {%- endcomment -%}
+        {% form 'recover_customer_password' %}
+
+        {% if form.posted_successfully? %}
+        <span class="reset-password-success"></span>
+        {% endif %}
+
+        {%- if form.errors -%}
+        <p>{{ form.errors.messages['form'] }}</p>
+        {%- endif -%}
+
+        <p>
+            <label for="RecoverEmail">{{ 'login.email' | t }}</label>
+            <input type="email" value="" name="email" autocorrect="off" autocapitalize="off" id="RecoverEmail" class="fullwidth">
+        </p>
+        
+        <p>
+            <button type="submit" class="is-primary" style="width: inherit;">{{ 'login.submit' | t }}</button>
+            <a href="#login" id="HideRecoverPasswordLink" class="button is-blank" tabindex="0">{{ 'login.cancel' | t }}</a>
+        </p>
+        {% endform %}
+    </div>
+
+    <span id="login" tabindex="-1"></span>
+    <div>
+        {%- comment -%} Login {%- endcomment -%}
+        <div class="login">
+        {% form 'customer_login', novalidate: 'novalidate' %}
+        {%- if form.errors -%}
+            {{ form.errors | default_errors }}
+        {%- endif -%}
+        <p>
+            <label for="CustomerEmail">{{ 'login.email' | t }}</label>
+            <input type="email" placeholder="{{ 'login.email' | t }}" name="customer[email]" autocomplete="email" autocorrect="off" autocapitalize="off" id="CustomerEmail" class="fullwidth">
+        </p>
+
+        {% if form.password_needed %}
+        <p>
+            <label for="CustomerPassword">{{ 'login.password' | t }}</label>
+            <input type="password" placeholder="{{ 'login.password' | t }}" value="" name="customer[password]" id="CustomerPassword" autocomplete="current-password" class="fullwidth">
+        </p>
+        {% endif %}
+
+        <ul class="no-style" x-grid columns="2" style="--rowGap:var(--mardding)">
+            <li span="row"><button type="submit" class="fullwidth is-primary">{{ 'login.signIn' | t }}</button></li>
+            <li><a href="{{ routes.account_register_url }}" class="no-style text-center" tabindex="0">{{ 'login.register' | t }}</a></li>
+
+            {%- if form.password_needed -%}
+            <li js="end"><a href="#recover" onclick="document.getElementById('resetpass').style.display = 'block'" id="RecoverPassword" class="no-style text-center" tabindex="0">{{ 'login.forgotPassword' | t }}</a></li>
+            {%- endif -%}
+        </ul>
+        {% endform %}
+        </div>
+    </div>
+    </x-cell>
+</x-grid>
+{%- comment -%}
+    If accounts are set as optional, the following will be shown as an option
+    during checkout, not on the default /login page.
+{%- endcomment -%}
+{%- if shop.checkout.guest_login -%}
+    {%- form 'guest_login' -%}
+    <button type="submit" class="is-primary">{{ 'login.guest_continue' | t }}</button>
+    {%- endform -%}
+{%- endif -%}
+</section>

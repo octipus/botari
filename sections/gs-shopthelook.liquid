@@ -1,0 +1,201 @@
+{%- render 'inc-stylesheet', src: 's-sections.css' -%}
+
+<section class="shop-the-look" {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}>
+    <component-laoder><shop-the-look>
+        {%- if section.settings.heading != blank -%}<h2 class="gs-title">{{ section.settings.heading }}</h2>{%- endif -%}
+        <x-grid columns="2" columns-s="1" class="hotspots">
+            <x-cell order="{{ section.settings.alignment }}" order-m="1" order-s="1" class="look-frame">
+                <x-grid columns="stack">
+                    <hot-spots>
+                        {% for block in section.blocks %}
+                            {% if block.settings.enableHotspot %}
+                            <hot-spot class="dott" data-target="hotspot-{{ section.id }}--{{ forloop.index }}" style="{{ block.settings.positionY | prepend: '--posY:' | append: '%;' }}{{ block.settings.positionX | prepend: '--posX:' | append: '%;' }}">
+                                <a href="{{ block.settings.product.url }}" target="_blank">{{ forloop.index }}</a>
+                            </hot-spot>
+                            {% endif %}
+                        {% endfor %}
+                    </hot-spots>
+                    <x-cell class="look">
+                        {%- assign img = section.settings.image -%}
+                        {%- if img != nil -%}
+                            {%- render 'global-img' img: img, alt: img.alt, lazyload: 'lazy' -%}
+                        {%- else -%}
+                            {{ 'image' | placeholder_svg_tag: 'svg-placeholder' }}
+                        {%- endif -%}
+                    </x-cell>
+                </x-grid>
+            </x-cell>
+
+            {%- unless section.settings.showProductList -%}<style>@media (max-width: 777px) { .shop-the-look .product-list { display: none } }</style>{%- endunless -%}
+            <x-cell order="2" order-m="2" order-s="2" class="product-list">
+                <x-flex direction="column" class="pro-list">
+                    {% for block in section.blocks %}
+                        <x-flex ai="center" ai-m="start" ai-s="start" class="card fullwidth" data-index="{{ forloop.index }}">
+                            <x-cell><hot-spot class="dott" id="hotspot-{{ section.id }}--{{ forloop.index }}">{{ forloop.index }}</hot-spot></x-cell>
+                            <a href="{{ block.settings.product.url }}" {% if section.settings.targetBlank %}target="_blank"{% endif %} x-grid columns="4" columns-m="2" columns-s="2" ai="center" ai-m="start" ai-s="start" class="fullwidth">
+                                <x-cell span="2" span-m="1" span-s="1">
+                                    {% if section.settings.showVendor %}<div>{{ block.settings.product.vendor }}</div>{% endif %}
+                                    <h3 class="title">{{ block.settings.product.title }}</h3>
+                                </x-cell>
+                                <x-cell js="center" js-m="end" js-s="end" >{% if section.settings.showPrice %}{%- render 'c-price', product: block.settings.product -%}{% endif %}</x-cell>
+                                <span js="end" span-m="row" span-s="row">{% if section.settings.showButton and block.settings.product != nil %}{{ 'product.viewProduct' | t }}{% endif %}</span>
+                            </a>                    
+                        </x-flex>
+                    {% endfor %}
+                </x-flex>
+            </x-cell>
+        </x-grid>
+    </shop-the-look></component-laoder>
+</section>
+
+{% schema %}
+{
+  "name": "Shop the look",
+  "disabled_on": { "groups": ["header", "footer", "aside"] },
+  "max_blocks": 9,
+  "presets": [
+    {
+      "name": "Shop the look",
+      "category": "Products"
+    }
+  ],
+  "settings": [
+    {
+        "type": "text",
+        "id": "heading",
+        "label": "Heading",
+        "default": "Shop the look",
+        "info": "Leave blank to remove heading."
+    },
+    {
+        "type": "header",
+        "content": "Image"
+    },
+    {
+        "type": "image_picker",
+        "id": "image",
+        "label": "Look image"
+    },
+    {
+      "type": "select",
+      "id": "alignment",
+      "label": "Desktop image position",
+      "info": "Image first is the default mobile layout.",
+      "default": "1",
+      "options": [
+        {
+          "value": "1",
+          "label": "Left"
+        },
+        {
+          "value": "3",
+          "label": "Right"
+        }
+      ]
+    },
+    {
+        "type": "header",
+        "content": "Product list"
+    },
+    {
+        "type": "checkbox",
+        "id": "showVendor",
+        "label": "Show vendor",
+        "default": false
+    },
+    {
+        "type": "checkbox",
+        "id": "showPrice",
+        "label": "Show price",
+        "default": true
+    },
+    {
+        "type": "checkbox",
+        "id": "showButton",
+        "label": "Show button",
+        "default": true
+    },
+    {
+        "type": "checkbox",
+        "id": "showProductList",
+        "label": "Show product list - mobile",
+        "default": false
+    },
+    {
+        "type": "checkbox",
+        "id": "targetBlank",
+        "label": "Open link in new tab",
+        "default": true
+    },
+    {
+        "type": "header",
+        "content": "Appearance"
+    },
+    {
+        "type": "checkbox",
+        "id": "global_color_scheme",
+        "label": "Use global color scheme",
+        "default": true
+    },
+    {
+        "type": "color_scheme",
+        "id": "color_scheme",
+        "label": "Color scheme",
+        "default": "coretex-1",
+        "visible_if": "{{ section.settings.global_color_scheme == false }}"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "product",
+      "name": "Product",
+      "settings": [
+        {
+            "type": "header",
+            "content": "Product"
+        },
+        {
+            "type": "product",
+            "id": "product",
+            "label": "Product"
+        },
+        {
+            "type": "header",
+            "content": "Hotspot",
+            "info": "Hotspots highlight areas of interest on the image."
+        },
+        {
+            "type": "checkbox",
+            "id": "enableHotspot",
+            "label": "Enable",
+            "default": true
+        },
+        {
+            "type": "range",
+            "label": "Vertical position",
+            "id": "positionY",
+            "min": 0,
+            "max": 100,
+            "step": 1,
+            "unit": "%",
+            "default": 50
+        },
+        {
+            "type": "range",
+            "label": "Horizontal position",
+            "id": "positionX",
+            "min": 0,
+            "max": 100,
+            "step": 1,
+            "unit": "%",
+            "default": 50
+        },
+        {
+            "type": "paragraph",
+            "content": "Position may differ between viewports."
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

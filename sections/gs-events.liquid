@@ -1,0 +1,166 @@
+{%- render 'inc-stylesheet', src: 's-sections.css' -%}
+
+<section class="events" {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}>
+    <h2 class="gs-title">{{ 'events.events' | t }}</h2>
+    <x-grid columns="6" class="eventHeader large-only" style="gap:var(--padding)">
+        <x-cell span="2+2">{{ 'events.info' | t }}</x-cell>
+        <x-cell>{{ 'events.date' | t }}</x-cell>
+        <x-cell>{{ 'events.location' | t }}</x-cell>
+        <x-cell>{{ 'events.moreInfo' | t }}</x-cell>
+    </x-grid>
+    {%- for block in section.blocks -%}
+    <x-grid columns="6" columns-s="2" class="event" event-expired="{{ block.settings.expired }}" style="gap:var(--padding)" {{ block.shopify_attributes }}>
+            <x-cell class="flyer">
+            {%- liquid
+                # Optimize image if first section
+                assign fetchpriority = nil
+                assign preload = false
+                assign loading = 'lazy'
+
+                if section.index == 1
+                    assign fetchpriority = 'high'
+                    assign preload = true
+                    assign loading = 'eager'
+                endif
+
+                assign img = block.settings.image
+                assign width = 750
+                render 'inc-img' img: img, width: width, preload: preload, loading: loading, fetchpriority: fetchpriority, fallback: true
+            -%}
+            </x-cell>
+            <x-cell span="2" span-s="row" class="what">
+                {% if block.settings.name %}<h3>{{ block.settings.name }}</h3>{% endif %}
+                {% if block.settings.desc %}<p class="rte">{{ block.settings.desc }}</p>{% endif %}
+            </x-cell>
+            <x-cell class="when">
+            <x-flex style="gap:var(--mardding)">
+                <x-cell>{% render 'global-icon' with 'calendar' %}</x-cell>
+                <x-cell>
+                    {% if block.settings.expired %}<div class="expired"><strong>{{ 'events.expired' | t }}</strong></div>{% endif %}
+                    <span class="date">{{ block.settings.date }}</span>
+                    <span class="time">{{ block.settings.time }}</span>
+                </x-cell>
+            </x-flex>
+            </x-cell>
+            {% if block.settings.location %}
+                <x-cell class="where">
+                <x-flex style="gap:var(--mardding)">
+                    <x-cell>{% render 'global-icon' with 'location' %}</x-cell>
+                    <x-cell><a href="{{ block.settings.locationOnMaps }}" target="_blank" rel="noreferrer nofollow">{{ block.settings.location }}</a></x-cell>
+                </x-flex>
+                </x-cell>
+            {% endif %}
+            {% if block.settings.moreInfo %}
+                <x-cell class="moreInfo"><a href="{{ block.settings.moreInfo }}" target="_blank" rel="noreferrer nofollow">{{ 'events.moreInfo' | t }}</a></x-cell>
+            {% endif %}
+    </x-grid>
+    {%- endfor -%}
+{%- if section.settings.all != empty -%}
+    <div class="loadmore"><a href="{{ section.settings.link }}" class="no-style">{{ section.settings.all }}</a></div>
+{%- endif -%}
+</section>
+
+{% schema %}
+{
+  "name": "Events",
+  "disabled_on": { "groups": ["header", "footer", "aside"] },
+  "settings": [
+    {
+      "type": "text",
+      "id": "all",
+      "label": "Button label",
+      "default": "View all events"
+    },
+    {
+      "id": "link",
+      "type": "url",
+      "label": "Button link"
+    },
+        {
+      "type": "header",
+      "content": "Appearance"
+    },
+    {
+      "type": "checkbox",
+      "id": "global_color_scheme",
+      "label": "Use global color scheme",
+      "default": true
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Color scheme",
+      "default": "coretex-1",
+      "visible_if": "{{ section.settings.global_color_scheme == false }}"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "event",
+      "name": "Event",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Flyer",
+          "info": "1:1 aspect ration (recommended)"
+        },
+        {
+          "type": "text",
+          "id": "name",
+          "label": "Name",
+          "default": "Event name"
+        },
+        {
+          "type": "richtext",
+          "id": "desc",
+          "label": "Description"
+        },
+        {
+          "type": "text",
+          "id": "date",
+          "label": "Date",
+          "default": "Friday, 31/12/3000"
+        },
+        {
+          "type": "text",
+          "id": "time",
+          "label": "Time",
+          "default": "18:30"
+        },
+        {
+          "type": "richtext",
+          "id": "location",
+          "label": "Location name",
+          "default": "<p>Event location name</p>"
+        },
+        {
+          "type": "url",
+          "id": "locationOnMaps",
+          "label": "Location map"
+        },
+        {
+          "type": "url",
+          "id": "moreInfo",
+          "label": "More info button"
+        },
+        {
+          "type": "checkbox",
+          "id": "expired",
+          "label": "Expired event",
+          "default": false
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Event",
+      "category": "Content",
+      "blocks": [
+        { "type": "event" }
+      ]
+    }
+  ]
+}
+{% endschema %}

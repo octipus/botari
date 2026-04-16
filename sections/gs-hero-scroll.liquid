@@ -1,0 +1,180 @@
+{%- render 'inc-stylesheet', src: 's-sections.css' -%}
+
+<section class="heroScroll" {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}>
+    <component-loader><hero-scroll>
+        <x-grid columns="stack">
+            <x-flex direction="column" ai="{{ section.settings.alignment | replace: 'left', 'start' | replace: 'right', 'end' }}" class="meta center-axyz sticky">
+                {%- for block in section.blocks -%}
+                    {%- liquid
+                        assign title = block.settings.title
+                        assign url = block.settings.url
+                    -%}
+                    <x-flex ai="center" {{ block.shopify_attributes }}>
+                        <h3><a href="#hsi-{{ block.id }}" class="button is-custom">{{ title }}</a></h3>
+                        {%- if url != blank -%}
+                            <a href="{{ url }}" class="no-style">{{ block.settings.label }}</a>
+                        {%- endif -%}
+                    </x-flex>
+                {%- endfor -%}
+            </x-flex>
+
+            <x-flex direction="column" class="media{% if section.settings.overlay %} overlay{% endif %}">
+                {%- for block in section.blocks -%}
+                    {%- liquid
+                        assign title = block.settings.title
+                    -%}
+                    <x-cell id="hsi-{{ block.id }}" style="{{ block.settings.media_height | prepend: '--_mediaHeight:' | append: ';' }}" {{ block.shopify_attributes }}>
+                        {%- if block.settings.media_type == 'video' and block.settings.video != blank -%}
+                            {%- render 'global-video',
+                                vid: block.settings.video,
+                                vidMobile: block.settings.video_mobile,
+                                loop: true,
+                                autoplay: true,
+                                muted: true,
+                                clickToPlay: true
+                            -%}
+                        {%- else -%}
+                            {%- render 'inc-img',
+                                img: block.settings.image,
+                                imgMob: block.settings.image_mobile,
+                                dynamic: true,
+                                fallback: true,
+                                svg: 'lifestyle-2'
+                            -%}
+                        {%- endif -%}
+                    </x-cell>
+                {%- endfor -%}
+            </x-flex>
+        </x-grid>
+    </hero-scroll></component-loader>
+</section>
+
+{% schema %}
+{
+  "name": "Hero scroll navigation",
+  "disabled_on": { "groups": ["header", "footer", "aside"] },
+  "max_blocks": 5,
+  "settings": [
+    {
+        "type": "text_alignment",
+        "id": "alignment",
+        "label": "Text alignment",
+        "default": "center"
+    },
+    {
+        "type": "checkbox",
+        "id": "overlay",
+        "label": "Enable overlay layer",
+        "default": true
+    },
+    {
+        "type": "header",
+        "content": "Appearance"
+    },
+    {
+        "type": "checkbox",
+        "id": "global_color_scheme",
+        "label": "Use global color scheme",
+        "default": true
+    },
+    {
+        "type": "color_scheme",
+        "id": "color_scheme",
+        "label": "Color scheme",
+        "default": "coretex-1",
+        "visible_if": "{{ section.settings.global_color_scheme == false }}"
+    }
+  ],
+    "blocks": [
+      {
+        "type": "banner",
+        "name": "Banner",
+        "settings": [
+            {
+                "type": "text",
+                "id": "title",
+                "label": "Title",
+                "default": "Hero title"
+            },
+            {
+                "type": "header",
+                "content": "Media"
+            },
+            {
+                "type": "select",
+                "id": "media_type",
+                "label": "Type",
+                "default": "image",
+                "options": [
+                    { "value": "image", "label": "Image" },
+                    { "value": "video", "label": "Video" }
+                ]
+            },
+            {
+                "type": "image_picker",
+                "id": "image",
+                "label": "Desktop",
+                "visible_if": "{{ block.settings.media_type == 'image' }}"
+            },
+            {
+                "type": "image_picker",
+                "id": "image_mobile",
+                "label": "Mobile",
+                "visible_if": "{{ block.settings.media_type == 'image' }}"
+            },
+            {
+                "type": "video",
+                "id": "video",
+                "label": "Desktop",
+                "visible_if": "{{ block.settings.media_type == 'video' }}"
+            },
+            {
+                "type": "video",
+                "id": "video_mobile",
+                "label": "Mobile",
+                "visible_if": "{{ block.settings.media_type == 'video' }}"
+            },
+            {
+                "type": "select",
+                "id": "media_height",
+                "label": "Height",
+                "default": "100vh",
+                "options": [
+                    { "value": "500px", "label": "Small" },
+                    { "value": "600px", "label": "Medium" },
+                    { "value": "700px", "label": "Large" },
+                    { "value": "100vh", "label": "Full" },
+                    { "value": "fit-content", "label": "Full uncropped" }
+                ]
+            },
+            {
+                "type": "header",
+                "content": "Link"
+            },
+            {
+                "type": "text",
+                "id": "label",
+                "label": "Button label",
+                "default": "Visit"
+            },
+            {
+                "type": "url",
+                "id": "url",
+                "label": "Button link"
+            }
+        ]
+      }
+    ],
+  "presets": [
+    {
+      "name": "Hero scroll navigation",
+      "category": "Banners",
+      "blocks": [
+        { "type": "banner" },
+        { "type": "banner" },
+        { "type": "banner" }
+      ]
+    }
+  ]
+}
+{% endschema %}

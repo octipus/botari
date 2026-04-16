@@ -1,0 +1,14 @@
+{%- comment -%}
+    The payment icons that show in your theme are determined by your store’s payment settings and the customer’s region and currency. 
+    If you want to add or remove payment icons without changing your payment settings, then you can do so by editing your theme code.
+
+    Learn more: https://docs.openthinking.net/themes/bullet/kb/payment-icons/
+
+    /!\ Changing this file will have an impact on all payment icons on the site.
+{%- endcomment -%}
+
+{%- liquid
+    for type in shop.enabled_payment_types
+        echo type | payment_type_svg_tag: class: 'payment-icon'
+    endfor 
+-%}

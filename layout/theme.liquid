@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="{{ request.locale.iso_code }}" dir="{% render 'inc-dir' %}" class="no-js">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+    {%- render 'global-meta' -%}
+    <script>document.documentElement.className = 'js';</script>
+
+    {%- # Preload assets -%}
+    {%- render 'global-preload' -%}
+
+    {%- if settings.favicon != blank -%}
+    <link rel="shortcut icon" href="{{ settings.favicon | image_url: width: 32, height: 32 }}">
+    <link rel="apple-touch-icon-precomposed" href="{{ settings.favicon | image_url: width: 250, height: 250 }}">
+    {%- endif -%}
+
+    <!-- BEGIN content_for_header -->
+    {{ content_for_header }}
+    <!-- END content_for_header -->
+
+    {%- liquid
+        echo 'skelet.css' | asset_url | stylesheet_tag: preload: true
+
+        render 'global-css'
+
+        if settings.useCustomFont
+            render 'global-fonts'
+        endif 
+
+        echo 'app.css' | asset_url | stylesheet_tag
+    -%}
+
+    {%- # theme-check-disable -%}
+    {%- if settings.css != blank -%}<style id="bUserCSS">{{ settings.css }}</style>{%- endif -%}
+    {%- # theme-check-enable -%}
+
+    <!-- ADDITIONAL CODE INJECTED BY SHOPIFY -->
+    {% # Shopify injects tracking + other code here before the closing of the head tag. %}
+</head>
+<body 
+    class="{{ settings.a11yFocusStyles }}" 
+    layout-boxed="{{ settings.boxedLayout }}" 
+    coretex-page="{{ template.name }}"
+    coretex-path="{{ request.path }}"
+>
+    <a href="#mainContent" class="skip-to-content button is-primary visually-hidden">{{ "general.accessibility.skip_to_text" | t }}</a>
+    <component-loader id="app">
+        {%- sections 'group-header' -%}
+        <main id="mainContent">
+            {%- render 'global-breadcrumbs' -%}
+            {{ content_for_layout }}
+        </main>
+        {%- liquid
+            sections 'group-footer'
+            sections 'group-overlay'
+        -%}
+    </component-loader>
+
+    {%- liquid
+        # Loading the Language dialog
+        if localization.available_languages.size > 1
+            render 'global-localization', type: 'language'
+        endif 
+
+        # Loading the Country/region dialog
+        if localization.available_countries.size > 1
+            render 'global-localization', type: 'country'
+        endif
+
+        render 'global-js'
+    -%}
+
+</body>
+</html>

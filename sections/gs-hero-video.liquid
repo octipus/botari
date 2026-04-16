@@ -1,0 +1,160 @@
+{%- liquid
+    # Load CSS
+    render 'inc-stylesheet', src: 's-sections.css'
+
+    assign videoId = section.settings.video.id
+    assign ratio = '16:9'
+    assign title = section.settings.title
+
+	case section.settings.video.type
+	when 'youtube'
+		assign vendor = 'youtube'
+		assign src = 'https://www.youtube.com/embed/'
+	when 'vimeo'
+		assign vendor = 'vimeo'
+		assign src = 'https://vimeo.com/'
+	endcase
+-%}
+
+{%- if section.settings.image != nil -%}
+    {%- capture thumbnail -%}
+        {{ section.settings.image | image_url: width: 1500 }}
+    {%- endcapture -%}
+{%- else -%}
+    {%- capture thumbnail -%}
+        {%- if vendor == 'youtube' -%}
+            https://i.ytimg.com/vi/{{ videoId }}/maxresdefault.jpg
+        {%- else -%}
+            https://vumbnail.com/{{ videoId }}_large.jpg
+        {%- endif -%}
+    {%- endcapture -%}
+{%- endif -%}
+
+{%- if request.design_mode -%}
+<style>
+.hero-video { position: relative; }
+.hero-video.inEditor iframe {
+    width: 100vw;
+    max-width: 100%;
+    height: 100%;
+    aspect-ratio: 16 / 9;
+    padding: 0;
+    margin: 0;
+}
+
+.hero-video.inEditor .imgOverlay { 
+    position: absolute; 
+    inset:0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--bgColor);
+    background-image: var(--bgImageThumb);
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+}
+
+.hero-video.inEditor .imgOverlay svg { opacity: 0.7 }
+
+.lazyframe .lazyframe__title {
+    background: var(--bgColor);
+    width: max-content;
+    border-radius: var(--radius-2);
+    margin: var(--margin);
+    padding: var(--margin);
+    position: absolute;
+    top: 0; left: 0;
+    z-index: 9;
+}
+</style>
+
+<script>function remove(el) { let element = el; element.style.cssText = "display:none" }</script>
+
+<section 
+    class="hero-video inEditor lazyframe" 
+    style="--bgImageThumb: url({{ thumbnail }})" 
+    {% if section.settings.has_bg %}color-scheme="{{ section.settings.color_scheme }}"{% endif %}
+>
+    <div class="imgOverlay" onclick="remove(this)">
+        <span class="lazyframe__title">{{ title }}</span>
+        <svg role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="75" height="75" fill="currentColor"><path d="M23.495 6.205a3.007 3.007 0 0 0-2.088-2.088c-1.87-.501-9.396-.501-9.396-.501s-7.507-.01-9.396.501A3.007 3.007 0 0 0 .527 6.205a31.247 31.247 0 0 0-.522 5.805 31.247 31.247 0 0 0 .522 5.783 3.007 3.007 0 0 0 2.088 2.088c1.868.502 9.396.502 9.396.502s7.506 0 9.396-.502a3.007 3.007 0 0 0 2.088-2.088 31.247 31.247 0 0 0 .5-5.783 31.247 31.247 0 0 0-.5-5.805zM9.609 15.601V8.408l6.264 3.602z"/></svg>
+    </div>
+    {%- if vendor == 'youtube' -%}
+        <iframe src="https://www.youtube.com/embed/{{ videoId }}" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+    {%- else -%}
+        <iframe src="https://player.vimeo.com/video/{{ videoId }}" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+    {%- endif -%}
+</section>
+
+{%- else -%}
+
+<section class="hero-video" {% if section.settings.has_bg %}color-scheme="{{ section.settings.color_scheme }}"{% endif %}>
+    <div data-vendor="{{ vendor }}" data-src="{{ src }}{{ videoId }}" data-autoplay="true" data-thumbnail="{{ thumbnail }}" data-title="{{ title }}" data-ratio="{{ ratio }}" class="lazyframe" id="vid-{{ videoId }}"></div>
+</section>
+
+{%- render 'inc-stylesheet', src: 'lazyframe.min.css' -%}
+<script type="module" src="{{ 'lazyframe.min.js' | asset_url }}"></script>
+<script>document.addEventListener("DOMContentLoaded", (event) => { lazyframe('#vid-{{ videoId }}') });</script>
+
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Video",
+  "disabled_on": { "groups": ["header", "footer", "aside"] },
+  "presets": [
+    {
+      "name": "Video",
+      "category": "Banners"
+    }
+  ],
+  "settings": [
+    {
+        "type": "paragraph",
+        "content": "For self-hosted videos use the Hero banner section."
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "Thumbnail",
+      "info": "1280 x 720px recommended"
+    },
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Title",
+      "default": "Share your brand story by adding a video title."
+    },
+    {
+      "type": "video_url",
+      "id": "video",
+      "label": "URL",
+      "accept": [
+        "youtube",
+        "vimeo"
+      ],
+      "default": "https://www.youtube.com/watch?v=_9VUPq3SxOc"
+    },
+    {
+      "type": "header",
+      "content": "Appearance"
+    },
+    {
+      "type": "checkbox",
+      "id": "has_bg",
+      "label": "Enable heading background",
+      "default": false
+    },
+    {
+        "type": "color_scheme",
+        "id": "color_scheme",
+        "label": "Color scheme",
+        "default": "coretex-1",
+        "visible_if": "{{ section.settings.has_bg }}"
+    }
+  ]
+}
+{% endschema %}

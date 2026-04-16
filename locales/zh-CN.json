@@ -1,0 +1,364 @@
+{
+	"general": {
+		"home": "主页",
+		"products": "产品",
+		"suggestions": "建议",
+		"pages": "页面",
+			"show_more": "显示更多内容",
+			"show_less": "隐藏部分内容",
+		"accessibility": {
+			"error": " 错误:",
+			"loading": "正在加载",
+			"skip_to_text": "跳至内容"
+		},
+		"meta": {
+			"tags": "标签",
+			"page": "页面"
+		}
+	},
+	"header": {
+		"menu": "菜单",
+		"close": "关闭",
+		"account": "账户",
+		"search": "搜索",
+		"register": "注册",
+		"login": "登录",
+		"logOut": "注销",
+		"searchPlaceholder": "搜索……",
+		"suggestedSearches": "建议搜索"
+	},
+	"footer": {
+		"backToTop": "返回顶部",
+		"newsletter": "新闻通讯",
+		"all_rights": "保留所有权利。",
+		"updateLanguage": "更新语言",
+		"updateCountry": "更新国家",
+		"languageLabel": "语言",
+		"countryLabel": "国家/地区"
+	},
+	"cookies": {
+		"accept": "接受",
+		"decline": "拒绝"
+	},
+	"newsletter": {
+		"newsletter": "新闻通讯",
+		"EmailPlaceholder": "您的电子邮箱",
+		"subscribe": "订阅",
+		"success": "谢谢！您已订阅。",
+		"error": "出错了。"
+	},
+	"cart": {
+		"cart": "购物车",
+		"checkout": "结账",
+		"total": "合计",
+		"subtotal": "小计",
+		"remove": "删除",
+		"update": "更新",
+		"update_quantity": "更新数量",
+		"quantity": "数量",
+		"product": "商品",
+		"name": "名称",
+		"price": "价格",
+		"tax": "税款",
+		"close": "关闭",
+		"view": "查看购物车",
+		"discount": "折扣",
+		"shipping": "运费",
+        "savings": "节省",
+		"continue_shopping": "继续购物",
+		"empty": "购物车为空",
+		"free_shipping_away_html": "再消费 <span class=\"awayAmount\">{{ amount }}</span> 可包邮！",
+		"free_shipping_ok": "已符合包邮条件。",
+		"note": "添加订单备注",
+		"notePlaceholder": "订单特殊说明",
+		"discount_code": "折扣代码",
+		"apply": "应用",
+		"applying": "正在应用...",
+		"apply_discount": "应用折扣",
+		"remove_discount": "移除折扣",
+		"terms_html": "我已阅读并同意条款和隐私政策。",
+		"cart_error": "更新购物车时出错。 请再试一次。",
+		"cart_quantity_error_html": "您只能将{{ quantity }} 件此商品加入购物车。",
+		"duties_and_taxes_included_shipping_at_checkout_with_policy_html": "已含关税和税费。结账时计算折扣和<a href=\"{{ link }}\">运费</a>。",
+		"duties_and_taxes_included_shipping_at_checkout_without_policy": "已含关税和税费。结账时计算折扣和运费。",
+		"taxes_included_shipping_at_checkout_with_policy_html": "已含税费。结账时计算折扣和<a href=\"{{ link }}\">运费</a>。",
+		"taxes_included_shipping_at_checkout_without_policy": "已含税费。结账时计算折扣和运费。",
+		"duties_included_taxes_at_checkout_shipping_at_checkout_with_policy_html": "已含关税。结账时计算税费、折扣和<a href=\"{{ link }}\">运费</a>。",
+		"duties_included_taxes_at_checkout_shipping_at_checkout_without_policy": "已含关税。结账时计算税费、折扣和运费。",
+		"taxes_at_checkout_shipping_at_checkout_with_policy_html": "结账时计算税费、折扣和<a href=\"{{ link }}\">运费</a>。",
+		"taxes_at_checkout_shipping_at_checkout_without_policy": "结账时计算税费、折扣和运费。"
+	},
+	"search": {
+		"search": "搜索",
+		"heading": "的结果:",
+		"apply": "申请",
+		"clear": "全部清除",
+		"reset": "重置",
+		"from": "从",
+		"to": "到",
+		"no_results_for": "未发现 {{ terms }} 的结果。",
+		"check_spelling": "请检查拼写,或换个单词或短语。",
+		"search_for": "搜索 {{ terms }}",
+		"results_with_count": {
+			"one": "{{ count }} 结果",
+			"other": "{{ count }} 结果"
+		},
+		"results_with_count_and_term": {
+			"one": "搜索 {{ terms }} 找到 {{ count }}个结果",
+			"other": "搜索 {{ terms }} 找到 {{ count }} 个结果"
+		},
+		"results_pages_with_count": {
+			"one": "{{ count }} 页",
+			"other": "{{ count }} 页"
+		},
+		"results_suggestions_with_count": {
+			"one": "{{ count }} 建议",
+			"other": "{{ count }} 建议"
+		},
+		"results_products_with_count": {
+			"one": "{{ count }} 件商品",
+			"other": "{{ count }} 件商品"
+		}
+	},
+	"collection": {
+        "collection": "商品集",
+        "viewCollection": "查看商品集",
+		"ViewAllProducts": "查看所有商品",
+		"featuredCollection": "重点推荐商品集",
+		"featuredProducts": "重点推荐商品",
+		"products": "商品",
+		"noMatches": "未发现商品",
+		"filters": "筛选",
+		"sortBy": "排序方式",
+		"default": "- 选择 -",
+		"all": "全部",
+		"featured": "重点推荐",
+		"load": "继续加载",
+		"loading": "继续加载中...",
+		"filter_match_all": "匹配全部"
+	},
+	"product": {
+		"sku": "SKU",
+		"quantity": {
+			"qty": "数量",
+			"increase": "增加数量",
+			"decrease": "减少数量"
+		},
+		"size_chart": "尺码表",
+		"from": "从",
+		"soldOut": "售罄",
+		"new": "新品",
+		"sale": "销售",
+		"amount_saved_html": "<small>您节省</small> <strong>{{ amount }}</strong>",
+		"preorder": "预订",
+		"selectOption": "选择选项",
+		"addToCart": "加入购物车",
+		"buy": "购买",
+		"addingToCart": "正在加入……",
+		"share": "分享",
+		"pick_up_available": "可到店取货 ",
+		"view_store_info": "查看店铺信息",
+		"check_other_stores": "查看其他店铺",
+		"unavailable": "不可购买",
+		"value_unavailable": "{{ option_value }} - 不可用",
+		"variant_sold_out_or_unavailable": "多属性已售罄或不可用",
+		"minimum_of": "最小值为 {{ quantity }}",
+		"maximum_of": "最大值为 {{ quantity }}",
+		"multiples_of": "增量为 {{ quantity }}",
+		"in_cart_html": "购物车中 <span class=\"quantity-cart\">{{ quantity }}</span> 件",
+		"taxes_included": "已含税费。",
+		"duties_included": "已含关税。",
+		"duties_and_taxes_included": "已含关税和税费。",
+		"shipping_policy_html": "<a href=\"{{ link }}\">运费</a> 将在结算时计算。",
+		"refresh": "刷新",
+		"regular_price": "正常价格",
+		"sale_price": "售价",
+		"unit_price": "单价",
+		"unit_price_separator": "每",
+		"from_price_html": "价格从 {{ price }}",
+        "price_range": "{{ minimum }} - {{ maximum }}",
+		"product_variants": "商品变体",
+		"in_your_space": "在您的空间查看",
+		"selling_plan": "销售计划",
+		"one_time_purchase": "一次性购买",
+		"viewAllMedia": "查看所有媒体",
+		"viewLessMedia": "查看较少媒体",
+		"viewProductFullDetails": "查看商品的全部详细信息",
+		"viewProduct": "查看商品",
+		"open_media": "在模态中打开媒体",
+		"youd_also_like": "您也会喜欢",
+		"pairs_well_with": "适合配对",
+		"inventory_in_stock": "有货",
+		"inventory_in_stock_show_count": "现货数量为{{ quantity }}",
+		"inventory_low_stock": "库存不多",
+		"inventory_low_stock_show_count": "库存不多:还剩{{ quantity }}",
+		"inventory_out_of_stock": "缺货",
+		"inventory_out_of_stock_continue_selling": "有货",
+		"total_reviews": "总评论数",
+		"star_reviews_info": "{{ rating_value }}/{{ rating_max }} 星"
+	},
+	"faqs": {
+		"frequentlyAskedQuestions": "常见问题",
+		"question": "问题",
+		"answer": "回答"
+	},
+	"contact": {
+		"contact": "联系人",
+		"name": "姓名",
+		"email": "电子邮箱",
+		"message": "留言",
+		"phone": "电话号码",
+		"orderNumber": "订单编号",
+		"url": "网址",
+		"send": "发送",
+		"sent": "您的留言已发送。"
+	},
+	"404": {
+		"title": "未找到",
+		"subtext": "您尝试访问的页面不存在。",
+		"goBack": "返回"
+	},
+	"events": {
+		"events": "活动",
+		"info": "信息",
+		"date": "日期",
+		"location": "位置",
+		"moreInfo": "更多信息",
+		"expired": "此活动结束了"
+	},
+	"account": {
+		"details": "账号详情",
+		"viewAddress": "查看地址",
+		"add": "添加",
+		"edit": "编辑",
+		"delete": "删除",
+		"update": "更新",
+		"addNew": "添加新的",
+		"addNewAddress": "添加新地址",
+		"editAddress": "编辑您的地址",
+		"return": "返回",
+		"order": "订单",
+		"orders": "订单",
+		"orderNone": "没有订单",
+		"orderNumber": "订单编号",
+		"orderStatus": "订单状态",
+		"orderDate": "日期",
+		"orderPaymentStatus": "付款状态",
+		"orderFulfillmentStatus": "履行状态",
+		"billingAddress": "账单地址",
+		"shippingAddress": "收货地址",
+		"activateAccount": "激活账户"
+	},
+	"order": {
+		"cancelled_html": "订单于{{ date }}取消",
+		"cancelled_reason": "原因:{{ reason }}",
+		"track_shipment": "查询物流状态",
+		"fulfilled_at_html": "{{ date }}完成"
+	},
+	"login": {
+		"login": "登录",
+		"email": "电子邮箱",
+		"password": "密码",
+		"passwordConfirm": "确认密码",
+		"forgotPassword": "恢复密码",
+		"resetPassword": "重置密码",
+		"signIn": "登录",
+		"register": "注册",
+		"guest_continue": "继续以游客身份浏览",
+		"submit": "提交",
+		"cancel": "取消",
+		"name": "名称"
+	},
+	"register": {
+		"register": "注册",
+		"firstName": "名",
+		"lastName": "姓"
+	},
+	"reset_password": {
+		"register": "注册",
+		"firstName": "名",
+		"lastName": "姓"
+	},
+	"form": {
+		"errorHeading": "请修复此错误",
+		"postSuccess": "提交成功。",
+		"message": "消息"
+	},
+	"address": {
+		"company": "公司",
+		"address": "地址",
+		"address_2": "地址 2",
+		"city": "城市",
+		"country": "国家",
+		"province": "省",
+		"zip": "邮政编码",
+		"phone": "电话",
+		"setDefault": "设置为默认",
+		"default": "默认地址",
+		"addressBook": "地址簿"
+	},
+	"blog": {
+		"read_all": "阅读所有文章",
+		"featuredArticles": "重点推荐文章",
+		"moderated": "请注意,评论需经批准才能公布。",
+		"post": "发布评论",
+		"success": "谢谢！ 您的评论已成功发布。",
+		"success_moderated": "您的评论已成功发布。稍等片刻,审核通过后,您的评论将在我们的博客公布。",
+		"comment_form_title": "请留下评论",
+		"error_heading": "请对以下内容加以调整:",
+		"comments": {
+			"one": "{{ count }}条评论",
+			"other": "{{ count }}评论"
+		}
+	},
+	"pagination": {
+		"left": "左",
+		"right": "右",
+		"previous": "上一条",
+		"next": "下一条",
+		"currentPage": "当前页面"
+	},
+	"gift_card": {
+		"issued": {
+			"title_html": "送给您价值{{ value }} 的礼品卡,可购买 {{ shop }}!",
+			"subtext": "您的礼品卡",
+			"gift_card_code": "礼品卡代码",
+			"disabled": "禁用",
+			"expired": "过期日为{{ expiry }}",
+			"active": "过期日为{{ expiry }}",
+			"redeem_html": "结账时使用此代码可抵用您价值为{{ value }}礼品卡",
+			"shop_link": "开始购物",
+			"print": "打印此礼品卡",
+			"remaining_html": "还剩{{ balance }}",
+			"add_to_apple_wallet": "添加至Apple Wallet",
+			"qr_image_alt": "二维码——扫描以兑换礼品卡"
+		}
+	},
+	"recipient": {
+		"form": {
+			"checkbox": "我想将此礼品卡发送为礼品",
+			"email_label": "收件人邮箱",
+			"email": "邮箱",
+			"name_label": "收件人姓名（可选）",
+			"name": "姓名",
+			"message_label": "消息（可选）",
+			"message": "消息",
+			"max_characters": "不超过 {{ max_chars }} 个字符",
+			"email_label_optional_for_no_js_behavior": "收件人邮箱（可选）",
+			"send_on": "YYYY-MM-DD",
+			"send_on_label": "发送日期（可选）"
+		}
+	},
+	"countdown": {
+		"week": "周",
+		"weeks": "周",
+		"day": "天",
+		"days": "天",
+		"hour": "小时",
+		"hours": "小时",
+		"minute": "分钟",
+		"minutes": "分钟",
+		"second": "秒",
+		"seconds": "秒"
+	}
+}

@@ -1,0 +1,388 @@
+{% liquid
+    # Liquid options
+    assign moreThanOne = true
+    if section.blocks.size == 1
+        assign moreThanOne = false
+    endif
+
+    # Slide options
+    capture slideshowOptions
+        # fade effect
+        if section.settings.slideshow_type == 'fade'
+            echo 'fade ' 
+        endif
+
+        # auto height
+        if section.settings.height_desktop == 'auto' 
+            echo 'auto-height="desktop" '
+        elsif section.settings.height_mobile == 'auto'
+            echo 'auto-height="mobile" '
+        endif
+
+        # auto play
+        if section.settings.slideshow_autoplay == true
+            echo 'autoplay '
+            echo section.settings.slideshow_delay | times: 1000 | prepend: "delay='" | append: "' "
+        endif
+    endcapture
+
+    # Slide styles
+    capture slideshowStyles
+        echo section.settings.height_desktop | prepend: "--heightDesktop:" | append: ";"
+        echo section.settings.height_mobile | prepend: "--heightMobile:" | append: ";"
+    endcapture
+
+    # Include stylesheet
+    render 'inc-stylesheet', src: 'c-slideshow.css' 
+-%}
+
+<section class="slideShow" {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}>
+<component-loader><coretex-slideshow {{ slideshowOptions }} style="{{ slideshowStyles }}">
+    <div {% if moreThanOne == true %}slideshow-viewport{% endif %}>
+        <ul x-flex slideshow-container class="no-style" role="region" aria-roledescription="carousel" aria-label="Carousel">
+            {%- assign count = 0 -%}
+            {%- for block in section.blocks -%}
+                {%- liquid
+                    assign count = count | plus: 1
+                    assign imgMobile = block.settings.image_mobile
+                    assign imgDesktop = block.settings.image_desktop
+                -%}
+                <li slideshow-slide="{{ count }}" {% unless block.settings.global_color_scheme %}color-scheme="{{ block.settings.color_scheme }}"{% endunless %} {{ block.shopify_attributes }}>
+                    <x-grid columns="stack">
+                        <x-cell class="meta">
+                            <x-flex pi="{{ block.settings.content_position }}" pi-s="{{ block.settings.content_position_mob }}">
+                                <x-cell>
+                                {%- if block.settings.heading != empty -%}<h2>{{ block.settings.heading }}</h2>{%- endif -%}
+                                {%- if block.settings.desc != empty -%}<p>{{ block.settings.desc }}</p>{%- endif -%}
+                                {%- if block.settings.cta != empty -%}<a href="{{ block.settings.url }}" class="button" {% if block.settings.urlTarget %}target="_blank"{% endif %}>{{ block.settings.cta }}</a>{%- endif -%}
+                                </x-cell>
+                            </x-flex>
+                        </x-cell>
+
+                        <x-cell class="media">
+                            {% if block.settings.cta and block.settings.url != empty %}<a href="{{ block.settings.url }}" class="no-style" {% if block.settings.urlTarget %}target="_blank"{% endif %}>{% endif %}
+                            {% if block.settings.mediaType == 'video' -%}
+                                {%- render 'global-video',
+                                    vid: block.settings.video_desktop,
+                                    vidMobile: block.settings.video_mobile,
+                                    loop: true,
+                                    autoplay: true,
+                                    muted: true,
+                                    clickToPlay: false,
+                                    controls: false
+                                -%}
+                            {%- else -%}
+                                {%- liquid
+                                    # Optimize first section hero image
+                                    assign fetchpriority = nil
+                                    assign preload = false
+                                    assign loading = 'lazy'
+
+                                    if section.index == 1
+                                        assign fetchpriority = 'high'
+                                        assign preload = true
+                                        assign loading = 'eager'
+                                    endif
+
+                                    assign img = imgDesktop
+                                    if imgMobile 
+                                        assign dynamic = true 
+                                        assign imgMob = imgMobile
+                                    endif
+
+                                    render 'inc-img' img: img, dynamic: dynamic, imgMob: imgMob, preload: preload, loading: loading, fetchpriority: fetchpriority, fallback: true, svg: 'lifestyle-2'
+                                -%}
+                            {%- endif -%}
+                            {% if block.settings.cta and block.settings.url != empty %}</a>{% endif %}
+                        </x-cell>
+                    </x-grid>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    {% if moreThanOne == true and section.settings.show_navigation == true or section.settings.pagination_type != 'nil' %}
+    <slider-controls>
+        <x-flex direction="row" jc="around" ai="center" class="paginationNav">
+            {%- if section.settings.show_navigation -%}
+                <x-cell order="1">
+                    <button control-prev class="is-blank has-icon" type="button" tabindex="0" aria-label="{{ 'pagination.previous' | t }}">
+                        {%- render 'global-icon' with 'arrow-left' -%}
+                    </button>
+                </x-cell>
+                <x-cell order="3">
+                    <button control-next class="is-blank has-icon" type="button" tabindex="0" aria-label="{{ 'pagination.next' | t }}">
+                        {%- render 'global-icon' with 'arrow-right' -%}
+                    </button>
+                </x-cell>
+            {%- endif -%}
+
+            {%- if section.settings.pagination_type == 'numbers' -%}
+                <x-cell order="2">
+                    <div control-numbers>1 / 1</div>
+                </x-cell>
+            {% elsif section.settings.pagination_type == 'dots' -%}
+                <x-cell order="2">
+                    <x-flex control-dots>
+                        <button class="control-dot is-selected" type="button" tabindex="0" disabled></button>
+                    </x-flex>
+                </x-cell>
+            {%- endif -%}
+        </x-flex>
+    </slider-controls>
+    {% endif %}
+</coretex-slideshow></component-loader>
+</section>
+
+{% schema %}
+{
+  "name": "Slideshow",
+  "tag": "section",
+  "class": "slideshow",
+  "max_blocks": 5,
+  "disabled_on": { "groups": ["header", "footer", "aside"] },
+  "settings": [
+    {
+        "type": "select",
+        "id": "height_desktop",
+        "label": "Height - desktop",
+        "default": "700px",
+        "options": [
+            { "value": "500px", "label": "500px" },
+            { "value": "600px", "label": "600px" },
+            { "value": "700px", "label": "700px" },
+            { "value": "800px", "label": "800px" },
+            { "value": "900px", "label": "900px" },
+            { "value": "100vh", "label": "Full height" },
+            { "value": "auto", "label": "Auto - adapts to each slide" }
+        ]
+    },
+    {
+        "type": "select",
+        "id": "height_mobile",
+        "label": "Height - mobile",
+        "default": "600px",
+        "options": [
+            { "value": "500px", "label": "500px" },
+            { "value": "600px", "label": "600px" },
+            { "value": "700px", "label": "700px" },
+            { "value": "800px", "label": "800px" },
+            { "value": "900px", "label": "900px" },
+            { "value": "100vh", "label": "Full height" },
+            { "value": "auto", "label": "Auto - adapts to each slide" }
+        ]
+    },
+    {
+        "type": "select",
+        "id": "pagination_type",
+        "label": "Pagination style",
+        "default": "dots",
+        "options": [
+            { "value": "nil", "label": "None" },
+            { "value": "dots", "label": "Dots" },
+            { "value": "numbers", "label": "Numbers" }
+        ]
+    },
+    {
+        "type": "checkbox",
+        "id": "show_navigation",
+        "label": "Show navigation buttons",
+        "default": true
+    },
+    {
+        "type": "header",
+        "content": "Transition effects"
+    },
+    {
+        "type": "select",
+        "id": "slideshow_type",
+        "label": "Slider type",
+        "default": "slide",
+        "info": "Save to view changes.",
+        "options": [
+            { "value": "slide", "label": "Slide" },
+            { "value": "fade", "label": "Fade" }
+        ]
+    },
+    {
+        "type": "header",
+        "content": "Autoplay"
+    },
+    {
+        "type": "checkbox",
+        "id": "slideshow_autoplay",
+        "label": "Auto-rotate slides",
+        "default": false
+    },
+    {
+        "type": "range",
+        "label": "Change slides every",
+        "id": "slideshow_delay",
+        "min": 3,
+        "max": 16,
+        "step": 1,
+        "unit": "s",
+        "default": 5,
+        "visible_if": "{{ section.settings.slideshow_autoplay }}"
+    },
+    {
+        "type": "header",
+        "content": "Appearance"
+    },
+    {
+        "type": "checkbox",
+        "id": "global_color_scheme",
+        "label": "Use global color scheme",
+        "default": true
+    },
+    {
+        "type": "color_scheme",
+        "id": "color_scheme",
+        "label": "Color scheme",
+        "default": "coretex-1",
+        "visible_if": "{{ section.settings.global_color_scheme == false }}"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "slide",
+      "name": "Slide",
+      "settings": [
+        {
+            "type": "header",
+            "content": "Media"
+        },
+		{
+			"type": "select",
+			"id": "mediaType",
+			"label": "Type",
+			"default": "image",
+			"options": [
+				{ "value": "image", "label": "Image" },
+				{ "value": "video", "label": "Video" }
+			]
+		},
+        {
+          "type": "image_picker",
+          "id": "image_desktop",
+          "label": "Desktop",
+          "info": "1800 x 800px recommended",
+          "visible_if": "{{ block.settings.mediaType == 'image' }}"
+        },
+        {
+          "type": "image_picker",
+          "id": "image_mobile",
+          "label": "Mobile",
+          "info": "800 x 1200px recommended",
+          "visible_if": "{{ block.settings.mediaType == 'image' }}"
+        },
+		{
+			"type": "video",
+			"id": "video_desktop",
+			"label": "Desktop",
+			"visible_if": "{{ block.settings.mediaType == 'video' }}"
+		},
+		{
+			"type": "video",
+			"id": "video_mobile",
+			"label": "Mobile",
+			"visible_if": "{{ block.settings.mediaType == 'video' }}"
+		},
+        {
+          "type": "header",
+          "content": "Content"
+        },
+        {
+          "type": "text",
+          "id": "heading",
+          "label": "Heading",
+          "default": "Slider heading"
+        },
+        {
+          "type": "richtext",
+          "id": "desc",
+          "label": "Text",
+          "default": "<p>Describe this slider to your customers.</p>"
+        },
+        {
+          "type": "text",
+          "id": "cta",
+          "label": "Button label",
+          "default": "Shop more"
+        },
+        {
+          "type": "url",
+          "id": "url",
+          "label": "Button link"
+        },
+        {
+            "type": "checkbox",
+            "id": "urlTarget",
+            "label": "Open link in new tab",
+            "default": false
+        },
+        {
+            "type": "header",
+            "content": "Content position"
+        },
+        {
+            "type": "select",
+            "id": "content_position",
+            "label": "Desktop",
+            "default": "bottom left",
+            "options": [
+                { "value": "top left", "label": "Top left" },
+                { "value": "top center", "label": "Top center" },
+                { "value": "top right", "label": "Top right" },
+                { "value": "center left", "label": "Middle Left" },
+                { "value": "center", "label": "Middle Center" },
+                { "value": "center right", "label": "Middle Right" },
+                { "value": "bottom left", "label": "Bottom left" },
+                { "value": "bottom center", "label": "Bottom center" },
+                { "value": "bottom right", "label": "Bottom right" }
+            ]
+        },
+        {
+            "type": "select",
+            "id": "content_position_mob",
+            "label": "Mobile",
+            "default": "bottom center",
+            "options": [
+                { "value": "top center", "label": "Top" },
+                { "value": "center", "label": "Middle" },
+                { "value": "bottom center", "label": "Bottom" }
+            ]
+        },
+        {
+            "type": "header",
+            "content": "Appearance"
+        },
+        {
+            "type": "checkbox",
+            "id": "global_color_scheme",
+            "label": "Use global color scheme",
+            "default": true
+        },
+        {
+            "type": "color_scheme",
+            "id": "color_scheme",
+            "label": "Color scheme",
+            "default": "coretex-1",
+            "visible_if": "{{ block.settings.global_color_scheme == false }}"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Slideshow",
+      "category": "Banners",
+      "blocks": [
+        { "type": "slide" },
+        { "type": "slide" },
+        { "type": "slide" }
+      ]
+    }
+  ]
+}
+{% endschema %}

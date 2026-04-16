@@ -1,0 +1,152 @@
+{%- comment -%}
+    Include social networks inside <ul class="no-style">
+    {%- render 'global-social' -%}
+{%- endcomment -%}
+{%- assign showIcon = settings.iconsTrue -%}
+
+{%- if settings.socialInstagram != blank -%}
+<li><a href="{{ settings.socialInstagram }}" rel="nofollow noopener noreferrer" target="_blank" class="no-style">
+    {%- if showIcon -%}{% render 'global-icon' with 'instagram' %}{%- endif -%}
+    <span>Instagram</span>
+</a></li>
+{%- endif -%}
+
+{%- if settings.socialTwitter != blank -%}
+<li><a href="{{ settings.socialTwitter }}" rel="nofollow noopener noreferrer" target="_blank" class="no-style">
+    {%- if showIcon -%}{% render 'global-icon' with 'twitter' %}{%- endif -%}
+    <span>X</span>
+</a></li>
+{%- endif -%}
+
+{%- if settings.socialTiktok != blank -%}
+<li><a href="{{ settings.socialTiktok }}" rel="nofollow noopener noreferrer" target="_blank" class="no-style">
+    {%- if showIcon -%}{% render 'global-icon' with 'tiktok' %}{%- endif -%}
+    <span>TikTok</span>
+</a></li>
+{%- endif -%}
+
+{% if settings.socialSnapchat != blank %}
+<li><a href="{{ settings.socialSnapchat }}" rel="nofollow noopener noreferrer" target="_blank" class="no-style">
+    {%- if showIcon -%}{% render 'global-icon' with 'snapchat' %}{%- endif -%}
+    <span>Snapchat</span></a></li>
+{%- endif -%}
+
+{% if settings.socialPinterest != blank %}
+<li><a href="{{ settings.socialPinterest }}" rel="nofollow noopener noreferrer" target="_blank" class="no-style">
+    {%- if showIcon -%}{% render 'global-icon' with 'pinterest' %}{%- endif -%}
+    <span>Pinterest</span></a></li>
+{%- endif -%}
+
+{% if settings.socialTumblr != blank %}
+<li><a href="{{ settings.socialTumblr }}" rel="nofollow noopener noreferrer" target="_blank" class="no-style">
+    {%- if showIcon -%}{% render 'global-icon' with 'tumblr' %}{%- endif -%}
+    <span>Tumblr</span></a></li>
+{%- endif -%}
+
+{% if settings.socialVk != blank %}
+<li><a href="{{ settings.socialVk }}" rel="nofollow noopener noreferrer" target="_blank" class="no-style">
+    {%- if showIcon -%}{% render 'global-icon' with 'vk' %}{%- endif -%}
+    <span>VK</span></a></li>
+{%- endif -%}
+
+{% if settings.socialFacebook != blank %}
+<li><a href="{{ settings.socialFacebook }}" rel="nofollow noopener noreferrer" target="_blank" class="no-style">
+    {%- if showIcon -%}{% render 'global-icon' with 'facebook' %}{%- endif -%}
+    <span>Facebook</span></a></li>
+{%- endif -%}
+
+{% if settings.socialLinkedIn != blank %}
+<li><a href="{{ settings.socialLinkedIn }}" rel="nofollow noopener noreferrer" target="_blank" class="no-style">
+    {%- if showIcon -%}{% render 'global-icon' with 'linkedin' %}{%- endif -%}
+    <span>LinkedIn</span></a></li>
+{%- endif %}
+
+{% if settings.socialYoutube != blank %}
+<li><a href="{{ settings.socialYoutube }}" rel="nofollow noopener noreferrer" target="_blank" class="no-style">
+    {%- if showIcon -%}{% render 'global-icon' with 'youtube' %}{%- endif -%}
+    <span>YouTube</span></a></li>
+{%- endif -%}
+
+{% if settings.socialVimeo != blank %}
+<li><a href="{{ settings.socialVimeo }}" rel="nofollow noopener noreferrer" target="_blank" class="no-style">
+    {%- if showIcon -%}{% render 'global-icon' with 'vimeo' %}{%- endif -%}
+    <span>Vimeo</span></a></li>
+{%- endif -%}
+
+{% if settings.socialTwitch != blank %}
+<li><a href="{{ settings.socialTwitch }}" rel="nofollow noopener noreferrer" target="_blank" class="no-style">
+    {%- if showIcon -%}{% render 'global-icon' with 'twitch' %}{%- endif -%}
+    <span>Twitch</span></a></li>
+{%- endif -%}
+
+{% if settings.socialTelegram != blank %}
+<li><a href="{{ settings.socialTelegram }}" rel="nofollow noopener noreferrer" target="_blank" class="no-style">
+    {%- if showIcon -%}{% render 'global-icon' with 'telegram' %}{%- endif -%}
+    <span>Telegram</span></a></li>
+{%- endif %}
+
+{% if settings.socialLine != blank %}
+<li><a href="{{ settings.socialLine }}" rel="nofollow noopener noreferrer" target="_blank" class="no-style">
+    {%- if showIcon -%}{% render 'global-icon' with 'line' %}{%- endif -%}
+    <span>Line</span></a></li>
+{%- endif %}
+
+{% if settings.socialWechat != blank %}
+<li><a href="{{ settings.socialWechat }}" rel="nofollow noopener noreferrer" target="_blank" class="no-style">
+    {%- if showIcon -%}{% render 'global-icon' with 'wechat' %}{%- endif -%}
+    <span>WeChat</span></a></li>
+{%- endif %}
+
+{% if settings.socialWeibo != blank %}
+<li><a href="{{ settings.socialWeibo }}" rel="nofollow noopener noreferrer" target="_blank" class="no-style">
+    {%- if showIcon -%}{% render 'global-icon' with 'weibo' %}{%- endif -%}
+    <span>Weibo</span></a></li>
+{%- endif %}
+
+{% if settings.socialWhatsapp != blank %}
+<li><a href="{{ settings.socialWhatsapp }}" rel="nofollow noopener noreferrer" target="_blank" class="no-style">
+    {%- if showIcon -%}{% render 'global-icon' with 'whatsapp' %}{%- endif -%}
+    <span>WhatsApp</span></a></li>
+{%- endif %}
+
+{% if settings.socialDiscord != blank %}
+<li><a href="{{ settings.socialDiscord }}" rel="nofollow noopener noreferrer" target="_blank" class="no-style">
+    {%- if showIcon -%}{% render 'global-icon' with 'discord' %}{%- endif -%}
+    <span>Discord</span></a></li>
+{%- endif -%}
+
+{% if settings.socialReddit != blank %}
+<li><a href="{{ settings.socialReddit }}" rel="nofollow noopener noreferrer" target="_blank" class="no-style">
+    {%- if showIcon -%}{% render 'global-icon' with 'reddit' %}{%- endif -%}
+    <span>Reddit</span></a></li>
+{%- endif -%}
+
+{% if settings.socialTrustpilot != blank %}
+<li><a href="{{ settings.socialTrustpilot }}" rel="nofollow noopener noreferrer" target="_blank" class="no-style">
+    {%- if showIcon -%}{% render 'global-icon' with 'trustpilot' %}{%- endif -%}
+    <span>Trustpilot</span></a></li>
+{%- endif %}
+
+{% if settings.socialTripadvisor != blank %}
+<li><a href="{{ settings.socialTripadvisor }}" rel="nofollow noopener noreferrer" target="_blank" class="no-style">
+    {%- if showIcon -%}{% render 'global-icon' with 'tripadvisor' %}{%- endif -%}
+    <span>TripAdvisor</span></a></li>
+{%- endif %}
+
+{% if settings.socialApplemusic != blank %}
+<li><a href="{{ settings.socialApplemusic }}" rel="nofollow noopener noreferrer" target="_blank" class="no-style">
+    {%- if showIcon -%}{% render 'global-icon' with 'applemusic' %}{%- endif -%}
+    <span>Apple music</span></a></li>
+{%- endif %}
+
+{% if settings.socialSpotify != blank %}
+<li><a href="{{ settings.socialSpotify }}" rel="nofollow noopener noreferrer" target="_blank" class="no-style">
+    {%- if showIcon -%}{% render 'global-icon' with 'spotify' %}{%- endif -%}
+    <span>Spotify</span></a></li>
+{%- endif %}
+
+{% if settings.socialSoundcloud != blank %}
+<li><a href="{{ settings.socialSoundcloud }}" rel="nofollow noopener noreferrer" target="_blank" class="no-style">
+    {%- if showIcon -%}{% render 'global-icon' with 'soundcloud' %}{%- endif -%}
+    <span>SoundCloud</span></a></li>
+{%- endif %}

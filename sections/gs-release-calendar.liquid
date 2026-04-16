@@ -1,0 +1,320 @@
+{%- render 'inc-stylesheet', src: 's-sections.css' -%}
+
+{%- liquid
+  assign now = 'now' | date: '%s'
+  assign rendered_count = 0
+-%}
+
+<section
+    class="releaseCalendar"
+    layout="{{ section.settings.layout | escape }}"
+    {% if section.settings.list_image_hover %}list-hover-image="true"{% endif %}
+    {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}
+>
+    {%- if section.settings.heading != blank %}<h2 class="gs-title">{{ section.settings.heading }}</h2>{%- endif -%}
+
+    {%- liquid
+        assign grid_columns = section.settings.columns
+        assign grid_columns_s = section.settings.columnsMob
+        if section.settings.layout == 'list'
+            assign grid_columns = '1'
+            assign grid_columns_s = '1'
+        endif
+    -%}
+    <x-grid columns="{{ grid_columns }}" columns-s="{{ grid_columns_s }}" class="releases">
+
+        {%- for block in section.blocks -%}
+            {%- liquid
+                assign release_date_epoch = block.settings.date | date: '%s'
+                assign is_past = false
+                if release_date_epoch < now
+                    assign is_past = true
+                endif
+
+                # Skip past releases if hidden
+                if section.settings.show_past == false
+                    if is_past
+                        continue
+                    endif
+                endif
+
+                assign rendered_count = rendered_count | plus: 1
+
+                # Resolve source: product or custom
+                assign release_product = block.settings.product
+                assign is_product = false
+                if release_product != blank
+                    assign is_product = true
+                endif
+
+                if is_product
+                    assign release_title = release_product.title
+                    assign release_img = release_product.featured_image
+                    assign release_url = release_product.url
+                    assign release_vendor = release_product.vendor
+                else
+                    assign release_title = block.settings.title
+                    assign release_img = block.settings.image
+                    assign release_url = block.settings.button_link
+                    assign release_vendor = block.settings.vendor
+                endif
+            -%}
+            <x-flex
+                direction="{% if section.settings.layout == 'list' %}row{% else %}column{% endif %}"
+                direction-s="column"
+                class="release"
+                {% if is_past %}release-past="true"{% endif %}
+                {{ block.shopify_attributes }}
+            >
+                {%- if release_img != blank -%}
+                <x-cell class="media">
+                    {%- liquid
+                        assign width = 750
+                        assign loading = 'lazy'
+                        assign preload = false
+
+                        if section.index == 1
+                            if forloop.first
+                                assign loading = 'eager'
+                                assign preload = true
+                            endif
+                        endif
+
+                        render 'inc-img' img: release_img, width: width, loading: loading, preload: preload, fallback: false
+                    -%}
+                </x-cell>
+                {%- endif -%}
+                {% # theme-check-disable %}
+                {% if section.settings.layout == 'list' %}
+                    <x-grid columns="10" columns-m="7" columns-s="2" class="meta fullwidth">
+                {% else %}
+                    <x-flex direction="column" class="meta">
+                {% endif %}
+                    {%- if block.settings.date != blank -%}
+                        <x-cell span="1">
+                            {%- if block.settings.time != blank -%}<span class="time">{{ block.settings.time | escape }}</span>{%- endif -%}
+                            <time class="date" datetime="{{ block.settings.date | date: '%Y-%m-%d' }}">
+                                {{- block.settings.date | date: "%B %d, %Y" -}}
+                            </time>
+                        </x-cell>
+                    {%- endif -%}
+
+                    <x-cell span="3" span-s="1">
+                        {%- if section.settings.show_vendor and release_vendor != blank -%}<span class="vendor">{{ release_vendor | escape }}</span><br>{%- endif -%}
+                        {%- if release_title != blank -%}<h3 class="title">{{ release_title | escape }}</h3>{%- endif -%}
+                    </x-cell>
+
+                    {%- if block.settings.description != blank -%}
+                        <x-cell span="4" span-s="row"><div class="description rte">{{ block.settings.description }}</div></x-cell>
+                    {%- endif -%}
+
+                    {%- if block.settings.button_label != blank -%}
+                        {%- if is_product or release_url != blank -%}
+                            <x-cell><a href="{{ release_url }}">{{ block.settings.button_label | escape }}</a></x-cell>
+                        {%- endif -%}
+                    {%- endif -%}
+                {% if section.settings.layout == 'list' %}</x-grid>{% else %}</x-flex>{% endif %}
+                {% # theme-check-enable %}
+            </x-flex>
+        {%- endfor -%}
+
+        {%- if rendered_count == 0 and section.settings.empty_message != blank -%}
+            <p class="emptyState">{{ section.settings.empty_message | escape }}</p>
+        {%- endif -%}
+
+    </x-grid>
+</section>
+
+{% schema %}
+{
+  "name": "Release calendar",
+  "disabled_on": { "groups": ["header", "footer", "aside"] },
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Release calendar",
+      "info": "Leave blank to remove"
+    },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "checkbox",
+      "id": "list_image_hover",
+      "label": "Image on hover",
+      "default": true,
+      "info": "Image appears on hover instead of inline",
+      "visible_if": "{{ section.settings.layout == 'list' }}"
+    },
+    {
+      "type": "select",
+      "id": "layout",
+      "label": "Layout",
+      "default": "list",
+      "options": [
+        { "value": "list", "label": "List" },
+        { "value": "grid", "label": "Grid" }
+      ]
+    },
+    {
+      "type": "select",
+      "id": "columns",
+      "label": "Columns - desktop",
+      "default": "3",
+      "visible_if": "{{ section.settings.layout == 'grid' }}",
+      "options": [
+        { "value": "2", "label": "2 columns" },
+        { "value": "3", "label": "3 columns" },
+        { "value": "4", "label": "4 columns" },
+        { "value": "5", "label": "5 columns" },
+        { "value": "6", "label": "6 columns" }
+      ]
+    },
+    {
+      "type": "select",
+      "id": "columnsMob",
+      "label": "Columns - mobile",
+      "default": "1",
+      "visible_if": "{{ section.settings.layout == 'grid' }}",
+      "options": [
+        { "value": "1", "label": "1 column" },
+        { "value": "2", "label": "2 columns" }
+      ]
+    },
+    {
+      "type": "textarea",
+      "id": "empty_message",
+      "label": "Empty message",
+      "default": "No upcoming releases.",
+      "info": "Shown when there are no releases to display"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_vendor",
+      "label": "Show vendor",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Filtering"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_past",
+      "label": "Past releases",
+      "default": false
+    },
+    {
+      "type": "header",
+      "content": "Appearance"
+    },
+    {
+      "type": "checkbox",
+      "id": "global_color_scheme",
+      "label": "Use global color scheme",
+      "default": true
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Color scheme",
+      "default": "coretex-1",
+      "visible_if": "{{ section.settings.global_color_scheme == false }}"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "release",
+      "name": "Release",
+      "settings": [
+        {
+          "type": "product",
+          "id": "product",
+          "label": "Product",
+          "info": "Uses the product image, title and link automatically"
+        },
+        {
+          "type": "header",
+          "content": "Content",
+          "visible_if": "{{ block.settings.product == blank }}"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Title",
+          "default": "Release title",
+          "visible_if": "{{ block.settings.product == blank }}"
+        },
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Image",
+          "visible_if": "{{ block.settings.product == blank }}"
+        },
+        {
+          "type": "text",
+          "id": "vendor",
+          "label": "Vendor",
+          "info": "Pulled from product automatically when set",
+          "visible_if": "{{ block.settings.product == blank }}"
+        },
+        {
+          "type": "header",
+          "content": "Details"
+        },
+        {
+          "type": "text",
+          "id": "date",
+          "label": "Date",
+          "default": "2027-03-15",
+          "info": "Format: YYYY-MM-DD"
+        },
+        {
+          "type": "text",
+          "id": "time",
+          "label": "Time",
+          "default": "22:00",
+          "info": "e.g. 10:00"
+        },
+        {
+          "type": "richtext",
+          "id": "description",
+          "label": "Description",
+          "info": "Short summary for the release card"
+        },
+        {
+          "type": "header",
+          "content": "Button"
+        },
+        {
+          "type": "text",
+          "id": "button_label",
+          "label": "Label",
+          "default": "View release",
+          "info": "Leave blank to hide"
+        },
+        {
+          "type": "url",
+          "id": "button_link",
+          "label": "Link",
+          "visible_if": "{{ block.settings.product == blank }}"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Release calendar",
+      "category": "Content",
+      "blocks": [
+        { "type": "release" },
+        { "type": "release" },
+        { "type": "release" }
+      ]
+    }
+  ]
+}
+{% endschema %}

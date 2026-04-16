@@ -1,0 +1,136 @@
+{%- comment -%}
+Renders a list of product's price (regular, sale)
+
+-- [ Accepts ] --
+    product: {Object} Product Liquid object (optional)
+    use_variant: {Boolean} Renders selected or first variant price instead of overall product pricing (optional)
+    price_class: {String} Adds a price class to the price element (optional)
+    show_compare_at_price: {Boolean} Renders the compare at price if the product matches the condition (optional)
+
+-- [ USAGE ] --
+    {%- render 'c-price', product: product -%}
+{%- endcomment -%}
+
+{%- liquid
+    if use_variant
+        assign target = product.selected_or_first_available_variant
+    else
+        assign target = product
+    endif
+
+    assign compare_at_price = target.compare_at_price
+    assign price = target.price | default: 1999
+    assign price_min = product.price_min
+    assign price_max = product.price_max
+    assign available = target.available | default: false
+    assign money_price = price | money
+    assign money_price_min = price_min | money
+    assign money_price_max = price_max | money
+
+    if settings.currency_code_enabled
+        assign money_price = price | money_with_currency
+        assign money_price_min = price_min | money_with_currency
+        assign money_price_max = price_max | money_with_currency
+    endif
+
+    assign unit_pricing = product.selected_or_first_available_variant.unit_price_measurement
+
+    # Money w/ currency_code_enabled or not
+    assign displayMoney = compare_at_price | money
+    if settings.currency_code_enabled
+        assign displayMoney = compare_at_price | money_with_currency
+    endif
+
+    if target == product and product.price_varies
+        assign money_price = 'product.from_price_html' | t: price: money_price
+    endif
+
+    # Classes
+    capture classes
+        echo 'price'
+
+        if price_class
+            echo price_class 
+        endif
+
+        if available == false
+            echo ' sold-out'
+        endif
+        
+        if compare_at_price > price and product.quantity_price_breaks_configured? != true
+            echo ' on-sale'
+        endif
+
+        if product.price_varies == false and product.compare_at_price_varies
+            echo ' no-compare'
+        endif
+    endcapture
+-%}
+
+{% comment %} 
+TO DO: 
+we are currently not loading the price-regular if the product has a sale. 
+But this was not tested to see if it would work on the product page and when switching
+variants if the price will update properly or will fail because there's not html loaded already
+{% endcomment %}
+
+<coretex-price 
+    class="{{ classes }}" 
+    x-flex {% if unit_pricing %}direction="column"{% else %}direction="row" ai="center"{% endif %}
+>
+    {%- if compare_at_price and compare_at_price > price -%}
+    <price-sale class="price-sale" x-flex direction="row" wrap="wrap" style="gap: 0 var(--mardding)">
+        {%- unless product.price_varies and product.compare_at_price_varies == false -%}
+        <x-cell>
+            <span class="visually-hidden">{{ 'product.regular_price' | t }}</span>
+            <s class="price-item regular">{{ displayMoney }}</s>
+        </x-cell>
+        {%- endunless -%}
+        <x-cell>
+            <span class="visually-hidden">{{ 'product.sale_price' | t }}</span>
+            <span class="price-item sale">{{ money_price }}</span>
+        </x-cell>
+    </price-sale>
+    {%- else -%}
+    <price-regular class="price-regular" x-flex direction="row" pi="center">
+        {%- if product.quantity_price_breaks_configured? -%}
+            {%- if show_compare_at_price and compare_at_price and compare_at_price > price -%}
+                {%- unless product.price_varies == false and product.compare_at_price_varies %}
+                <x-cell>
+                    <span class="visually-hidden">{{- 'product.regular_price' | t -}}</span>
+                    <s class="price-item regular oldPrice">{{ displayMoney }}</s>
+                </x-cell>
+                {%- endunless -%}
+            {%- endif -%}
+            <x-cell>
+                <span class="visually-hidden">{{ 'product.regular_price' | t }}</span>
+                <span class="price-item regular">{{- 'product.price_range' | t: minimum: money_price_min, maximum: money_price_max -}}</span>
+            </x-cell>
+        {%- else -%}
+            <x-cell>
+                <span class="visually-hidden">{{ 'product.regular_price' | t }}</span>
+                <span class="price-item regular">{{ money_price }}</span>
+            </x-cell>
+        {%- endif -%}
+    </price-regular>
+    {%- endif -%}
+
+    {%- if available and unit_pricing -%}
+    <price-unit class="unit-price">
+        <span class="visually-hidden">{{ 'product.unit_price' | t }}</span>
+        <small class="price-item last">
+            <span>{{- product.selected_or_first_available_variant.unit_price | money -}}</span>
+            <span aria-hidden="true">/</span>
+            <span class="visually-hidden">&nbsp;{{ 'product.unit_price_separator' | t }}&nbsp;</span>
+            <span>
+            {%- liquid
+                if product.selected_or_first_available_variant.unit_price_measurement.reference_value != 1
+                    echo product.selected_or_first_available_variant.unit_price_measurement.reference_value
+                endif
+                echo product.selected_or_first_available_variant.unit_price_measurement.reference_unit 
+            -%}
+            </span>
+        </small>
+    </price-unit>
+    {%- endif -%}
+</coretex-price>

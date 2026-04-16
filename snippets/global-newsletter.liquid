@@ -1,0 +1,58 @@
+{%- comment -%} 
+    Replace the code below with the code provided from 
+    a third party provider such as MailChimp, Klaviyo etc.
+{%- endcomment -%}
+{%- assign columns = columns | default: 1 -%}
+{%- form 'customer', id: "contact_form", class: class -%}
+<input type="hidden" name="contact[tags]" value="newsletter">
+<x-grid columns="{{ columns }}" ai="center" style="gap:var(--space-1)" class="newsletterbox">
+    {%- unless form.posted_successfully? -%}
+        <x-cell class="umail">
+        <label class="visually-hidden" for="nf-{{ section.id }}">{{ 'newsletter.newsletter' | t }}</label>
+        <input
+            id="nf-{{ section.id }}"
+            type="email"
+            name="contact[email]"
+            class="fullwidth"
+            value="{{ form.email }}"
+            aria-required="true"
+            autocorrect="off"
+            autocapitalize="off"
+            autocomplete="email"
+            pattern="[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}$"
+            {% if form.errors %}
+              autofocus
+              aria-invalid="true"
+              aria-describedby="newsletter-fail-{{ section.id }}"
+            {% elsif form.posted_successfully? %}
+              aria-describedby="Newsletter-success-{{ section.id }}"
+            {% endif %}
+            placeholder="{{ 'newsletter.EmailPlaceholder' | t }}"
+            required
+        >
+        </x-cell>
+
+        <x-cell class="usubscribe"><button type="submit" name="commit" id="subscribeMe-{{ section.id }}" class="fullwidth">{{ 'newsletter.subscribe' | t }}</button></x-cell>
+    {%- endunless -%}
+
+    {%- if form.errors -%}
+    <x-cell span="row">
+        <p id="newsletter-fail-{{ section.id }}" class="is-red newsletter-fail" tabindex="-1" data-form-status>{{- form.errors.translated_fields.email | capitalize }} {{ form.errors.messages.email -}}</p>
+    </x-cell>
+    {%- endif -%}
+
+    {%- if form.posted_successfully? -%}
+    <x-cell span="row">
+        <x-flex direction="column">
+            <x-cell><h3 class="h2 newsletter-success text-center" id="newsletter-success-{{ section.id }}" tabindex="-1" data-form-status autofocus>{{ 'newsletter.success' | t }}</h3></x-cell>
+            {%- if location == 'popup' -%}<x-cell>
+                <button type="button" value="cancel" close-newsletter class="is-primary">{{ 'cart.close' | t }}</button>
+            </x-cell>{%- endif -%}
+        </x-flex>
+    </x-cell>
+    {%- endif -%}
+</x-grid>
+{%- endform -%}
+{%- comment -%} 
+    stop editing here. 
+{%- endcomment -%}

@@ -1,0 +1,125 @@
+
+{%- if localization.available_countries.size > 1 or localization.available_languages.size > 1 -%}
+    <li class="large-only">
+        <x-flex ai="center" class="localization">
+            {%- comment -%} Country button {%- endcomment -%}
+            {%- if block.settings.show_country and localization.available_countries.size > 1  -%}
+                <x-cell class="selector-country">
+                    {%- capture country_selector -%}
+                    {%- if show_icons -%}
+                        {%- render 'global-icon' with 'globe' -%}
+                        <span class="visually-hidden">{{ 'footer.languageLabel' | t }}</span>
+                    {%- else -%}
+                        <x-flex ai="center" jc="between" wrap="nowrap">
+                            {%- # Country/region selector -%}
+                            <x-cell class="country-name visually-hidden">{{- localization.country.name }}</x-cell>
+                            <x-cell class="country-currency">{{ localization.country.currency.iso_code }} {{ localization.country.currency.symbol -}}</x-cell>
+                        </x-flex>
+                    {%- endif -%}
+                    {%- endcapture -%}
+                    <button class="is-custom text-normal{% if show_icons %} hasIcon{% endif %}" data-open="#countryBox">{{ country_selector }}</button>
+                </x-cell>
+            {%- endif -%}
+
+            {%- comment -%} Language button {%- endcomment -%}
+            {%- if block.settings.show_language and localization.available_languages.size > 1 -%}
+                <x-cell class="selector-language">
+                    {% # This displays the list of available languages %}
+                    {% if localization.available_languages.size == 2 -%}
+                        <component-loader><localization-form>
+                            {%- form 'localization', id: 'HeaderLanguageForm', class: 'localization-form' -%}
+                                <x-flex class="langSwitch">
+                                    {%- for language in localization.available_languages -%}
+                                        <x-cell tabindex="-1"{% if language.iso_code == localization.language.iso_code %} aria-current="true"{% endif %}>
+                                            <a href="#" class="button is-custom dont{% if show_icons %} hasIcon{% endif %}" data-count="{{ forloop.index }}" hreflang="{{ language.iso_code }}"
+                                                lang="{{ language.iso_code }}"
+                                                {% if language.iso_code == localization.language.iso_code %}aria-current="true"{% endif %}
+                                                data-value="{{ language.iso_code }}"
+                                                title="{{ language.endonym_name | capitalize }}"
+                                            >{{ language.iso_code | capitalize }}</a>
+                                        </x-cell>
+                                        {%- unless forloop.last -%}
+                                            <x-cell class="separator" aria-hidden="true">/</x-cell>
+                                        {%- endunless -%}
+                                    {%- endfor -%}
+                                </x-flex>
+                                <input type="hidden" name="locale_code" value="{{ localization.language.iso_code }}">
+                            {%- endform -%}
+                        </localization-form></component-loader>
+
+                    {%- else -%}
+                        <button class="is-custom text-normal{% if show_icons %} hasIcon{% endif %}" data-open="#languageBox">
+                            {%- if show_icons -%}
+                                {%- render 'global-icon' with 'lang' -%}
+                                <span class="visually-hidden">{{ 'footer.languageLabel' | t }}</span>
+                            {%- else -%}
+                                <x-flex ai="center" jc="between" wrap="nowrap">
+                                    {%- # Language selector -%}
+                                    <x-cell class="language">{{ localization.language.iso_code | upcase }}</x-cell>
+                                </x-flex>
+                            {%- endif -%}
+                        </button>
+
+                    {%- endif -%}
+                </x-cell>
+        {% endif %}
+        </x-flex>
+    </li>
+{%- endif -%}
+
+{%- comment -%} Account URLS {%- endcomment -%}
+{%- if shop.customer_accounts_enabled and block.settings.accountLink != false -%}
+    {%- if customer -%}
+        <li class="large-only">
+            <a href="{{ routes.account_url }}" class="button is-blank text-normal{% if show_icons %} hasIcon{% endif %}">
+                {%- if show_icons -%}
+                    {% render 'global-icon' with 'user' %}
+                    <span class="visually-hidden">{{ 'header.account' | t }}</span>
+                {%- else -%}
+                    {{ 'header.account' | t }}
+                {%- endif -%}
+            </a>
+        </li>
+    {% else %}
+        <li class="large-only">
+            <a href="{{ routes.account_login_url }}" class="button is-blank text-normal{% if show_icons %} hasIcon{% endif %}">
+                {%- if show_icons -%}
+                    {% render 'global-icon' with 'user' %}
+                    <span class="visually-hidden">{{ 'header.login' | t }}</span>
+                {%- else -%}
+                    {{ 'header.login' | t }}
+                {%- endif -%}
+            </a>
+        </li>
+    {%- endif -%}
+{%- endif -%}
+
+{%- comment -%} Search button {%- endcomment -%}
+{%- if show_search -%}
+<li><button class="is-blank text-normal{% if show_icons %} hasIcon{% endif %}" aria-label="{{ 'header.search' | t }}" data-open="#searchBox">
+    {%- if show_icons -%}
+        {% render 'global-icon' with 'search' %}
+        <span class="visually-hidden">{{ 'header.search' | t }}</span>
+    {%- else -%}
+        {{ 'header.search' | t }}
+    {%- endif -%}
+</button></li>
+{%- endif -%}
+
+{%- comment -%} Cart button {%- endcomment -%}
+{%- if show_cart -%}
+<li class="cartCounter">
+    {%- capture cart_counter -%}
+    <span id="counter">
+        {%- if show_icons -%} {% render 'global-icon' with 'cart' %} {%- endif -%}
+        <span data-ajax-cart-bind="item_count">{{ cart.item_count }}</span>
+    </span>
+    {%- endcapture -%}
+
+    {%- if template != 'cart' and settings.cart_type != 'page' -%}
+        <button class="is-blank text-normal dont{% if show_icons %} hasIcon{% endif %}" aria-label="{{ 'cart.cart' | t }}" data-open="#cartBox">{{ cart_counter }}</button>
+    {%- else -%}
+        <a href="{{ routes.cart_url }}" class="button is-blank text-normal dont{% if show_icons %} hasIcon{% endif %}" aria-label="{{ 'cart.cart' | t }}">{{ cart_counter }}</a>
+    {%- endif -%}
+</li>
+{%- endif -%}

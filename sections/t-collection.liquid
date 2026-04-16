@@ -1,0 +1,388 @@
+{%- render 'inc-stylesheet', src: 's-sections.css' -%}
+
+{%- assign prodXpage = section.settings.prodXpage -%}
+{%- paginate collection.products by prodXpage -%}
+
+<div class="listing-page" {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}>
+<div class="products">
+
+    {%- if section.settings.collection_list != empty -%}
+        <div class="listoftags listofcolselected">
+            <div class="mob-scroller">
+                {%- for collection in section.settings.collection_list -%}
+                    <a href="{{ collection.url }}" class="no-style" x-flex direction="column" ai="center">
+                    {%- if section.settings.show_category_image -%}
+                    <x-cell class="media" as="center">
+                        {%- render 'inc-img'
+                            img: collection.featured_image,
+                            widths: '20,50,100,150,200',
+                            fetchpriority: 'high',
+                            preload: true
+                        -%}
+                    </x-cell>
+                    {%- endif -%}
+
+                    <x-cell class="meta" as="center">
+                        {%- liquid
+                            echo collection.title | escape
+                            if section.settings.show_product_counts
+                                echo '&nbsp;<sup class="count">' | append: collection.products_count | append: '</sup>'
+                            endif
+                        -%}
+                    </x-cell>
+                    </a>
+                {%- endfor -%}
+            </div>
+        </div>
+    {%- endif -%}
+
+    {%- if section.settings.related_collections == true and collection.products.size > 0 -%}
+        {%- liquid
+            assign related_collection_handles = ''
+            
+            # 'Collect all collections from current collection's products'
+            for product in collection.products limit: 50
+                for product_collection in product.collections
+                    unless product_collection.id == collection.id
+                        unless related_collection_handles contains product_collection.handle
+                            assign related_collection_handles = related_collection_handles | append: product_collection.handle | append: ','
+                        endunless
+                    endunless
+                endfor
+            endfor
+            
+            assign related_handles_array = related_collection_handles | split: ',' | compact | uniq
+            
+            # 'Create sortable string with product count + handle'
+            assign sorted_collections_string = ''
+            for handle in related_handles_array
+                assign target_collection = collections[handle]
+                if target_collection != empty
+                    # 'Pad product count to 6 digits for proper sorting'
+                    assign padded_count = target_collection.products_count | prepend: '000000' | slice: -6, 6
+                    assign sorted_collections_string = sorted_collections_string | append: padded_count | append: ':' | append: handle | append: '|'
+                endif
+            endfor
+            
+            # 'Split, sort by count (descending), and extract handles'
+            assign collection_pairs = sorted_collections_string | split: '|' | compact | sort | reverse
+            assign final_handles = blank
+            
+            for pair in collection_pairs
+                assign parts = pair | split: ':'
+                if parts.size == 2
+                    assign handle = parts[1]
+                    assign final_handles = final_handles | append: handle | append: ','
+                endif
+            endfor
+            
+            assign final_handles_array = final_handles | split: ',' | compact
+        -%}
+        
+        {%- if final_handles_array.size > 0 -%}
+            <div class="listoftags">
+                <div class="mob-scroller">
+                    {%- for handle in final_handles_array -%}
+                        {% assign related_collection = collections[handle] %}
+                        {%- if related_collection != empty -%}
+                            <a href="{{ related_collection.url }}" class="no-style category-link" x-flex direction="column" ai="center">
+                            {%- if section.settings.related_collections_show_category_image -%}
+                            <x-cell class="media" as="center">
+                                {%- render 'inc-img'
+                                    img: related_collection.featured_image,
+                                    widths: '20,50,100,150,200',
+                                    fetchpriority: 'high',
+                                    preload: true
+                                -%}
+                            </x-cell>
+                            {%- endif -%}
+
+                            <x-cell class="meta" as="center">
+                                {%- liquid
+                                    echo related_collection.title | escape
+                                    if section.settings.related_collections_show_product_counts
+                                        echo '&nbsp;<sup class="count">' | append: related_collection.products_count | append: '</sup>'
+                                    endif
+                                -%}
+                            </x-cell>
+                            </a>
+                        {%- endif -%}
+                    {%- endfor -%}
+                </div>
+            </div>
+        {%- endif -%}
+    {%- endif -%}
+
+    {% if linklists[section.settings.suggestedLinklist].links != empty %}
+    <div class="listoftags listofsuggested">
+        <div class="mob-scroller">
+            {%- for link in linklists[section.settings.suggestedLinklist].links -%}
+            <a href="{{ link.url }}" class="no-style">{{ link.title }}</a>
+            {%- endfor -%}
+        </div>
+    </div>
+    {% endif %}
+
+    {%- if section.settings.quickTags == true and collection.tags != empty -%}
+    <div class="listoftags">
+        <div class="mob-scroller">
+        {%- for tag in collection.tags -%}
+            {%- assign tag_label = tag | downcase -%}{%- if tag contains 'badge:' -%}{%- assign tag_label = tag | remove: 'badge:' -%}{%- endif -%} 
+            {{ tag_label | link_to_tag: tag }} 
+        {%- endfor -%}
+        </div>
+    </div>
+    {%- endif -%}
+
+    <section class="intro">
+        <x-grid columns="3" columns-m="3" columns-s="1">
+            {%- liquid 
+                if collection.image
+                    assign img = collection.image
+                    assign imgType = 'feat'
+                endif
+            -%}
+            {%- if img != nil and section.settings.showFeatImg == true -%}
+            <x-cell span="row" class="center-axyz featuredMedia {{ imgType }}">
+            <picture class="featured">
+                {%- liquid
+                    assign alt = collection.title | escape
+                    assign widths = '750,1000,1280,1500,1750,2000,2500,2750'
+                    assign sizes = '(min-width: 777px) 100vw, 100vw'
+                    render 'global-img' img: img, alt: alt, width: 2750, widths: widths, sizes: sizes, loading: 'eager'
+                -%}
+            </picture>
+            </x-cell>
+            {%- endif -%}
+            <x-cell><h1>{{ collection.title }}</h1></x-cell>
+            <x-cell span-s="row">
+                {%- if collection.description != empty and section.settings.showDescription -%}
+                    <div class="rte">{{ collection.description }}</div>
+                {%- endif -%}
+            </x-cell>
+            <x-cell span-s="row" class="filterBlock">
+            {%- liquid
+                if section.settings.showFilters
+                    render 'global-filters', results: collection 
+                endif
+            -%}
+            </x-cell>
+        </x-grid>
+    </section>
+
+    <section class="product">
+        <x-grid 
+            columns="{{ settings.cardGridCol }}"
+            columns-m="{{ settings.cardGridCol-m }}"
+            columns-s="{{ settings.cardGridCol-s }}"
+
+            id="ajaxSection"
+            class="product-grid"
+
+            grid-gap="{{ settings.cardGridGap }}"
+            card-layout="{{ settings.card_layout }}"
+            {% if settings.card_badges and settings.card_layout == 'underneath' and settings.card_badges_overlay_top %}card-badge="overlay"{% endif %}
+            {% if settings.card_layout == 'underneath' and settings.card_toggle_meta %}toggle-meta="true"{% endif %}
+            clip-meta="{{ settings.card_clip_meta }}"
+            card-media-radius="{{ settings.card_media_radius }}"
+            card-media-padding="{{ settings.card_media_padding }}"
+            card-font-size="{{ settings.card_font_size }}"
+            card-quickbuy-unfloat="{{ settings.card_quick_buy_float }}"
+        >
+            {% for product in collection.products %}
+                {%- liquid
+                    assign loading = 'eager'
+                    if forloop.index > 5
+                        assign loading = 'lazy'
+                    endif
+                
+                    render 'c-prod-card', product: product, loading: loading
+                -%}
+            {% else %}
+                <x-cell span="row" style="height:50vh" class="text-center center-axyz">
+                    <h1>{{ 'collection.noMatches' | t }}</h1>
+                </x-cell>
+            {% endfor %}
+        </x-grid>
+    </section>
+    {%- comment -%} Pagination {%- endcomment -%}
+    {%- render 'global-pagination', paginate: paginate, section: section -%}
+</div>
+</div>
+{%- if section.settings.pagination != 'classic' -%}
+<script type="module">
+import { InfiniScroll } from '{{ 'infiniscroll.min.js' | asset_url }}';
+
+InfiniScroll({
+    itemsContainerSelector: '#ajaxSection',
+    paginationContainerSelector: '#ajaxPagination',
+    loadingText: '{{ 'collection.loading' | t }}',
+    debug: false,
+}).start();
+</script>
+{%- endif -%}
+{%- endpaginate -%}
+
+{% schema %}
+{
+    "name": "Collection",
+    "settings": [
+        {
+            "type": "header",
+            "content": "Banner"
+        },
+        {
+            "type": "checkbox",
+            "id": "showFeatImg",
+            "label": "Show collection image",
+            "default": false,
+            "info": "1200 x 500px recommended"
+        },
+        {
+            "type": "header",
+            "content": "Information"
+        },
+        {
+            "type": "checkbox",
+            "id": "showDescription",
+            "label": "Show description",
+            "default": true
+        },
+        {
+            "type": "checkbox",
+            "id": "showFilters",
+            "label": "Show filters",
+            "info": "Allow your customers to filter collections and search results by product availability, price, color, and more. [Learn more...](https://help.shopify.com/en/manual/online-store/themes/customizing-themes/storefront-filters#add-filters)",
+            "default": true
+        },
+        {
+            "type": "checkbox",
+            "id": "filtersDetached",
+            "label": "Show filters as drawer",
+            "default": false,
+            "visible_if": "{{ section.settings.showFilters }}"
+        },
+        {
+            "type": "header",
+            "content": "Featured collections"
+        },
+        {
+            "type": "collection_list",
+            "id": "collection_list",
+            "label": "Collections",
+            "limit": 20,
+            "info": "Manually select collections to display"
+        },
+        {
+            "type": "checkbox",
+            "id": "show_product_counts",
+            "label": "Show product counts",
+            "info": "Display product numbers in collection links",
+            "default": false,
+            "visible_if": "{{ section.settings.collection_list != empty }}"
+        },
+        {
+            "type": "checkbox",
+            "id": "show_category_image",
+            "label": "Show category image",
+            "info": "Display the category's featured image.",
+            "default": false,
+            "visible_if": "{{ section.settings.collection_list != empty }}"
+        },
+        {
+            "type": "header",
+            "content": "Related collections"
+        },
+        {
+            "type": "checkbox",
+            "id": "related_collections",
+            "label": "Show related collections",
+            "info": "Auto-show collections sharing products with current collection",
+            "default": false
+        },
+        {
+            "type": "checkbox",
+            "id": "related_collections_show_product_counts",
+            "label": "Show product counts",
+            "info": "Display product numbers in collection links",
+            "default": false,
+            "visible_if": "{{ section.settings.related_collections }}"
+        },
+        {
+            "type": "checkbox",
+            "id": "related_collections_show_category_image",
+            "label": "Show category image",
+            "info": "Display the category's featured image.",
+            "default": false,
+            "visible_if": "{{ section.settings.related_collections }}"
+        },
+        {
+            "type": "header",
+            "content": "Navigation links"
+        },
+        {
+            "type": "link_list",
+            "id": "suggestedLinklist",
+            "label": "Custom links",
+            "info": "Add custom navigation links"
+        },
+        {
+            "type": "header",
+            "content": "Tag Filters"
+        },
+        {
+            "type": "checkbox",
+            "id": "quickTags",
+            "label": "Collection tags",
+            "default": false,
+            "info": "Show collection tags as clickable filters"
+        },
+        {
+            "type": "header",
+            "content": "Pagination"
+        },
+        {
+            "type": "select",
+            "id": "pagination",
+            "label": "Pagination type",
+            "default": "classic",
+            "options": [
+                {
+                    "value": "classic",
+                    "label": "Numbers"
+                },
+                {
+                    "value": "scroll",
+                    "label": "Load on scroll"
+                }
+            ]
+        },
+        {
+            "type": "range",
+            "label": "Products per page",
+            "id": "prodXpage",
+            "min": 3,
+            "max": 30,
+            "step": 1,
+            "default": 9
+        },
+        {
+            "type": "header",
+            "content": "Appearance"
+        },
+        {
+            "type": "checkbox",
+            "id": "global_color_scheme",
+            "label": "Use global color scheme",
+            "default": true
+        },
+        {
+            "type": "color_scheme",
+            "id": "color_scheme",
+            "label": "Color scheme",
+            "default": "coretex-1",
+            "visible_if": "{{ section.settings.global_color_scheme == false }}"
+        }
+    ]
+}
+{% endschema %}

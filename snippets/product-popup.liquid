@@ -1,0 +1,40 @@
+{%- comment -%} --- [ Pop up ] --- {%- endcomment -%}
+{%- assign popups = section.blocks | where: "type", "popup" -%}
+{%- for block in popups -%}
+    {%- render 'inc-stylesheet', src: 'c-dialog.css', loading: 'defer', fetchpriority: 'low' -%}
+    {%- if block.settings.content_source == 'page' -%}
+        {%- assign popup_title = block.settings.page.title -%}
+        {%- assign popup_content = block.settings.page.content -%}
+    {%- else -%}
+        {%- assign popup_title = block.settings.popup_title -%}
+        {%- assign popup_content = block.settings.rich_text -%}
+    {%- endif -%}
+    <component-loader><coretex-dialog id="PopupModal-{{ block.id }}" class="coretex-dialog" data-nosdm data-section-id="{{ section.id }}" {% unless section.settings.dialog_global_color_scheme %}color-scheme="{{ section.settings.dialog_color_scheme }}"{% endunless %}>
+        <dialog aria-label="Popup modal" dialog-position="{{ section.settings.dialogPosition }}">
+            <dialog-wrapper aria-label="Popup modal" x-flex direction="column">
+                <header x-flex direction="row" ai="center" jc="between" class="sticky">
+                    <x-cell style="--clipWidth:100%;overflow:hidden;"><h2 class="h3 headingTitle clipThis">{{ popup_title }}</h2></x-cell>
+                    <x-cell><form><button formmethod="dialog" class="is-blank" data-close><span class="visually-hidden">{{ 'header.close' | t }}</span>{%- render 'global-icon' with 'x' -%}</button></form></x-cell>
+                </header>
+                <main><div class="rte">{{ popup_content }}</div></main>
+            </dialog-wrapper>
+        </dialog>
+    </coretex-dialog></component-loader>
+{%- endfor -%}
+
+{%- comment -%} --- [ Size chart popup ] --- {%- endcomment -%}
+{%- assign block_variant_picker = section.blocks | where: "type", "variant_picker" | first -%}
+{%- if block_variant_picker and block_variant_picker.settings.size_chart != blank -%}
+    {%- render 'inc-stylesheet', src: 'c-dialog.css', loading: 'defer', fetchpriority: 'low' -%}
+    <component-loader><coretex-dialog id="PopupModal-{{ block_variant_picker.id }}" class="coretex-dialog sizeChart" data-nosdm data-section-id="{{ section.id }}" {% unless section.settings.dialog_global_color_scheme %}color-scheme="{{ section.settings.dialog_color_scheme }}"{% endunless %}>
+        <dialog aria-label="Size chart modal" dialog-position="{{ section.settings.dialogPosition }}">
+            <dialog-wrapper aria-label="Size chart modal" x-flex direction="column">
+                <header x-flex direction="row" ai="center" jc="between" class="sticky">
+                    <x-cell style="--clipWidth:100%;overflow:hidden;"><h2 class="h3 headingTitle clipThis">{{ block_variant_picker.settings.size_chart.title }}</h2></x-cell>
+                    <x-cell><form><button formmethod="dialog" class="is-blank" data-close><span class="visually-hidden">{{ 'header.close' | t }}</span>{%- render 'global-icon' with 'x' -%}</button></form></x-cell>
+                </header>
+                <main><div class="rte">{{ block_variant_picker.settings.size_chart.content }}</div></main>
+            </dialog-wrapper>
+        </dialog>
+    </coretex-dialog></component-loader>
+{%- endif -%}

@@ -1,0 +1,50 @@
+{% # Component loader %}
+<div id="OpenThinking">{%- render 'inc-components' -%}</div>
+
+{% # theme-check-disable %}
+{%- # Cart -%}
+<script type="application/json" data-ajax-cart-initial-state>{{- cart | json -}}</script>  
+
+{%- # Global -%}
+<script src="{{ 'app.js' | asset_url }}"></script>
+
+{%- # Instantpage -%}
+<script src="{{ 'm-instantpage.min.js' | asset_url }}" type="module"></script>
+
+{%- if request.design_mode -%}
+<script src="{{ 'h-editor.js' | asset_url }}" id="coretex-theme-editor" data-id="{{ shop.id }}" data-shop="{{ shop.permanent_domain | escape }}" data-contact="{{ shop.email }}" data-theme="{{ settings.themeName | escape }}" data-preset="{{ settings.themePreset | escape }}" data-version="{{ settings.themeVersion | escape }}"></script>
+{%- endif -%}
+
+<script>
+window.shopUrl = '{{ request.origin }}';
+window.routes = { cart_add_url: '{{ routes.cart_add_url }}', cart_change_url: '{{ routes.cart_change_url }}', cart_update_url: '{{ routes.cart_update_url }}', cart_url: '{{ routes.cart_url }}', predictive_search_url: '{{ routes.predictive_search_url }}' };
+window.cartStrings = { error: `{{ 'cart.cart_error' | t }}`, quantityError: `{{ 'cart.cart_quantity_error_html' | t }}` };
+window.variantStrings = { addToCart: `{{ 'product.addToCart' | t }}`, preOrder: `{{ 'product.preorder' | t }}`, soldOut: `{{ 'product.soldOut' | t }}`, unavailable: `{{ 'product.unavailable' | t }}`, unavailable_with_option: `{{ 'product.value_unavailable' | t: option_value: '[value]' }}` };
+</script>
+
+{% # SVG Icon Sprites %}
+{%- render 'global-icon' with 'cart-sprites' -%}
+
+{%- if settings.js != blank -%}<script id="bUserJS">{{ settings.js }}</script>{%- endif -%}
+{%- # theme-check-enable -%}
+
+{% comment %}
+    Trackers/analytics are now loaded in the footer 
+    because we had problems with some of them breaking the theme 
+    when loaded in the header.
+{% endcomment %}
+{%- liquid 
+    if settings.pixelPinterest != blank
+        # Pinterest pixel
+        echo settings.pixelPinterest
+    endif
+
+    if settings.pixelTikTok != blank
+        # TikTok pixel
+        echo settings.pixelTikTok
+    endif
+
+    if settings.pixelOther != blank
+        echo settings.pixelOther
+    endif 
+-%}

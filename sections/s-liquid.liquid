@@ -1,0 +1,41 @@
+<div class="liquid-block" {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}>
+{{- section.settings.liquid -}}
+</div>
+
+{% schema %}
+	{
+		"name": "Custom Liquid",
+		"tag": "section",
+		"class": "custom-liquid",
+		"presets": [
+			{
+				"name": "Custom Liquid",
+				"category": "Layout"
+			}
+		],
+		"settings": [
+			{
+				"type": "liquid",
+				"label": "Custom Liquid",
+				"id": "liquid"
+			},
+            {
+                "type": "header",
+                "content": "Appearance"
+            },
+            {
+                "type": "checkbox",
+                "id": "global_color_scheme",
+                "label": "Use global color scheme",
+                "default": true
+            },
+            {
+                "type": "color_scheme",
+                "id": "color_scheme",
+                "label": "Color scheme",
+                "default": "coretex-1",
+                "visible_if": "{{ section.settings.global_color_scheme == false }}"
+            }
+		]
+	}
+{% endschema %}

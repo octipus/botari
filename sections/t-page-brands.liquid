@@ -1,0 +1,48 @@
+{% assign linklist = linklists["brands"] %}
+{% assign collections_per_row = settings.frontpage_collections_per_row %}
+<div class="listing-page" {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}>
+<div class="brands">
+    <section class="intro">
+        <x-grid columns="3" columns-s="1">
+            <x-cell><h1>{{ page.title | escape }}</h1></x-cell>
+            <x-cell>{{ page.content | escape | strip_html }}</x-cell>
+            <x-cell></x-cell>
+        </x-grid>
+    </section>
+
+    <section class="product">
+        <x-grid columns="3" columns-s="1">
+            {% render 'collection-brands', linklist: linklist, collections_per_row: collections_per_row %}
+        </x-grid>
+    </section>
+</div>
+</div>
+{% schema %}
+{
+  "name": "Brands list",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Setup",
+      "info": "You need to first setup your brands listing page. [Learn how](https://bullet.docs.openthinking.net/#/customization?id=brand-listing-page)"
+    },
+    {
+        "type": "header",
+        "content": "Appearance"
+    },
+    {
+        "type": "checkbox",
+        "id": "global_color_scheme",
+        "label": "Use global color scheme",
+        "default": true
+    },
+    {
+        "type": "color_scheme",
+        "id": "color_scheme",
+        "label": "Color scheme",
+        "default": "coretex-1",
+        "visible_if": "{{ section.settings.global_color_scheme == false }}"
+    }
+  ]
+}
+{% endschema %}

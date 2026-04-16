@@ -1,0 +1,200 @@
+{%- render 'inc-stylesheet', src: 's-sections.css' -%}
+
+{%- assign prodXpage = section.settings.prodXpage -%}
+{%- paginate search.results by prodXpage -%}
+
+{%- capture search_input -%}
+<form action="{{ routes.search_url }}" method="get" role="search">
+    <label for="@x@x@" class="visually-hidden">{{ 'search.search' | t }}</label>
+    <input id="@x@x@" type="search" name="q" placeholder="{{ 'search.search' | t }}" value="{{ search.terms | escape }}" class="fullwidth" autofocus>
+    <input type="hidden" name="sort_by" value="{{ search.sort_by | default: search.default_sort_by }}">
+    <input type="hidden" name="options[prefix]" value="last">
+    <button type="submit" class="is-blank fullwidth" hidden>{{ 'search.search' | t }}</button>
+</form>
+{%- endcapture -%}
+
+<div class="search-page" {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}>
+<div class="products">
+    {%- if search.performed and search.results != empty -%}
+    <section class="intro">
+        <x-grid columns="3" columns-s="1">
+            <x-cell span-s="row" class="filter search-input">
+                <x-flex ai="center" style="height:100%">
+                    <x-cell style="padding-inline:var(--buttonPadding)">{%- render 'global-icon' with 'search' -%}</x-cell>
+                    <x-cell class="fullwidth" style="padding-inline-end:var(--buttonPadding)">{{ search_input | replace: '@x@x@', 'topSearchInput' }}</x-cell>
+                </x-flex>
+            </x-cell>
+            <x-cell class="large-only"></x-cell>
+            <x-cell span-s="row" as="center" class="filterBlock">
+                {%- liquid
+                    if section.settings.showFilters
+                        render 'global-filters', results: search 
+                    endif
+                -%}
+            </x-cell>
+        </x-grid>
+    </section>
+    {%- endif -%}
+
+    <section class="results product">
+        <x-grid 
+            columns="{{ settings.cardGridCol }}"
+            columns-m="{{ settings.cardGridCol-m }}"
+            columns-s="{{ settings.cardGridCol-s }}"
+
+            id="ajaxSection"
+            class="product-grid"
+
+            grid-gap="{{ settings.cardGridGap }}"
+            card-layout="{{ settings.card_layout }}"
+            {% if settings.card_badges and settings.card_layout == 'underneath' and settings.card_badges_overlay_top %}card-badge="overlay"{% endif %}
+            {% if settings.card_layout == 'underneath' and settings.card_toggle_meta %}toggle-meta="true"{% endif %}
+            clip-meta="{{ settings.card_clip_meta }}"
+            card-media-radius="{{ settings.card_media_radius }}"
+            card-media-padding="{{ settings.card_media_padding }}"
+            card-font-size="{{ settings.card_font_size }}"
+            card-quickbuy-unfloat="{{ settings.card_quick_buy_float }}"
+        >
+            {% if search.performed and search.results_count != 0 %}
+                {%- for item in search.results -%}
+                    {%- case item.object_type -%}
+                    {%- when 'product' -%}
+                        {%- liquid
+                            assign loading = 'eager'
+                            if forloop.index > 5
+                                assign loading = 'lazy'
+                            endif
+                        
+                            render 'c-prod-card', product: item, loading: loading
+                        -%}
+                        {%- when 'article' -%}
+                            {%- assign img = item.image -%}
+                            <x-cell class="blog-listing"><div class="posts">{%- render "global-blog-card" for item as article, img: img, alt: img.alt, thumbnail: true, date: true, title: true, excerpt: false -%}</div></x-cell>
+                        {%- when 'page' -%}
+                            <x-cell class="apage">{% render 'global-page-card' for item as page %}</x-cell>
+                    {%- endcase -%}
+                {% else %}
+                    <x-cell span="row" style="height:50vh" class="text-center center-axyz">
+                        <h1>{{ 'collection.noMatches' | t }}</h1>
+                    </x-cell>
+                {% endfor %}
+
+            {% else %}
+                <x-cell span="row" class="noresults">
+                    <x-grid style="--rowGap:var(--padding);width:clamp(250px,90vw,500px);margin: 0 auto" columns="1">
+                        {%- if search.performed -%}
+                            <x-cell>
+                                <h1><label for="bottomSearchInput">{{ 'search.no_results_for' | t: terms: search.terms }}</label></h1>
+                            </x-cell>
+                        {%- else -%}
+                            <x-cell>
+                                <h1><label for="bottomSearchInput">{{ 'search.search' | t }}</label></h1>
+                            </x-cell>
+                        {%- endif -%}
+                        <x-cell>
+                            {{ search_input | replace: '@x@x@', 'centralSearchInput' }}
+                            {%- if search.performed -%}<p>{{ 'search.check_spelling' | t }}</p>{%- endif -%}
+                        </x-cell>
+                    </x-grid>
+                </x-cell>
+            {% endif %}
+        </x-grid>
+    </section>
+
+    {%- liquid 
+        if search.performed and search.results_count > 1
+            render 'global-pagination', paginate: paginate, section: section 
+        endif
+    -%}
+
+</div>
+</div>
+{%- if section.settings.pagination != 'classic' -%}
+<script type="module">
+import { InfiniScroll } from '{{ 'infiniscroll.min.js' | asset_url }}';
+InfiniScroll({
+    itemsContainerSelector: '#ajaxSection',
+    paginationContainerSelector: '#ajaxPagination',
+    loadingText: '{{ 'collection.loading' | t }}',
+    debug: false,
+}).start();
+</script>
+{%- endif -%}
+{%- endpaginate -%}
+
+{% schema %}
+{
+  "name": "Search",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Search behavior",
+      "info": "To enhance the search functionality of your store and tailor the results to your preference, install the Search & Discovery app. [Learn more](https://help.shopify.com/en/manual/online-store/search-and-discovery)"
+    },
+    {
+      "type": "header",
+      "content": "Pagination"
+    },
+    {
+      "type": "select",
+      "id": "pagination",
+      "label": "Type",
+      "default": "classic",
+      "options": [
+        {
+          "value": "classic",
+          "label": "Numbers"
+        },
+        {
+          "value": "scroll",
+          "label": "Load on scroll"
+        }
+      ]
+    },
+    {
+      "type": "range",
+      "label": "Results per page",
+      "id": "prodXpage",
+      "min": 3,
+      "max": 30,
+      "step": 3,
+      "default": 9
+    },
+    {
+        "type": "header",
+        "content": "Filters",
+        "info": "Allow your customers to filter collections and search results by product availability, price, color, and more. [Learn more...](https://help.shopify.com/en/manual/online-store/themes/customizing-themes/storefront-filters#add-filters)"
+    },
+    {
+        "type": "checkbox",
+        "id": "showFilters",
+        "label": "Show filters",
+        "default": true
+    },
+    {
+        "type": "checkbox",
+        "id": "filtersDetached",
+        "label": "Show filters as drawer",
+        "default": false,
+        "visible_if": "{{ section.settings.showFilters }}"
+    },
+    {
+        "type": "header",
+        "content": "Appearance"
+    },
+    {
+        "type": "checkbox",
+        "id": "global_color_scheme",
+        "label": "Use global color scheme",
+        "default": true
+    },
+    {
+        "type": "color_scheme",
+        "id": "color_scheme",
+        "label": "Color scheme",
+        "default": "coretex-1",
+        "visible_if": "{{ section.settings.global_color_scheme == false }}"
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,112 @@
+{%- comment -%}
+    Image
+{%- endcomment -%}
+
+{%- liquid
+    # Lazy loading
+    assign lazy = 'eager'
+    if lazy_load 
+        assign lazy = 'lazy'
+    endif
+
+    # Image widths
+    assign widths = '550,750,950,1280,1426,1646,1946'
+    assign sizes = '(max-width:777px) 100vw, (min-width:778px) 50vw, 100vw'
+
+    # Video
+    assign videoLoop = section.settings.enable_video_looping
+    assign videoAutoplay = section.settings.enable_video_autoplay
+    assign videoControls = section.settings.enable_video_controls
+-%}
+
+{%- if media.media_type == 'image' -%}
+
+{%- if imageZoom -%}<a href="{{ media.preview_image | image_url: width: 2080 }}" target="_blank" class="imgzoomer" data-pswp-width="{{ media.preview_image.width }}" data-pswp-height="{{ media.preview_image.height }}"><span class="visually-hidden">{{ 'product.open_media' | t}}</span>{%- endif -%}
+
+<picture>
+    {{ media.preview_image | image_url: width: 1946 | image_tag:
+        widths: widths,
+        sizes: sizes,
+        loading: lazy,
+        alt: media.preview_image.alt | escape
+    }}
+</picture>
+
+{%- if imageZoom -%}</a>{%- endif -%}
+
+{%- else -%}
+
+{%- comment -%}
+    Video & 3D model
+{%- endcomment -%}
+
+{%- if media.media_type == 'model' -%}
+    <product-model class="deferred-media media xmodel no-js-hidden" data-media-id="{{ media.id }}">
+{%- else -%}
+    <deferred-media class="deferred-media media xvideo no-js-hidden" data-media-id="{{ media.id }}">
+{%- endif -%}
+
+{% if media.media_type == 'video' and videoAutoplay == true %}
+
+	{%- render 'global-video'
+        vid: media, 
+        loop: videoLoop, 
+        autoplay: videoAutoplay, 
+        controls: videoControls, 
+        clickToPlay: true
+	-%}
+
+{% else %}
+
+    <button id="Deferred-Poster-Modal-{{ media.id }}" type="button">
+        <poster-button>
+        {%- liquid 
+            if media.media_type == 'model' 
+                render 'global-icon' with 'model3d'
+            else
+                render 'global-icon' with 'play'
+            endif
+        -%}
+        </poster-button>
+
+        {{ media.preview_image | image_url: width: 1946 | image_tag:
+            widths: widths,
+            sizes: sizes,
+            loading: lazy,
+            alt: media.preview_image.alt | escape
+        }}
+    </button>
+
+    <template>
+    {%- liquid
+        case media.media_type
+        when 'external_video'
+
+            assign video_class = 'js-' | append: media.host
+            if media.host == 'youtube'
+                echo media | external_video_url: autoplay: true, loop: videoLoop, playlist: media.external_id | external_video_tag: class: video_class, loading: "lazy"
+            else
+                echo media | external_video_url: autoplay: true, loop: videoLoop | external_video_tag: class: video_class, loading: "lazy"
+            endif
+
+        when 'video'
+            echo media | media_tag: image_size: "2048x", autoplay: true, loop: videoLoop, controls: false, preload: "none"
+        when 'model'
+            echo media | media_tag: image_size: "2048x", toggleable: true
+        endcase
+    -%}
+    </template>
+{% endif %}
+
+    {%- if media.media_type == 'model' -%}
+    </product-model>
+    {%- if xr_button -%}
+        <button type="button" data-shopify-xr data-shopify-model3d-id="{{ media.id }}" data-shopify-title="{{ product.title | escape }}" data-shopify-xr-hidden>
+            <span>{% render 'global-icon' with 'model3d' %}</span>
+            <small class="text-normal">{{ 'product.in_your_space' | t }}</small>
+        </button>
+    {%- endif -%}
+    {%- else -%}
+    </deferred-media>
+    {%- endif -%}
+{%- endif -%}

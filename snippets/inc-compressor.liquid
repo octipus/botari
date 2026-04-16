@@ -1,0 +1,24 @@
+{%- comment -%}
+    Accepts: 
+        - content:
+        - sWd: {Boolean}
+
+    Usage:
+    {%- capture content %}
+        // Content that you want to "minify"
+    {%- endcapture -%}{%- render 'inc-compressor', content: content, sWd: 'true' -%}
+
+    
+    === [ CORETEX FYI ] ===
+    use only for JS and CSS, do not include the HTML elements <script> or <style> inside the compressor.
+    only the JS/CSS code goes inside!!!
+{%- endcomment -%}
+
+{%- liquid 
+    if sWd == 'false' or request.design_mode == true
+        echo content
+    else
+        assign _content = content | strip_newlines | strip | replace: '    ', '' | replace: '  ', ''
+        echo _content
+    endif 
+-%}

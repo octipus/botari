@@ -1,0 +1,1 @@
+{"sections":{"main":{"type":"page-contact","blocks":{"name":{"type":"fname","settings":{}},"email":{"type":"femail","settings":{}},"phone":{"type":"fphone","settings":{}},"message":{"type":"fmessage","settings":{}},"button":{"type":"fbutton","settings":{}}},"block_order":["name","email","phone","message","button"],"settings":{}}},"order":["main"]}

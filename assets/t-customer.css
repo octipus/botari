@@ -1,0 +1,31 @@
+/*** Login page */
+#recover, #recover + div { display: none }
+#recover:target { display: flex }
+#recover:target + div { display: block }
+#recover:target ~ #login, #recover:target ~ #login + div { display: none }
+
+/*** Addresses */
+.addressBox { padding: var(--padding) 0; margin: var(--padding) auto; border-block-end: var(--globalBorder) }
+
+/*** Account page */
+.account-page { border-block-end: var(--globalBorder) }
+.account-page > x-grid { min-height: 65vh }
+.account-page > x-grid > x-cell { border-inline-end: var(--globalBorder); padding: var(--padding) }
+.account-page > x-grid > x-cell:last-child { border: 0 }
+
+.account-page .table x-grid { --columnGap: 1rem; --rowGap: 1rem }
+.account-page .table .head { border-block-start: var(--globalBorder) }
+.account-page .table .head,
+.account-page .table .body { padding: var(--margin) 0; margin-bottom: var(--margin); border-block-end: var(--globalBorder) }
+.account-page .text-hr.noMargin { margin-top: 0 }
+.account-page form div { margin: var(--padding) 0 }
+
+@media (max-width: 777px) { 
+    .account-page > x-grid > x-cell { border-inline-end: 0; border-block-end: var(--globalBorder) }
+    .account-page > x-grid > x-cell:last-child { border-block-end: 0 }
+}
+
+/*** Register page */
+.register-page .field { display: block; margin-bottom: var(--padding) }
+.register-page [aria-invalid=true] { border-color: var(--red)!important }
+.register-page .errorMsg ul { margin-top: var(--padding) }

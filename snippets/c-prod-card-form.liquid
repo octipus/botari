@@ -1,0 +1,139 @@
+{% doc %}
+    Renders a product card form component with add to cart functionality.
+
+    Supports both single variant and multi-variant products. For multi-variant products,
+    renders a quick buy interface with option selection. For single variants, renders
+    a direct add to cart button. Handles preorder products and availability states.
+
+    @param {product} product - The product object to render the form for (required)
+    @param {object} [section] - Section object for generating unique IDs
+
+    @example
+    {% render 'c-prod-card-form', product: product %}
+
+    @example With section context
+    {% render 'c-prod-card-form', product: product, section: section %}
+{% enddoc %}
+
+{%- assign variant = product.selected_or_first_available_variant -%}
+{%- if product.available and variant.available -%}
+
+{%- liquid
+	# Product form ID for quick view
+	assign product_form_id = 'qv-product-form-' | append: section.id
+
+	# Get selected or first available variant - may be null for invalid combinations
+	assign current_variant = product.selected_or_first_available_variant
+
+	# Check availability - handle null variant case
+	assign variant_available = false
+	if current_variant
+		assign variant_available = current_variant.available
+	endif
+
+	# Check if we have a valid variant combination
+	assign has_valid_variant = false
+	if current_variant
+		assign has_valid_variant = true
+	endif
+
+    # Check if product has preorder tag
+    # Preorder tag (normalize + handle spelling variants)
+    assign pre_order = false
+    assign tags_csv = product.tags | join: ',' | downcase
+    if tags_csv contains 'preorder' or tags_csv contains 'pre-order' or tags_csv contains 'pre order'
+        assign pre_order = true
+    endif
+
+    # Form data attributes for AJAX cart integration
+    assign dataType = 'quick-buy'
+    assign cartSubmit = 'true'
+
+    # Generate appropriate button text based on product state
+    capture cartSubmitButton
+        # Check if product is unavailable
+        unless has_valid_variant
+            echo 'product.unavailable' | t
+        else
+
+            # Check if product is sold out
+            unless variant_available
+                echo 'product.soldOut' | t
+            else
+
+                # Check if product has preorder tag.
+                unless pre_order
+                    echo 'product.addToCart' | t
+                else
+                    echo 'product.preorder' | t
+                endunless
+
+            endunless
+        endunless
+    endcapture
+-%}
+
+{%- if product.variants.size > 1 -%}
+
+        <coretex-quickbuy data-product-handle="{{ product.handle }}" data-base-url="{{ product.url | split: '?' | first }}">
+            <details auto-focus data-close-outside>
+                <summary class="button fullwidth" x-grid columns="fit" style="display:grid;gap:1px">
+                    <x-flex ai="center" span="1" class="button cartSelect elselect">
+                        <span class="clipper" data-menu-button>{{ 'product.selectOption' | t }}</span>
+                    </x-flex>
+                    <x-flex ai="center" span="1" class="button is-primary cardButton{% if settings.card_quick_buy_minimal %} hidden{% endif %}">
+                        <x-flex jc="around" ai="center" class="fullwidth">
+                            {%- if settings.card_quick_buy_price -%}
+                            <x-cell class="xPrice"><span class="uprice">{{ variant.price | money }}</span></x-cell>
+                            {%- endif -%}
+                            <x-cell class="xCTA clipper"><span data-button-text>{{ cartSubmitButton }}</span></x-cell>
+                        </x-flex>
+                    </x-flex>
+                </summary>
+                <details-menu class="quickBuy" src="{{ product.url | split: "?" | first | append: '?section_id=x-quickbuy' }}" preload>
+                    {%- # Loads x-quickbuy.liquid section for multi-variant product selection -%}
+                    <include-fragment>{{ 'general.accessibility.loading' | t }}</include-fragment>
+                </details-menu>
+            </details>
+        </coretex-quickbuy>
+
+{%- else -%}
+
+    <ajax-cart-product-form cart-type="{{ settings.cart_type }}">
+        {%- form 'product', product, id: product_form_id, class: 'form', novalidate: 'novalidate', data-type: dataType, data-cart-submit: cartSubmit -%}
+
+        <x-cell class="superQuickBuy">
+            <input type="hidden" name="id" value="{{ variant.id }}" hidden>
+            <div data-ajax-cart-errors="form"></div>
+
+			{%- # Add to Cart Button for single variant products -%}
+            <button 
+                type="submit" name="add" 
+                preorder="{{ pre_order }}" 
+                class="cardButton is-primary"
+                id="QbSubmitButton-{{ section.id }}"
+                {% unless has_valid_variant and variant_available %}disabled{% endunless %}
+            >
+                <span class="cartPriceAdd fullwidth">
+                    <x-flex class="cta" jc="around" ai="center">
+                        {%- if settings.card_quick_buy_price -%}
+                        <x-cell class="xPrice">{%- render 'c-price', product: product, use_variant: true -%}</x-cell>
+                        {%- endif -%}
+                        <x-cell class="xCTA clipper">
+                            <span class="cartDefault" data-button-text>{{ cartSubmitButton }}</span>
+                            <span class="cartLoading" aria-hidden="true">{{ 'product.addingToCart' | t }}</span>
+                        </x-cell>
+                    </x-flex>
+                </span>
+            </button>
+        </x-cell>
+
+        {%- endform -%}
+    </ajax-cart-product-form>
+{%- endif -%}
+
+{%- else -%}
+    <button class="is-primary soldoutButton" disabled>
+        <span class="cartPriceAdd">{{ 'product.soldOut' | t }}</span>
+    </button>
+{%- endif -%}

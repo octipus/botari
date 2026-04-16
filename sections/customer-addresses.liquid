@@ -1,0 +1,189 @@
+{%- render 'inc-stylesheet', src: 't-customer.css' -%}
+
+{% comment %} Addresses page {% endcomment %}
+<div class="customers account-page">
+<x-grid columns="2" columns-s="1">
+<x-cell>
+    <h1>{{ 'address.addressBook' | t }}</h1>
+    <a href="{{ routes.account_url }}">{{ 'account.return' | t }}</a>
+</x-cell>
+<x-cell>
+{% paginate customer.addresses by 5 %}
+
+{%- comment -%} Tabs URL {%- endcomment -%}
+<x-flex jc="between" wrap="wrap" style="gap:var(--margin)">
+    <x-cell><a href="#login" class="button">{{ 'address.addressBook' | t }}</a></x-cell>
+    <x-cell><a href="#recover" class="button">{{ 'account.addNewAddress' | t }}</a></x-cell>
+</x-flex>
+
+{%- comment -%} Tab: New address {%- endcomment -%}
+<span class="text-hr" id="recover" tabindex="-1">{{ 'account.addNewAddress' | t }}</span>
+<div>
+    <div id="addNew">
+
+        {% form 'customer_address', customer.new_address %}
+        <div>
+            <label for="AddressFirstNameNew">{{ 'register.firstName' | t }}</label>
+            <input type="text" id="AddressFirstNameNew" name="address[first_name]" value="{{ form.first_name }}" autocomplete="given-name" class="fullwidth">
+        </div>
+        <div>
+            <label for="AddressLastNameNew">{{ 'register.lastName' | t }}</label>
+            <input type="text" id="AddressLastNameNew" name="address[last_name]" value="{{ form.last_name }}" autocomplete="family-name" class="fullwidth">
+        </div>
+        <div>
+            <label for="AddressCompanyNew">{{ 'address.company' | t }}</label>
+            <input type="text" id="AddressCompanyNew" name="address[company]" value="{{ form.company }}" autocomplete="organization" class="fullwidth">
+        </div>
+        <div>
+            <label for="AddressAddress1New">{{ 'address.address' | t }}</label>
+            <input type="text" id="AddressAddress1New" name="address[address1]" value="{{ form.address1 }}" autocomplete="street-address address-line1" class="fullwidth">
+        </div>
+        <div>
+            <label for="AddressAddress2New">{{ 'address.address_2' | t }}</label>
+            <input type="text" id="AddressAddress2New" name="address[address2]" value="{{ form.address2 }}" autocomplete="street-address address-line2" class="fullwidth">
+        </div>
+        <div>
+            <label for="AddressCityNew">{{ 'address.city' | t }}</label>
+            <input type="text" id="AddressCityNew" name="address[city]" value="{{ form.city }}" autocomplete="address-level2" class="fullwidth">
+        </div>
+        <div>
+            <label for="AddressCountryNew">{{ 'address.country' | t }}</label>
+            <select id="AddressCountryNew" name="address[country]" data-default="{{ form.country }}">{{ all_country_option_tags }}</select>
+        </div>
+        <div id="AddressProvinceContainerNew" style="display:none">
+            <label for="AddressProvinceNew">{{ 'address.province' | t }}</label>
+            <select id="AddressProvinceNew" name="address[province]" data-default="{{ form.province }}" autocomplete="address-level1"></select>
+        </div>
+        <div>
+            <label for="AddressZipNew">{{ 'address.zip' | t }}</label>
+            <input type="text" id="AddressZipNew" name="address[zip]" value="{{ form.zip }}" autocapitalize="characters" autocomplete="postal-code" class="fullwidth">
+        </div>
+        <div>
+            <label for="AddressPhoneNew">{{ 'address.phone' | t }}</label>
+            <input type="tel" id="AddressPhoneNew" name="address[phone]" value="{{ form.phone }}" autocomplete="phone" inputmode="tel" class="fullwidth">
+        </div>
+
+        <x-grid columns="2">
+            <x-cell ps="center start">
+                <button type="submit" class="is-primary" style="width: inherit;">{{ 'account.add' | t }}</button>
+            
+                <a href="#login" class="button is-blank">{{ 'login.cancel' | t }}</a>
+            </x-cell>
+            <x-cell ps="center end">
+                <style>.filter .filters label{margin-top:0;}</style>
+                {{ form.set_as_default_checkbox }}
+                <label for="address_default_address_new">{{ 'address.setDefault' | t }}</label>
+            </x-cell>
+        </x-grid>
+        {% endform %}
+    </div>
+</div>
+
+{%- comment -%} Tab: Address book {%- endcomment -%}
+<span class="text-hr" id="login" tabindex="-1">{{ 'address.addressBook' | t }}</span>
+<div>
+    {% for address in customer.addresses %}
+    <x-grid columns="2" class="addressBox">
+        <x-cell class="text-start">
+            {% if address == customer.default_address %}
+            <div><small>{{ 'address.default' | t }}</small></div>
+            {% endif %}
+            {{ address | format_address }}
+        </x-cell>
+
+        {%- comment -%} Edit address {%- endcomment -%}
+        <x-cell ps="start end" class="text-end">
+            <button class="text-end button is-primary fireEdit" style="width:inherit" onclick="let toggle = document.getElementById('address-{{ address.id }}'); toggle.style.display = toggle.style.display === 'none' ? '' : 'none'">{{ 'account.edit' | t }}</button>
+
+            <form method="post" action="{{ routes.account_addresses_url }}/{{ address.id }}" style="display:inline;">
+                <input type="hidden" name="_method" value="delete"/>
+                <button type="submit" class="is-blank" style="width:inherit">{{ 'account.delete' | t }}</button>
+            </form>
+        </x-cell>
+    </x-grid>
+
+    <div id="address-{{ address.id }}" style="display:none;">
+        <span class="text-hr" tabindex="-1" id="address--{{ address.id }}">{{ 'account.editAddress' | t }}</span>
+
+        {% form 'customer_address', address %}
+        <div data-address-fields class="address-form">
+            <div>
+                <label for="AddressFirstName_{{ form.id }}">{{ 'register.firstName' | t }}</label>
+                <input type="text" name="address[first_name]" id="AddressFirstName_{{ form.id }}" value="{{ form.first_name }}" autocapitalize="words" class="fullwidth">
+            </div>
+            <div>
+                <label for="AddressLastName_{{ form.id }}">{{ 'register.lastName' | t }}</label>
+                <input type="text" name="address[last_name]" id="AddressLastName_{{ form.id }}" value="{{ form.last_name }}" autocapitalize="words" class="fullwidth">
+            </div>
+            <div>
+                <label for="AddressCompany_{{ form.id }}">{{ 'address.company' | t }}</label>
+                <input type="text" name="address[company]" id="AddressCompany_{{ form.id }}" value="{{ form.company }}" autocapitalize="words" class="fullwidth">
+            </div>
+            <div>
+                <label for="AddressAddress1_{{ form.id }}">{{ 'address.address' | t }}</label>
+                <input type="text" name="address[address1]" id="AddressAddress1_{{ form.id }}" value="{{ form.address1 }}" autocapitalize="words" class="fullwidth">
+            </div>
+            <div>
+                <label for="AddressAddress2_{{ form.id }}">{{ 'address.address_2' | t }}</label>
+                <input type="text" name="address[address2]" id="AddressAddress2_{{ form.id }}" value="{{ form.address2 }}" autocapitalize="words" class="fullwidth">
+            </div>
+            <div>
+                <label for="AddressCity_{{ form.id }}">{{ 'address.city' | t }}</label>
+                <input type="text" name="address[city]" id="AddressCity_{{ form.id }}" value="{{ form.city }}" autocapitalize="words" class="fullwidth">
+            </div>
+            <div>
+                <label for="AddressCountry_{{ form.id }}">{{ 'address.country' | t }}</label>
+                <select name="address[country]" id="AddressCountry_{{ form.id }}" class="address-country-option" data-form-id="{{ form.id }}" data-default="{{ form.country }}">{{ all_country_option_tags }}</select>
+            </div>
+            <div id="AddressProvinceContainer_{{ form.id }}" style="display:none">
+                <label for="AddressProvince_{{ form.id }}">{{ 'address.province' | t }}</label>
+                <select name="address[province]" id="AddressProvince_{{ form.id }}" data-default="{{ form.province }}"></select>
+            </div>
+            <div>
+                <label for="AddressZip_{{ form.id }}">{{ 'address.zip' | t }}</label>
+                <input type="text" name="address[zip]" id="AddressZip_{{ form.id }}" value="{{ form.zip }}" autocapitalize="characters" class="fullwidth">
+            </div>
+            <div>
+                <label for="AddressPhone_{{ form.id }}">{{ 'address.phone' | t }}</label>
+                <input type="tel" name="address[phone]" id="AddressPhone_{{ form.id }}" value="{{ form.phone }}" autocomplete="phone" inputmode="tel" class="fullwidth">
+            </div>
+        </div>
+
+        <x-grid columns="2">
+            <x-cell ps="center start">
+                <button type="submit" class="is-primary" style="width:inherit;">{{ 'account.update' | t }}</button>
+                <button type="button" class="is-blank" data-form-id="{{ form.id }}" style="width:inherit;" onclick="let toggle = document.getElementById('address-{{ address.id }}'); toggle.style.display = toggle.style.display === 'none' ? '' : 'none'">{{ 'login.cancel' | t }}</button>
+            </x-cell>
+            <x-cell ps="center end">
+                <style>.filter .filters label{margin-top:0;}</style>
+                {{ form.set_as_default_checkbox }}
+                <label for="address_default_address_{{ form.id }}">{{ 'address.setDefault' | t }}</label>
+            </x-cell>
+        </x-grid>
+        {% endform %}
+    </div>
+    {% endfor %}
+</div>
+
+{%- comment -%} Pagination {%- endcomment -%}
+{%- if paginate.pages > 1 -%}
+    {% render 'pagination', paginate: paginate %}
+{%- endif -%}
+
+{%- comment -%} 
+    Provinces script
+{%- endcomment -%}
+{%- comment -%} Shopify dependecy to retrive provinces {%- endcomment -%}
+{% # theme-check-disable ParserBlockingScriptTag %}
+{{ "shopify_common.js" | shopify_asset_url | script_tag }}
+{% # theme-check-enable ParserBlockingScriptTag %}
+<script>
+new Shopify.CountryProvinceSelector('AddressCountryNew', 'AddressProvinceNew', { hideElement: 'AddressProvinceContainerNew' });
+{%- for address in customer.addresses -%}
+new Shopify.CountryProvinceSelector('AddressCountry_{{ address.id }}', 'AddressProvince_{{address.id}}', { hideElement: 'AddressProvinceContainer_{{address.id}}'} );
+{%- endfor -%}
+</script>
+{%- endpaginate %}
+</x-cell>
+</x-grid>
+</div>

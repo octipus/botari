@@ -1,0 +1,177 @@
+{%- liquid
+    # Load sections CSS file.
+    render 'inc-stylesheet', src: 's-sections.css'
+
+    assign collections = section.settings.collection_list
+    assign totalCollections = collections.count | plus: 0
+
+    assign collectionUrl = section.settings.url
+    assign collectionUrlLabel = section.settings.label
+
+    assign collectionTitle = section.settings.heading
+
+    assign collectionCount = section.settings.collectionCount
+
+    # Scroller
+    assign scrollerState = section.settings.horizontalScroller
+    case scrollerState
+    when "desk"
+
+        assign horizontalScroll = nil
+        assign hscrollSlide = nil
+        if totalCollections > 3
+            assign horizontalScroll = 'card scroll-snap'
+            assign hscrollSlide = true
+            assign hscrollRun = 'desktop'
+        endif
+
+    when "mob"
+        assign horizontalScroll = 'card scroll-snap-m'
+        assign hscrollSlide = true
+        assign hscrollRun = 'mobile'
+
+    when "both"
+
+        assign horizontalScroll = 'card scroll-snap-m'
+        if totalCollections > 3
+            assign horizontalScroll = 'card scroll-snap scroll-snap-m'
+            assign hscrollSlide = true
+            assign hscrollRun = 'both'
+        endif
+
+    else 
+        assign horizontalScroll = nil
+        assign hscrollSlide = nil
+    endcase
+-%}
+
+<section class="collections-list" {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}>
+{%- comment -%} hscroll-slider {%- endcomment -%}
+{%- if hscrollSlide != nil -%}<hscroll-slider data-run="{{ hscrollRun }}">{%- endif -%}
+{%- if collectionTitle != empty -%}
+<div class="gs-title" x-flex ai="center" jc="between">
+    <x-cell><h2>{{ collectionTitle }}</h2></x-cell>
+    {%- if hscrollSlide != nil -%}<x-flex ai="center" jc="between">
+        <button class="is-blank" hscroll-button-prev aria-label="{{ 'pagination.previous' | t }}" style="padding:0px">
+            {%- render 'global-icon' with 'arrow-left' -%}
+        </button>
+        <button class="is-blank" hscroll-button-next aria-label="{{ 'pagination.next' | t }}" style="padding:0px">
+            {%- render 'global-icon' with 'arrow-right' -%}
+        </button>
+    </x-flex>{%- endif -%}
+</div>
+{%- endif -%}
+
+<x-grid 
+    columns="{{ settings.cardGridCol }}"
+    columns-m="{{ settings.cardGridCol-m }}"
+    columns-s="{{ settings.cardGridCol-s }}"
+
+    {% if hscrollSlide != nil %}hscroll-area{% endif %}
+    class="product-grid cards {{ horizontalScroll }}"
+
+    grid-gap="{{ settings.cardGridGap }}"
+    card-layout="{{ settings.card_layout }}"
+    {% if settings.card_badges and settings.card_layout == 'underneath' and settings.card_badges_overlay_top %}card-badge="overlay"{% endif %}
+    {% if settings.card_layout == 'underneath' and settings.card_toggle_meta %}toggle-meta="true"{% endif %}
+    clip-meta="{{ settings.card_clip_meta }}"
+    card-media-radius="{{ settings.card_media_radius }}"
+    card-media-padding="{{ settings.card_media_padding }}"
+    card-font-size="{{ settings.card_font_size }}"
+    card-quickbuy-unfloat="{{ settings.card_quick_buy_float }}"
+>
+{%- liquid
+    for collection in collections
+        if collection.products_count > 0
+            assign img = collection.featured_image
+            render 'global-collection-card', img: img, collection: collection, collectionCount: collectionCount, placeholder: false, hscrollElement: 'hscroll-slide'
+        endif
+    else
+        render 'global-collection-card', placeholder: true
+    endfor
+-%}
+</x-grid>
+
+{%- comment -%} hscroll-slider buttons {%- endcomment -%}
+{%- if hscrollSlide != nil -%}
+</hscroll-slider>
+{%- comment -%} / hscroll-slider {%- endcomment -%}
+{%- endif -%}
+
+{%- if collectionUrl != blank -%}
+<div class="loadmore"><a href="{{ collectionUrl }}" class="no-style">{{ collectionUrlLabel }}</a></div>
+{%- endif -%}
+</section>
+
+{% schema %}
+{
+  "name": "Featured collections",
+  "class": "feat-collections",
+  "disabled_on": { "groups": ["header", "footer", "aside"] },
+  "presets": [
+    { "name": "Featured collections", "category": "Collections" }
+  ],
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Featured collections",
+      "info": "Leave blank to remove heading."
+    },
+    {
+      "type": "url",
+      "id": "url",
+      "label": "Button link",
+      "info": "Leave blank to remove button."
+    },
+    {
+        "type": "text",
+        "id": "label",
+        "label": "Button label",
+        "default": "View all collections"
+    },
+    {
+        "type": "checkbox",
+        "id": "collectionCount",
+        "label": "Show collection product count",
+        "default": true
+    },
+    {
+      "type": "collection_list",
+      "id": "collection_list",
+      "label": "Collections",
+      "limit": 12
+    },
+    {
+        "type": "select",
+        "id": "horizontalScroller",
+        "label": "Enable horizontal scroll",
+        "default": "none",
+        "options": [
+            { "value": "none", "label": "None" },
+            { "value": "desk", "label": "Desktop" },
+            { "value": "mob", "label": "Mobile" },
+            { "value": "both", "label": "Desktop and mobile" }
+        ]
+    },
+    {
+        "type": "header",
+        "content": "Appearance"
+    },
+    {
+        "type": "checkbox",
+        "id": "global_color_scheme",
+        "label": "Use global color scheme",
+        "default": true
+    },
+    {
+        "type": "color_scheme",
+        "id": "color_scheme",
+        "label": "Color scheme",
+        "default": "coretex-1",
+        "visible_if": "{{ section.settings.global_color_scheme == false }}"
+    }
+  ]
+}
+{% endschema %}

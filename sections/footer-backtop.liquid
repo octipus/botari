@@ -1,0 +1,31 @@
+<section class="bouncebackup" {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}>
+	<a href="#app" class="button is-blank is-currentcolor">{{ 'footer.backToTop' | t }}</a>
+</section>
+
+{% schema %}
+	{
+		"name": "Back-to-top button",
+		"settings": [
+			{
+				"type": "header",
+				"content": "Appearance"
+			},
+			{
+				"type": "checkbox",
+				"id": "global_color_scheme",
+				"label": "Use global color scheme",
+				"default": true
+			},
+			{
+				"type": "color_scheme",
+				"id": "color_scheme",
+				"label": "Color scheme",
+				"default": "coretex-1",
+				"visible_if": "{{ section.settings.global_color_scheme == false }}"
+			}
+		],
+		"enabled_on": {
+			"groups": ["footer"]
+		}
+	}
+{% endschema %}

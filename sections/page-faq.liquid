@@ -1,0 +1,115 @@
+{%- render 'inc-stylesheet', src: 's-sections.css' -%}
+
+<div class="general-page faq-page">
+<section {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}>
+    <x-grid columns="4" columns-s="1">
+        <x-cell>
+            <h1>{{ page.title | escape }}</h1>
+            <br>
+            <div class="rte">{{ page.content }}</div>
+            {%- if section.settings.summary -%}
+            <nav id="summary" class="sticky large-only" style="top: calc(var(--headerHeight) - var(--globalBorderWidth))">
+                <ul class="no-style text-end text-start-s">
+                {% for block in section.blocks %}
+                {%- case block.type -%}
+                {%- when 'heading' -%}
+                <li><a href="#faq-{{ block.settings.heading | escape | strip_html | strip_newlines | url_encode | downcase }}" class="no-style text-uppercase">{{ block.settings.heading }}</a></li>
+                {%- endcase -%}
+                {%- endfor -%}
+                </ul>
+            </nav>
+            {%- endif -%}
+        </x-cell>
+
+        <x-cell class="faqs" span="2.." span-s="row">
+        {% for block in section.blocks %}
+        {%- case block.type -%}
+        {%- when 'question' -%}
+            <details {% if block.settings.expandAnswer == true %}open{% endif %} itemscope itemprop="mainEntity" itemtype="https://schema.org/Question" {{ block.shopify_attributes }}>
+                <summary data-question="{{ 'faqs.question' | t }}" itemprop="name" class="dropdown-caret">{{ block.settings.title | escape }}</summary>
+                <div data-answer="{{ 'faqs.answer' | t }}" itemscope itemprop="acceptedAnswer" itemtype="https://schema.org/Answer">
+                    <div itemprop="text">{{ block.settings.answer }}</div>
+                </div>
+            </details>
+        {%- when 'heading' -%}
+            <h2 classs="h1" id="faq-{{ block.settings.heading | escape | strip_html | strip_newlines | url_encode | downcase }}" {{ block.shopify_attributes }}>{{ block.settings.heading }}</h2>
+        {%- endcase -%}
+        {%- endfor -%}
+        </x-cell>
+    </x-grid>
+</section>
+</div>
+
+{%- if section.settings.summary -%}
+<script>function updateLinkStyles() { const currentFragment = window.location.hash; document.querySelectorAll('a[href^="#"]').forEach(link => { link.style.textDecoration = link.getAttribute('href') === currentFragment ? 'underline' : 'none'; }); } updateLinkStyles(); window.addEventListener('hashchange', updateLinkStyles);</script>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "FAQs",
+  "settings": [
+    {
+        "type": "checkbox",
+        "id": "summary",
+        "label": "Enable summary",
+        "default": false,
+        "info": "Shows a summary link list for quick FAQ group navigation."
+    },
+    {
+        "type": "header",
+        "content": "Appearance"
+    },
+    {
+        "type": "checkbox",
+        "id": "global_color_scheme",
+        "label": "Use global color scheme",
+        "default": true
+    },
+    {
+        "type": "color_scheme",
+        "id": "color_scheme",
+        "label": "Color scheme",
+        "default": "coretex-1",
+        "visible_if": "{{ section.settings.global_color_scheme == false }}"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "heading",
+      "name": "Heading",
+      "settings": [
+        {
+          "type": "text",
+          "id": "heading",
+          "label": "Heading",
+          "default": "Heading separator"
+        }
+      ]
+    },
+    {
+      "type": "question",
+      "name": "Question",
+      "settings": [
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Question",
+          "default": "The question"
+        },
+        {
+          "type": "richtext",
+          "id": "answer",
+          "label": "Answer",
+          "default": "<p>The answer</p>"
+        },
+        {
+          "type": "checkbox",
+          "id": "expandAnswer",
+          "label": "Expand answer by default",
+          "default": false
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

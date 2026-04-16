@@ -1,0 +1,155 @@
+{%- render 'inc-stylesheet', src: 's-sections.css' -%}
+
+<section class="collection-list" {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}>
+    {% if section.settings.heading != blank %}<h2 class="gs-title">{{ section.settings.heading}}</h2>{% endif %}
+    <x-flex direction="column">
+    {%- for block in section.blocks -%}
+        {%- liquid
+            # Determine title: custom title > collection title > placeholder
+            if block.settings.title != blank
+                assign display_title = block.settings.title
+            elsif block.settings.collection != blank
+                assign display_title = block.settings.collection.title
+            else
+                assign display_title = 'collection.collection' | t
+            endif
+
+            # Determine counter: collection size > index
+            if block.settings.collection != blank
+                assign counter = block.settings.collection.all_products_count
+            else
+                assign counter = forloop.index
+            endif
+
+            # Determine image: custom image > collection image > null
+            assign display_image = null
+            if block.settings.image
+                assign display_image = block.settings.image
+            elsif block.settings.collection != blank
+                if block.settings.collection.image
+                    assign display_image = block.settings.collection.image
+                elsif block.settings.collection.featured_image
+                    assign display_image = block.settings.collection.featured_image
+                endif
+            endif
+
+            # Check if media should be inline
+            assign media_container = 'div'
+            assign media_class = 'media'
+            if section.settings.show_media_inline
+                assign media_container = 'x-flex ai="center"'
+                assign media_class = 'mediaStatic'
+            endif
+        -%}
+        <{{media_container}} class="collectionItem" {{ block.shopify_attributes }}>
+            <div class="meta" order="last">
+                <a x-flex direction="row" ai="center" href="{{ block.settings.collection.url }}" class="button is-blank">
+                    <h3 class="title">{{ display_title }}{% if section.settings.show_product_counts %} <sup class="counter large-only">{{ counter }}</sup>{% endif %}</h3>
+                    {% if section.settings.show_category_button %}<span class="arrow large-only" js="center">{{ 'collection.viewCollection' | t }}</span>{% endif %}
+                </a>
+            </div>
+            <div class="{{ media_class }}" order="first">
+                {%- render 'inc-img', 
+                    img: display_image, 
+                    alt: display_title, 
+                    widths: '100,200,250,300',
+                    fallback: true 
+                -%}
+            </div>
+        </{{ media_container }}>
+    {%- endfor -%}
+    </x-flex>
+</section>
+
+{% schema %}
+{
+  "name": "Collection list",
+  "disabled_on": { "groups": ["header", "footer", "aside"] },
+  "settings": [
+    {
+        "type": "text",
+        "id": "heading",
+        "label": "Heading",
+        "default": "Collection list",
+        "info": "Leave blank to remove"
+    },
+    {
+        "type": "checkbox",
+        "id": "show_product_counts",
+        "label": "Show product counts",
+        "default": true
+    },
+    {
+        "type": "checkbox",
+        "id": "show_category_button",
+        "label": "Show view collection button",
+        "default": true
+    },
+    {
+        "type": "checkbox",
+        "id": "show_media_inline",
+        "label": "Show media inline",
+        "default": false
+    },
+    {
+        "type": "header",
+        "content": "Appearance"
+    },
+    {
+        "type": "checkbox",
+        "id": "global_color_scheme",
+        "label": "Use global color scheme",
+        "default": true
+    },
+    {
+        "type": "color_scheme",
+        "id": "color_scheme",
+        "label": "Color scheme",
+        "default": "coretex-1",
+        "visible_if": "{{ section.settings.global_color_scheme == false }}"
+    }
+  ],
+    "blocks": [
+      {
+        "type": "collection",
+        "name": "Collection",
+        "settings": [
+            {
+                "type": "collection",
+                "id": "collection",
+                "label": "Collection"
+            },
+            {
+                "type": "header",
+                "content": "Overrides"
+            },
+            {
+                "type": "text",
+                "id": "title",
+                "label": "Custom title",
+                "info": "Leave blank to use collection title"
+            },
+            {
+                "type": "image_picker",
+                "id": "image",
+                "label": "Custom image",
+                "info": "Leave blank to use collection image"
+            }
+        ]
+      }
+    ],
+  "presets": [
+    {
+      "name": "Collection list",
+      "category": "Collections",
+      "blocks": [
+        { "type": "collection" },
+        { "type": "collection" },
+        { "type": "collection" },
+        { "type": "collection" },
+        { "type": "collection" }
+      ]
+    }
+  ]
+}
+{% endschema %}

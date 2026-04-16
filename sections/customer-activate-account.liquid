@@ -1,0 +1,30 @@
+{%- render 'inc-stylesheet', src: 't-customer.css' -%}
+
+<section class="general-page customers activate-account-page">
+<x-grid columns="2" columns-s="1">
+    <x-cell>
+        <h1>{{ 'account.activateAccount' | t }}</h1>
+    </x-cell>
+    <x-cell>
+		{% form 'activate_customer_password' %}
+		    {%- if form.errors -%}
+		        {{ form.errors | default_errors }}
+		    {%- endif -%}
+		    <p>
+		    	<label for="CustomerPassword">{{ 'login.password' | t }}</label>
+		    	<input type="password" value="" name="customer[password]" id="CustomerPassword" placeholder="{{ 'login.password' | t }}" class="fullwidth">
+		    </p>
+
+		    <p>
+			    <label for="CustomerPasswordConfirmation">{{ 'login.passwordConfirm' | t }}</label>
+			    <input type="password" value="" name="customer[password_confirmation]" id="CustomerPasswordConfirmation" placeholder="{{ 'login.passwordConfirm' | t }}" class="fullwidth">
+		    </p>
+
+		    <p>
+			    <button type="submit" class="is-primary" style="width: inherit;">{{ 'login.submit' | t }}</button>
+			    <button type="submit" name="decline" class="is-blank" style="width: inherit;">{{ 'login.cancel' | t }}</button>
+		    </p>
+		{% endform %}
+	</x-cell>
+</x-grid>
+</section>

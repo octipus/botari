@@ -1,0 +1,614 @@
+{%- liquid 
+# -
+# Variables
+# - 
+    # Check for icons
+    assign show_icons = section.settings.show_icons
+    assign hasBorder = section.settings.show_borders
+    assign outline_links = section.settings.outline_links
+    assign show_dropdown_caret = section.settings.show_dropdown_caret
+    assign expand_central = section.settings.expand_central
+
+# -
+# Blocks
+# -
+    # Detecting if blocks available
+    assign hasMenu = false
+    assign hasUtility = false
+
+    # Count blocks
+    assign block_count = section.blocks.size
+
+    # Loop through blocks
+    for block in section.blocks
+    case block.type
+
+        # Check for 'logo' block type
+        when 'logo'
+            # Logo font
+            assign logoFont = block.settings.logoFont
+            assign logoFontBold = logoFont | font_modify: 'weight', 'bold'
+            assign logoFontItalic = logoFont | font_modify: 'style', 'italic'
+            assign logoFontBoldItalic = logoFontBold | font_modify: 'style', 'italic'
+
+            if block.settings.logoImage == blank
+            capture logoBlock
+                echo logoFont | font_face: font_display: 'swap'
+                echo logoFontBold | font_face: font_display: 'swap'
+                echo logoFontItalic | font_face: font_display: 'swap'
+                echo logoFontBoldItalic | font_face: font_display: 'swap'
+            endcapture
+            endif
+
+        # Check for 'menuLinks' block type
+        when 'menu'
+            assign hasMenu = true
+
+        # Check for 'accounts' block type
+        when 'utility'
+            assign hasUtility = true
+            assign language_selector = false
+            assign country_selector = false
+            assign show_cart = block.settings.show_cart
+            assign show_search = block.settings.show_search
+
+            if block.settings.show_language and localization.available_languages.size > 1
+                assign language_selector = true
+            endif
+
+            if block.settings.show_country and localization.available_countries.size > 1
+                assign country_selector = true
+            endif
+
+    endcase
+    endfor
+
+# -
+# Header position type
+# -
+assign home_overlay = false
+if template.name == "index" and section.settings.homeOverlay
+    assign home_overlay = true
+    if section.settings.headerPosition == true 
+        assign headerPosition = 'fixed'
+    else 
+        assign headerPosition = 'absolute'
+    endif
+else 
+    if section.settings.headerPosition == true 
+        assign headerPosition = 'sticky'
+    else 
+        assign headerPosition = 'inherit'
+    endif
+endif
+
+# -
+# Header Overlay
+# -
+capture overlayHeader
+    # Background fill mode
+    if section.settings.bgFill == 'translucent'
+        echo '--headerBg: rgb(var(--bgRGB) / 0.5); background: var(--headerBg); backdrop-filter: blur(10px);'
+    elsif section.settings.bgFill == 'transparent'
+        echo '--headerBg: transparent; --globalBorder: none; background: transparent!important; border: none'
+    else
+        echo '--headerBg: var(--bg);'
+    endif
+endcapture
+-%}
+
+{%- style -%}
+{{ logoBlock }}
+:where(html) { --headerPosition: {{ headerPosition }}; --logoFontFamily: {{ logoFont.family }},{{ logoFont.fallback_families }}; --logoFontWeight: {{ logoFont.weight }}; --logoFontStyle: {{ logoFont.style }} }
+{% if home_overlay %}[class*="group-header"]:not(.main-header) { display: none } :is(#mainHeader, #mainHeader details.dm > details-menu) { {{ overlayHeader }} }{% endif %}
+{% endstyle -%}
+
+<header id="mainHeader" boxed-mode="{{ section.settings.boxed_mode }}" {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}>
+
+    <x-grid columns="{{ block_count }}"
+        id="headerGrid" 
+        show-borders="{{ hasBorder }}"
+        links-outline="{{ outline_links }}" 
+        dropdown-caret="{{show_dropdown_caret }}" 
+        expand-central="{{ expand_central }}"
+        show-icons="{{ show_icons }}"
+    >
+
+        {%- for block in section.blocks -%}
+        {%- case block.type -%}
+            {%- when 'logo' -%}
+                <x-flex ai="center" jc="{{ block.settings.block_alignment | replace: 'left', 'start' | replace: 'right', 'end' }}" jc-s="center" 
+                    class="bogo" 
+                    style="{{ block.settings.image_size | prepend: '--logoImageSize:' | append: 'px;' }}" 
+                    {{ block.shopify_attributes }}
+                >
+                    <a href="{{ routes.root_url }}">
+                        {%- assign img = block.settings.image -%}
+                        {%- if img -%}
+                            {{ img | image_url: width: 400 | image_tag: class: 'logo', widths: '100,200,400', alt: shop.name | escape }}
+                        {%- else -%}
+                            <div class="logo" style="{{ block.settings.font_size | prepend: '--logoSize:' | append: 'px;' }}">
+                                {%- liquid
+                                    if block.settings.name != blank
+                                        echo block.settings.name
+                                    else 
+                                        echo shop.name
+                                    endif 
+                                -%}
+                            </div>
+                        {%- endif -%}
+                    </a>
+                </x-flex>
+
+            {%- when 'menu' -%}
+                {% assign block_alignment = block.settings.block_alignment | replace: 'left', 'start' | replace: 'right', 'end' %}
+                <x-flex ai="center" jc="{{ block_alignment | replace: 'left', 'start' | replace: 'right', 'end' }}" js="{{ block_alignment | replace: 'left', 'start' | replace: 'right', 'end' }}" class="menu fullwidth large-only"
+                    style="{{ block_alignment | prepend: '--_jc:' | append: ';' }}{{ block.settings.dropdown_alignment | prepend: '--_ji:' | append: ';' }}" 
+                    menu-type="{{ block.settings.menu_type }}"
+                    {{ block.shopify_attributes }}
+                >
+                    <nav x-flex wrap="wrap" jc="{{ block_alignment }}" aria-label="{{ 'header.menu' | t }}">
+                        {%- render 'c-menu-item', links: block.settings.menu.links, level: 1, id: 'mainMenu', menuType: block.settings.menu_type -%}
+                    </nav>
+                </x-flex>
+
+                {%- comment -%} Hamburger button for mobile {%- endcomment -%}
+                <x-flex class="small-only hamburger">
+                    <button class="is-blank text-normal{% if show_icons %} hasIcon{% endif %}" popovertarget="mobmenu">
+                        {%- if show_icons -%}
+                            {%- render 'global-icon' with 'menu' -%}
+                            <span class="visually-hidden">{{ 'header.menu' | t }}</span>
+                        {%- else -%}
+                            {{ 'header.menu' | t }}
+                        {%- endif -%}
+                    </button>
+                </x-flex>
+
+                {%- if block.settings.open_on_hover -%}
+                <script>document.addEventListener('DOMContentLoaded', () => {
+                    const header = document.querySelector('#mainHeader');
+                    const menuContainer = header.querySelector('.menu[menu-type]');
+                    const menuType = menuContainer?.getAttribute('menu-type');
+                    const isMega = menuType === 'mega';
+
+                    // Only select menus that should be interactive
+                    const menuSelector = isMega ? '.closex.lv1' : '.closex';
+                    const menus = header.querySelectorAll(menuSelector);
+
+                    let velocity = 0, timers = {}, openMenus = {}, switchTimer;
+
+                    const cfg = { velocityThreshold: 0.5, closeFast: 150, closeSlow: 250, openDelay: 150 };
+
+                    // Helper: get level from menu element
+                    const getLevel = el => el.classList.contains('lv1') ? 'lv1' : el.classList.contains('lv2') ? 'lv2' : 'lv3';
+
+                    // Helper: get parent menu levels for an element
+                    const getParents = el => {
+                        const parents = [];
+                        let p = el.parentElement;
+                        while (p && p !== header) {
+                        if (p.classList?.contains('closex')) parents.push(getLevel(p));
+                        p = p.parentElement;
+                        }
+                        return parents;
+                    };
+
+                    // Helper: clear timers for specific levels
+                    const clearTimers = (...levels) => levels.forEach(l => clearTimeout(timers[l]));
+
+                    // Helper: close menu after delay
+                    const scheduleClose = (menu, level, delay) => {
+                        clearTimeout(timers[level]);
+                        timers[level] = setTimeout(() => {
+                        menu.removeAttribute('open');
+                        openMenus[level] = null;
+                        a11yDetails();
+                        }, delay);
+                    };
+
+                    // Track velocity
+                    let lastT = Date.now(), lastX = 0, lastY = 0;
+                    header.addEventListener('mousemove', e => {
+                        const dt = Date.now() - lastT;
+                        if (dt > 0) {
+                        const dx = e.clientX - lastX, dy = e.clientY - lastY;
+                        velocity = Math.sqrt(dx * dx + dy * dy) / dt;
+                        }
+                        lastT = Date.now(); lastX = e.clientX; lastY = e.clientY;
+                    });
+
+                    // Close all on header exit
+                    header.addEventListener('mouseleave', () => {
+                        Object.keys(timers).forEach(k => clearTimeout(timers[k]));
+                        timers.global = setTimeout(() => {
+                        menus.forEach(m => m.removeAttribute('open'));
+                        openMenus = {};
+                        a11yDetails();
+                        }, cfg.closeFast);
+                    });
+
+                    header.addEventListener('mouseenter', () => clearTimeout(timers.global));
+
+                    // Handle menu dropdowns
+                    menus.forEach(menu => {
+                        const level = getLevel(menu);
+                        const isTop = level === 'lv1';
+
+                        menu.addEventListener('mouseenter', () => {
+                        clearTimers('global', 'lv1', 'lv2', 'lv3');
+                        if (switchTimer) clearTimeout(switchTimer);
+
+                        const open = () => {
+                            if (openMenus[level] && openMenus[level] !== menu) {
+                            openMenus[level].removeAttribute('open');
+                            }
+                            menu.setAttribute('open', '');
+                            openMenus[level] = menu;
+                            a11yDetails();
+                        };
+
+                        (isTop && velocity > cfg.velocityThreshold) || !isTop
+                            ? (switchTimer = setTimeout(open, cfg.openDelay))
+                            : open();
+                        });
+
+                        menu.addEventListener('mouseleave', e => {
+                        if (e.relatedTarget && menu.contains(e.relatedTarget)) return;
+                        scheduleClose(menu, level, cfg.closeFast);
+                        });
+                    });
+
+                    // Handle regular links
+                    header.querySelectorAll('a:not(summary)').forEach(link => {
+                        link.addEventListener('mouseenter', () => {
+                        const parents = getParents(link);
+                        clearTimers(...parents);
+                        Object.keys(openMenus).forEach(lvl => {
+                            if (!parents.includes(lvl) && openMenus[lvl]) {
+                            scheduleClose(openMenus[lvl], lvl, cfg.closeSlow);
+                            }
+                        });
+                        });
+                    });
+                    });
+                </script>
+                {%- endif -%}
+
+            {%- when 'utility' -%}
+                {% assign block_alignment = block.settings.block_alignment | replace: 'left', 'start' | replace: 'right', 'end' %}
+                <ul x-flex ai="center" jc="{{ block_alignment }}" jc-s="end" class="utility" {{ block.shopify_attributes }}>
+                    {%- render 'header-utility', block: block, show_icons: show_icons, show_cart: show_cart, show_search: show_search -%}
+                </ul>
+
+        {%- endcase -%}
+        {%- endfor -%}
+
+    </x-grid>
+</header>
+
+<script>(() => { document.body.setAttribute('header-type', '{{ headerPosition }}'); document.body.setAttribute('header-boxed', '{{ section.settings.boxed_mode }}'); const updateHeaderVars = () => { const headerElements = document.querySelectorAll('[class*="group-header"]'); const header = document.querySelector('#mainHeader'); const marquee = document.querySelector('.marquee'); let headerGroupHeight = 0; for (const el of headerElements) { if (el) { const rect = el.getBoundingClientRect(); const style = getComputedStyle(el); const marginTop = parseFloat(style.marginTop) || 0; const marginBottom = parseFloat(style.marginBottom) || 0; headerGroupHeight += rect.height + marginTop + marginBottom; } } const getFullHeight = (el) => { if (!el) return 0; const rect = el.getBoundingClientRect(); const style = getComputedStyle(el); const marginTop = parseFloat(style.marginTop) || 0; const marginBottom = parseFloat(style.marginBottom) || 0; return rect.height + marginTop + marginBottom; }; const getHeightWithoutMargin = (el) => { if (!el) return 0; const rect = el.getBoundingClientRect(); return rect.height; }; document.body.style.setProperty('--headerGroupHeight', `${headerGroupHeight}px`); document.body.style.setProperty('--headerHeight', `${getHeightWithoutMargin(header)}px`); document.body.style.setProperty('--headerHeightWM', `${getFullHeight(header)}px`); document.body.style.setProperty('--marqueeHeight', `${getFullHeight(marquee)}px`); }; if (document.fonts?.ready) { document.fonts.ready.then(updateHeaderVars); } else { updateHeaderVars(); } let debouncerer; window.addEventListener('resize', () => { clearTimeout(debouncerer); debouncerer = setTimeout(updateHeaderVars, 100);}); })();</script>
+
+{%- liquid
+# Mobile menu
+if hasMenu 
+    for block in section.blocks
+        if block.type == 'menu'
+            render 'header-mobile', links: block.settings.menu.links, accountLinkMob: section.settings.accountLinkMob, language_selector: language_selector, country_selector: country_selector
+        endif
+    endfor
+endif
+
+# Accounts
+if hasUtility
+    # Search
+    if show_search
+        render 'header-search'
+    endif
+
+    # Cart
+    if show_cart and template != 'cart'
+        render 'header-cart', location: 'drawer'
+    endif 
+endif
+-%}
+
+{% schema %}
+{
+  "name": "Header",
+  "class": "main-header",
+  "settings": [
+    {
+        "type": "paragraph",
+        "content": "Find out how you can customize your header even more. [Learn more](https://docs.openthinking.net/themes/bullet/kb/snippets/#custom-headers)"
+    },
+    {
+      "type": "checkbox",
+      "id": "headerPosition",
+      "label": "Enable sticky header",
+      "default": true
+    },
+    {
+        "type": "checkbox",
+        "id": "boxed_mode",
+        "label": "Enable boxed mode",
+        "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "expand_central",
+      "label": "Expand central column",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "show_dropdown_caret",
+      "label": "Show dropdown caret",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_borders",
+      "label": "Show borders",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "outline_links",
+      "label": "Show link outline - hover",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "show_icons",
+      "label": "Show icons",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "accountLinkMob",
+      "label": "Show user accounts - mobile",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Home page header overlay",
+      "info": "When enabled, this option will hide all header group sections except the header.",
+      "visible_if": "{{ section.settings.homeOverlay }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "homeOverlay",
+      "label": "Overlay header",
+      "default": false
+    },
+    {
+      "type": "select",
+      "id": "bgFill",
+      "label": "Background type",
+      "visible_if": "{{ section.settings.homeOverlay }}",
+      "default": "transparent",
+      "options": [
+        {
+          "value": "solid",
+          "label": "Solid"
+        },
+        {
+          "value": "translucent",
+          "label": "Translucent"
+        },
+        {
+          "value": "transparent",
+          "label": "Transparent"
+        }
+      ]
+    },
+    {
+      "type": "header",
+      "content": "Appearance"
+    },
+    {
+        "type": "checkbox",
+        "id": "global_color_scheme",
+        "label": "Use global color scheme",
+        "default": true
+    },
+    {
+        "type": "color_scheme",
+        "id": "color_scheme",
+        "label": "Color scheme",
+        "default": "coretex-1",
+        "visible_if": "{{ section.settings.global_color_scheme == false }}"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "logo",
+      "name": "Logo",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "header",
+          "content": "Image"
+        },
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Image"
+        },
+        {
+          "type": "range",
+          "id": "image_size",
+          "min": 20,
+          "max": 120,
+          "step": 5,
+          "unit": "px",
+          "label": "Size",
+          "default": 20,
+          "visible_if": "{{ block.settings.image }}"
+        },
+        {
+          "type": "header",
+          "content": "Text",
+          "visible_if": "{{ block.settings.image == blank }}"
+        },
+        {
+          "type": "text",
+          "id": "name",
+          "label": "Text",
+          "visible_if": "{{ block.settings.image == blank }}"
+        },
+        {
+          "type": "font_picker",
+          "label": "Font",
+          "id": "logo_font",
+          "default": "inter_n4",
+          "visible_if": "{{ block.settings.image == blank }}",
+          "info": "Selecting a different font can affect the speed of your store. [Learn more about system fonts.](https://help.shopify.com/en/manual/online-store/store-speed/improving-speed#fonts)"
+          
+        },
+        {
+          "type": "range",
+          "id": "font_size",
+          "min": 10,
+          "max": 30,
+          "step": 1,
+          "unit": "px",
+          "label": "Size",
+          "default": 15,
+          "visible_if": "{{ block.settings.image == blank }}"
+        },
+        {
+            "type": "header",
+            "content": "Alignment"
+        },
+        {
+            "type": "text_alignment",
+            "id": "block_alignment",
+            "label": "Block",
+            "default": "left"
+        }
+      ]
+    },
+    {
+      "type": "menu",
+      "name": "Primary menu",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "link_list",
+          "id": "menu",
+          "label": "Menu",
+          "default": "main-menu"
+        },
+        {
+            "type": "select",
+            "id": "menu_type",
+            "label": "Menu type - desktop",
+            "default": "dropdown",
+            "options": [
+                {
+                    "value": "dropdown",
+                    "label": "Dropdown"
+                },
+                {
+                    "value": "dropdown-compact",
+                    "label": "Dropdown - compact"
+                },
+                {
+                    "value": "mega",
+                    "label": "Mega"
+                }
+            ]
+        },
+        {
+            "type": "checkbox",
+            "id": "open_on_hover",
+            "label": "Open on hover - desktop",
+            "default": false,
+            "visible_if": "{{ section.settings.dropdown-compact != 'dropdown-compact' }}"
+        },
+        {
+            "type": "header",
+            "content": "Alignment"
+        },
+        {
+            "type": "text_alignment",
+            "id": "block_alignment",
+            "label": "Block",
+            "default": "center"
+        },
+        {
+            "type": "text_alignment",
+            "id": "dropdown_alignment",
+            "label": "Text alignment",
+            "default": "left",
+            "visible_if": "{{ section.settings.dropdown-compact != 'dropdown-compact' }}"
+        }
+      ]
+    },
+    {
+      "type": "utility",
+      "name": "Secondary menu",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "checkbox",
+          "id": "show_cart",
+          "label": "Show cart",
+          "default": true
+        },
+        {
+          "type": "checkbox",
+          "id": "show_search",
+          "label": "Show search",
+          "default": true
+        },
+        {
+          "type": "checkbox",
+          "id": "accountLink",
+          "label": "Show customer account",
+          "info": "[Activate customer accounts first](/admin/settings/customer_accounts)",
+          "default": true
+        },
+        {
+            "type": "checkbox",
+            "id": "show_language",
+            "label": "Language selector",
+            "info": "[Manage languages](/admin/settings/languages)",
+            "default": false
+        },
+        {
+            "type": "checkbox",
+            "id": "show_country",
+            "label": "Country/region selector",
+            "info": "[Manage countries/regions](/admin/settings/markets)",
+            "default": false
+        },
+        {
+            "type": "header",
+            "content": "Alignment"
+        },
+        {
+            "type": "text_alignment",
+            "id": "block_alignment",
+            "label": "Block",
+            "default": "right"
+        }
+      ]
+    }
+  ],
+  "default": {
+    "blocks": [
+      {
+        "type": "logo"
+      },
+      {
+        "type": "menu"
+      },
+      {
+        "type": "utility"
+      }
+    ]
+  }
+}
+{% endschema %}

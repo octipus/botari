@@ -1,0 +1,65 @@
+<div class="general-page about-page">
+<section class="about" {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}>
+    <x-grid columns="2" columns-s="1">
+        <x-cell class="gallery">
+            {%- liquid 
+                assign img = section.settings.image
+                render 'inc-img' img: img, fallback: true
+            -%}
+        </x-cell>
+
+        <x-cell class="meta">
+            <h1>{% if section.settings.heading != blank %}{{ section.settings.heading }}{% else %}{{ page.title }}{% endif %}</h1>
+            {% if section.settings.contents != blank %}{{ section.settings.contents }}{% else %}<div class="rte">{{ page.content }}</div>{% endif %}
+        </x-cell>
+    </x-grid>
+</section>
+</div>
+
+{% schema %}
+{
+  "name": "About page",
+  "settings": [
+    {
+      "type": "header",
+      "content": "About"
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "Image"
+    },
+    {
+      "type": "paragraph",
+      "content": "If left empty content will be retrieved from the About page."
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading"
+    },
+    {
+      "type": "richtext",
+      "id": "contents",
+      "label": "Body"
+    },
+    {
+        "type": "header",
+        "content": "Appearance"
+    },
+    {
+        "type": "checkbox",
+        "id": "global_color_scheme",
+        "label": "Use global color scheme",
+        "default": true
+    },
+    {
+        "type": "color_scheme",
+        "id": "color_scheme",
+        "label": "Color scheme",
+        "default": "coretex-1",
+        "visible_if": "{{ section.settings.global_color_scheme == false }}"
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,140 @@
+{%- render 'inc-stylesheet', src: 's-sections.css' -%}
+
+<section class="related products no-js-hidden" {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}>
+<product-recommendations class="product product-recommendations page-width" 
+    data-url="{{ routes.product_recommendations_url }}?limit={{ section.settings.numberOfProds }}"
+    data-section-id="{{ section.id }}"
+    data-product-id="{{ product.id }}"
+>
+{% if recommendations.performed and recommendations.products_count > 0 %}
+{%- liquid
+    assign scrollerState = section.settings.horizontalScroller
+    assign totalProducts = recommendations.products_count
+
+    case scrollerState
+    when "desk"
+
+        assign horizontalScroll = nil
+        assign hscrollSlide = nil
+        if totalProducts > 3
+            assign horizontalScroll = 'card scroll-snap'
+            assign hscrollSlide = true
+        endif
+
+    when "mob"
+        assign horizontalScroll = 'card scroll-snap-m'
+        assign hscrollSlide = true
+
+    when "both"
+
+        assign horizontalScroll = 'card scroll-snap-m'
+        if totalProducts > 3
+            assign horizontalScroll = 'card scroll-snap scroll-snap-m'
+            assign hscrollSlide = true
+        endif
+
+    else 
+        assign horizontalScroll = nil
+        assign hscrollSlide = nil
+    endcase
+-%}
+{%- comment -%} hscroll-slider {%- endcomment -%}
+{%- if hscrollSlide != nil -%}<component-loader><hscroll-slider>{%- endif -%}
+<div class="gs-title" x-flex ai="center" jc="between">
+    <x-cell><h2>{{ 'product.youd_also_like' | t }}</h2></x-cell>
+    {%- if hscrollSlide != nil -%}<x-flex ai="center" jc="between" style="gap:var(--margin)">
+        <button class="is-blank" style="padding:0" hscroll-button-prev aria-label="{{ 'pagination.previous' | t }}">
+            {%- render 'global-icon' with 'arrow-left' -%}
+        </button>
+        <button class="is-blank" style="padding:0" hscroll-button-next aria-label="{{ 'pagination.next' | t }}">
+            {%- render 'global-icon' with 'arrow-right' -%}
+        </button>
+    </x-flex>{%- endif -%}
+</div>
+
+<x-grid 
+    columns="{{ settings.cardGridCol }}"
+    columns-m="{{ settings.cardGridCol-m }}"
+    columns-s="{{ settings.cardGridCol-s }}"
+
+    {% if hscrollSlide != nil %}hscroll-area{% endif %}
+    class="product-grid {{ horizontalScroll }}"
+
+    grid-gap="{{ settings.cardGridGap }}"
+    card-layout="{{ settings.card_layout }}"
+    {% if settings.card_badges and settings.card_layout == 'underneath' and settings.card_badges_overlay_top %}card-badge="overlay"{% endif %}
+    {% if settings.card_layout == 'underneath' and settings.card_toggle_meta %}toggle-meta="true"{% endif %}
+    clip-meta="{{ settings.card_clip_meta }}"
+    card-media-radius="{{ settings.card_media_radius }}"
+    card-media-padding="{{ settings.card_media_padding }}"
+    card-font-size="{{ settings.card_font_size }}"
+    card-quickbuy-unfloat="{{ settings.card_quick_buy_float }}"
+>
+{%- liquid
+    for product in recommendations.products
+        render 'c-prod-card', product: product, hscrollElement: 'hscroll-slide'
+    else
+        # If no products show placeholders
+        for i in (1..3)
+            render 'c-prod-card', product: null
+        endfor
+    endfor
+-%}
+</x-grid>
+{%- comment -%} hscroll-slider buttons {%- endcomment -%}
+{%- if hscrollSlide != nil -%}</hscroll-slider></component-loader>{%- endif -%}
+{%- comment -%} / hscroll-slider {%- endcomment -%}
+
+{%- endif -%}
+</product-recommendations>
+</section>
+
+{% schema %}
+{
+    "name": "Product recommendations",
+    "settings": [
+        {
+            "type": "paragraph",
+            "content": "Control product recommendation with \"Shopify Search & Discovery app\", [learn more](https://help.shopify.com/en/manual/online-store/search-and-discovery/product-recommendations)."
+        },
+        {
+            "type": "range",
+            "label": "Products shown",
+            "id": "numberOfProds",
+            "min": 3,
+            "max": 9,
+            "step": 1,
+            "default": 3
+        },
+        {
+            "type": "select",
+            "id": "horizontalScroller",
+            "label": "Enable horizontal scroll",
+            "default": "mob",
+            "options": [
+                { "value": "none", "label": "None" },
+                { "value": "desk", "label": "Desktop" },
+                { "value": "mob", "label": "Mobile" },
+                { "value": "both", "label": "Desktop and mobile" }
+            ]
+        },
+        {
+            "type": "header",
+            "content": "Appearance"
+        },
+        {
+            "type": "checkbox",
+            "id": "global_color_scheme",
+            "label": "Use global color scheme",
+            "default": true
+        },
+        {
+            "type": "color_scheme",
+            "id": "color_scheme",
+            "label": "Color scheme",
+            "default": "coretex-1",
+            "visible_if": "{{ section.settings.global_color_scheme == false }}"
+        }
+    ]
+}
+{% endschema %}

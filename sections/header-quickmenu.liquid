@@ -1,0 +1,95 @@
+{%- capture class -%}
+{%- if section.settings.visibility == 'desktop' %} large-only{% elsif section.settings.visibility == 'mobile' %} small-only{% endif -%}
+{%- endcapture -%}
+
+{%- capture style -%}
+border-block: var(--globalBorder); margin-block-start: calc(-1 * var(--globalBorderWidth));
+{%- endcapture -%}
+
+{%- liquid
+    # Text alignment
+    if section.settings.collapse
+        assign flex_alignment = 'start'
+    else 
+        assign flex_alignment = section.settings.alignment | replace: 'left', 'start' | replace: 'right', 'end'
+    endif
+
+    # Horizontal scroll
+    assign flex_wrap = 'wrap="wrap"'
+    if section.settings.collapse
+        assign flex_wrap = 'wrap="nowrap"'
+    endif
+-%}
+
+<section 
+    class="quick-menu {{ class | strip_newlines | strip }}{% if section.settings.collapse %} fader{% endif %}"
+    style="{{ style | strip_newlines | strip }}"
+    {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}
+>
+    <ul class="no-style inside mob-scroller" x-flex {{ flex_wrap }} wrap-s="nowrap" ai="center" jc="{{ flex_alignment }}" jc-s="start">
+        {%- for link in linklists[section.settings.linklist].links -%}
+        <li><a href="{{ link.url }}" {% if link.active %}aria-current="page"{% endif %} class="button is-blank text-nonecase text-normal" data-active="{{ link.active }}">{{ link.title }}</a></li>
+        {%- endfor -%}
+    </ul>
+</section>
+
+{% schema %}
+{
+	"name": "Quick menu",
+	"class": "quicker-menu",
+	"limit": 1,
+	"enabled_on": { "groups": ["header"] },
+	"presets": [{ "name": "Quick menu" }],
+	"settings": [
+		{
+			"type": "select",
+			"id": "visibility",
+			"label": "Visibility",
+			"default": "both",
+			"options": [
+				{ "value": "desktop", "label": "Desktop only" },
+				{ "value": "mobile", "label": "Mobile only" },
+				{ "value": "both", "label": "Desktop and mobile" }
+			]
+		},
+		{
+			"type": "link_list",
+			"id": "linklist",
+			"label": "Menu",
+			"default": "main-menu",
+			"info": "Displays a single-level menu. Only top-level links are shown."
+		},
+        {
+            "type": "checkbox",
+            "id": "collapse",
+            "label": "Horizontal scroll - desktop",
+            "default": true,
+            "info": "Automatically optimized for mobile."
+        },
+        {
+            "type": "text_alignment",
+            "id": "alignment",
+            "label": "Alignment - desktop",
+            "default": "left",
+            "visible_if": "{{ section.settings.collapse == false }}"
+        },
+		{
+			"type": "header",
+			"content": "Appearance"
+		},
+		{
+			"type": "checkbox",
+			"id": "global_color_scheme",
+			"label": "Use global color scheme",
+			"default": true
+		},
+		{
+			"type": "color_scheme",
+			"id": "color_scheme",
+			"label": "Color scheme",
+			"default": "coretex-1",
+			"visible_if": "{{ section.settings.global_color_scheme == false }}"
+		}
+	]
+}
+{% endschema %}

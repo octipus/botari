@@ -1,0 +1,275 @@
+{%- render 'inc-stylesheet', src: 's-sections.css' -%}
+
+<section class="products-highlight" {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}>
+    {%- if section.settings.heading != blank -%}
+        <h2 class="gs-title">{{ section.settings.heading }}</h2>
+    {%- endif -%}
+
+    <x-grid columns="2" columns-s="1">
+        {%- for block in section.blocks -%}
+            {%- case block.type -%}
+
+                {%- when 'media' -%}
+                    <x-grid columns="stack" class="mediaBlock" {{ block.shopify_attributes }}>
+                        <x-cell class="meta">
+                            <x-flex direction="column" 
+                                ai="{{ block.settings.alignment | replace: 'left', 'start' | replace: 'right', 'end' }}" 
+                                jc="{{ block.settings.alignment_vertical }}"
+                                class="sticky"
+                            >
+                                {%- if block.settings.heading != blank -%}
+                                    <x-cell><h3>{{ block.settings.heading }}</h3></x-cell>
+                                {%- endif -%}
+                                {%- if block.settings.description != blank -%}
+                                    <x-cell><p class="rtw">{{ block.settings.description | replace: '\n', '<br/>' }}</p></x-cell>
+                                {%- endif -%}
+                                {%- if block.settings.label != blank -%}
+                                    <x-cell><a href="{{ block.settings.link | default: '#' }}" class="button">{{ block.settings.label }}</a></x-cell>
+                                {%- endif -%}
+                            </x-flex>
+                        </x-cell>
+
+                        <x-cell class="media">
+                        {%- if block.settings.mediaType == 'video' and block.settings.video != blank -%}
+                            {%- render 'global-video',
+                                vid: block.settings.video,
+                                vidMobile: block.settings.videoMob,
+                                loop: block.settings.video_loop,
+                                autoplay: block.settings.video_autoplay,
+                                muted: block.settings.video_muted,
+                                controls: block.settings.video_controls,
+                                clickToPlay: true
+                            -%}
+                        {%- else -%}
+                            {%- render 'inc-img',
+                                dynamic: true,
+                                img: block.settings.image,
+                                imgMob: block.settings.imageMob,
+                                mediaLoader: true,
+                                fallback: true,
+                                svg: 'lifestyle-2'
+                            -%}
+                        {%- endif -%}
+                        </x-cell>
+                    </x-grid>
+
+                {%- when 'products' -%}
+                    <x-cell class="productsBlock" {{ block.shopify_attributes }}>
+                        {%- liquid
+                            assign product_list = block.settings.product_list
+                        -%}
+
+                        <component-loader><hscroll-slider>
+                        <x-grid
+                            columns="2"
+                            hscroll-area
+                            grid-gap="{{ settings.cardGridGap }}"
+                            card-layout="{{ settings.card_layout }}"
+                            card-media-radius="{{ settings.card_media_radius }}"
+                            card-media-padding="{{ settings.card_media_padding }}"
+                            card-font-size="{{ settings.card_font_size }}"
+                            card-quickbuy-unfloat="{{ settings.card_quick_buy_float }}"
+                            class="product-grid card scroll-snap-m"
+                        >
+                            {%- liquid
+                                for product in product_list limit: 4
+                                    render 'c-prod-card', product: product, hscrollElement: 'hscroll-slide'
+                                else
+                                    for i in (1..4)
+                                        render 'c-prod-card', product: nil, hscrollElement: 'hscroll-slide'
+                                    endfor
+                                endfor
+                            -%}
+                        </x-grid>
+                        </hscroll-slider></component-loader>
+                    </x-cell>
+
+            {%- endcase -%}
+        {%- endfor -%}
+    </x-grid>
+</section>
+
+{% schema %}
+{
+  "name": "Products highlight",
+  "disabled_on": { "groups": ["header", "footer", "aside"] },
+  "max_blocks": 2,
+  "presets": [
+    {
+      "name": "Products highlight",
+      "category": "Products",
+      "blocks": [
+        { "type": "media" },
+        { "type": "products" }
+      ]
+    }
+  ],
+  "settings": [
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Products highlights",
+      "info": "Leave blank to remove heading."
+    },
+    {
+      "type": "header",
+      "content": "Appearance"
+    },
+    {
+      "type": "checkbox",
+      "id": "global_color_scheme",
+      "label": "Use global color scheme",
+      "default": true
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Color scheme",
+      "default": "coretex-1",
+      "visible_if": "{{ section.settings.global_color_scheme == false }}"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "media",
+      "name": "Banner media",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "header",
+          "content": "Media"
+        },
+        {
+          "type": "select",
+          "id": "mediaType",
+          "label": "Type",
+          "default": "image",
+          "options": [
+            { "value": "image", "label": "Image" },
+            { "value": "video", "label": "Video" }
+          ]
+        },
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Desktop image",
+          "visible_if": "{{ block.settings.mediaType == 'image' }}"
+        },
+        {
+          "type": "image_picker",
+          "id": "imageMob",
+          "label": "Mobile image",
+          "visible_if": "{{ block.settings.mediaType == 'image' }}"
+        },
+        {
+          "type": "video",
+          "id": "video",
+          "label": "Desktop video",
+          "visible_if": "{{ block.settings.mediaType == 'video' }}"
+        },
+        {
+          "type": "video",
+          "id": "videoMob",
+          "label": "Mobile video",
+          "visible_if": "{{ block.settings.mediaType == 'video' }}"
+        },
+        {
+          "type": "checkbox",
+          "id": "video_autoplay",
+          "label": "Video autoplay",
+          "default": true,
+          "visible_if": "{{ block.settings.mediaType == 'video' }}"
+        },
+        {
+          "type": "checkbox",
+          "id": "video_loop",
+          "label": "Video loop",
+          "default": true,
+          "visible_if": "{{ block.settings.mediaType == 'video' }}"
+        },
+        {
+          "type": "checkbox",
+          "id": "video_muted",
+          "label": "Video muted",
+          "default": true,
+          "info": "Video is muted by default if autoplay is enabled.",
+          "visible_if": "{{ block.settings.mediaType == 'video' }}"
+        },
+        {
+          "type": "checkbox",
+          "id": "video_controls",
+          "label": "Video controls",
+          "default": false,
+          "visible_if": "{{ block.settings.mediaType == 'video' }}"
+        },
+        {
+          "type": "header",
+          "content": "Content"
+        },
+        {
+          "type": "text",
+          "id": "heading",
+          "label": "Heading",
+          "default": "Heading",
+          "info": "Leave blank to remove"
+        },
+        {
+            "type": "inline_richtext",
+            "id": "description",
+            "label": "Description",
+            "default": "Describe something here.",
+            "info": "Leave blank to remove"
+        },
+        {
+          "type": "text",
+          "id": "label",
+          "label": "Button label",
+          "default": "Shop now",
+          "info": "Leave blank to remove"
+        },
+        {
+          "type": "url",
+          "id": "link",
+          "label": "Button link"
+        },
+        {
+            "type": "text_alignment",
+            "id": "alignment",
+            "label": "Text alignment",
+            "default": "left"
+        },
+        {
+            "type": "select",
+            "id": "alignment_vertical",
+            "label": "Content position",
+            "default": "start",
+            "options": [
+                { "value": "start", "label": "Top" },
+                { "value": "center", "label": "Middle" },
+                { "value": "end", "label": "Bottom" }
+            ]
+        }
+      ]
+    },
+    {
+      "type": "products",
+      "name": "Product grid",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "header",
+          "content": "Products"
+        },
+        {
+          "type": "product_list",
+          "id": "product_list",
+          "label": "Products",
+          "limit": 4,
+          "info": "Select up to 4 products for the 2 x 2 grid"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

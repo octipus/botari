@@ -1,0 +1,124 @@
+{%- if section.settings.homeOnly == false or template.name == 'index' -%}
+{%- render 'inc-stylesheet', src: 's-sections.css' -%}
+
+<section class="marquee" {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}>
+    <bullet-marquee
+        {% if section.settings.marqueeMarquee == true %}go{% endif %} 
+        bullet-reverse="{{ section.settings.marqueeDirection }}" 
+        bullet-speed="{{ section.settings.marqueeSpeeds }}" 
+        bullet-pause="{{ section.settings.marqueePause }}"
+        bullet-image="false"
+    >
+        {%- for i in (1..15) -%}
+        <span class="projectile" {% unless forloop.first %}aria-hidden="true"{% endunless %}>
+            {% if section.settings.notice != blank %}
+            <span>
+            {% if section.settings.link != blank %}<a href="{{ section.settings.link }}" class="no-style" {% unless forloop.first %}aria-hidden="true" tabindex="-1"{% endunless %}>{% endif %}
+                <x-flex ai="center" jc="center" style="gap:var(--marqueeLateralSpace)">
+                    <x-cell>{{ section.settings.notice }}</x-cell> 
+                    {%- if section.settings.image -%}<x-cell>{{ section.settings.image | image_url: height: 65 | image_tag: srcset: nil, loading: 'lazy' }}</x-cell>{%- endif -%}
+                </x-flex>
+            {% if section.settings.link != blank %}</a>{% endif %}
+            </span>
+            {% endif %}
+        </span>
+        {%- endfor -%}
+    </bullet-marquee>
+</section>
+
+{%- endif -%}
+
+{% schema %}
+{
+    "name": "Announcement bar",
+    "class": "announcement-bar",
+    "limit": 2,
+    "enabled_on": { "groups": ["header"] },
+    "presets": [ { "name": "Announcement bar" } ],
+    "settings": [
+        {
+            "type": "checkbox",
+            "id": "homeOnly",
+            "label": "Show only on home page",
+            "default": false
+        },
+        {
+            "type": "checkbox",
+            "id": "marqueeMarquee",
+            "label": "Enable scrolling text",
+            "default": true
+        },
+        {
+            "type": "header",
+            "content": "Scrolling behavior",
+            "visible_if": "{{ section.settings.marqueeMarquee }}"
+        },
+        {
+            "type": "select",
+            "id": "marqueeDirection",
+            "label": "Direction",
+            "default": "false",
+            "visible_if": "{{ section.settings.marqueeMarquee }}",
+            "options": [
+                { "value": "false", "label": "Right to left" },
+                { "value": "true", "label": "Left to right" }
+            ]
+        },
+        {
+            "type": "range",
+            "label": "Speed",
+            "id": "marqueeSpeeds",
+            "min": 10,
+            "max": 100,
+            "step": 5,
+            "default": 40,
+            "visible_if": "{{ section.settings.marqueeMarquee }}"
+        },
+        {
+            "type": "checkbox",
+            "id": "marqueePause",
+            "label": "Pause on hover",
+            "default": true,
+            "visible_if": "{{ section.settings.marqueeMarquee }}"
+        },
+        {
+            "type": "header",
+            "content": "Content"
+        },
+        {
+            "type": "textarea",
+            "id": "notice",
+            "label": "Text",
+            "default": "Announce something here"
+        },
+        {
+            "type": "image_picker",
+            "id": "image",
+            "label": "Icon",
+            "info": "Recommended size: 60 x 60 px"
+        },
+        {
+            "type": "url",
+            "id": "link",
+            "label": "Link"
+        },
+        {
+            "type": "header",
+            "content": "Appearance"
+        },
+        {
+            "type": "checkbox",
+            "id": "global_color_scheme",
+            "label": "Use global color scheme",
+            "default": true
+        },
+        {
+            "type": "color_scheme",
+            "id": "color_scheme",
+            "label": "Color scheme",
+            "default": "coretex-1",
+            "visible_if": "{{ section.settings.global_color_scheme == false }}"
+        }
+    ]
+}
+{% endschema %}

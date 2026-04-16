@@ -1,0 +1,128 @@
+{%- render 'inc-stylesheet', src: 's-sections.css' -%}
+
+{%- if section.settings.marqueeText != blank -%}
+<section class="marquee" 
+    style="--marqueeFontSize:{{ section.settings.font_size | prepend: 'var(--type-' | append: ');' }} --marqueeFontSizeMob:{{ section.settings.font_size_mob | prepend: 'var(--type-' | append: ');' }}"
+    {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}
+>
+    <bullet-marquee go
+        bullet-reverse="{{ section.settings.marqueeDirection }}" 
+        bullet-speed="{{ section.settings.marqueeSpeeds }}" 
+        bullet-pause="{{ section.settings.marqueePause }}"
+    >
+        {%- for i in (1..15) -%}
+        <span class="projectile" {% unless forloop.first %}aria-hidden="true"{% endunless %}>
+            <span>
+            {%- if section.settings.marqueeLink != blank -%}<a href="{{ section.settings.marqueeLink }}" class="no-style" {% unless forloop.first %}aria-hidden="true" tabindex="-1"{% endunless %}>{%- endif -%}
+                <x-flex ai="center" jc="center" style="gap:var(--marqueeLateralSpace)">
+                    <x-cell>{{ section.settings.marqueeText }}</x-cell> 
+                    {%- if section.settings.image -%}<x-cell>{{ section.settings.image | image_url: height: 65 | image_tag: srcset: nil, loading: 'lazy' }}</x-cell>{%- endif -%}
+                </x-flex>
+            {%- if section.settings.marqueeLink != blank -%}</a>{%- endif -%}
+            </span>
+        </span>
+        {%- endfor -%}
+    </bullet-marquee>
+</section>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Scrolling text",
+  "disabled_on": { "groups": ["header", "footer", "aside"] },
+  "class": "marquee-walker",
+  "presets": [
+    {
+      "name": "Scrolling text",
+      "category": "Content",
+    }
+  ],
+  "settings": [
+    {
+      "type": "text",
+      "id": "marqueeText",
+      "label": "Text",
+      "default": "Announce something here"
+    },
+    {
+        "type": "image_picker",
+        "id": "image",
+        "label": "Image icon",
+        "info": "60 x 60 px recommended"
+    },
+    {
+        "type": "header",
+        "content": "Content"
+    },
+    {
+      "type": "url",
+      "id": "marqueeLink",
+      "label": "Link"
+    },
+    {
+        "type": "select",
+        "id": "marqueeDirection",
+        "label": "Scroll direction",
+        "default": "false",
+        "options": [
+            { "value": "false", "label": "Right to left" },
+            { "value": "true", "label": "Left to right" }
+        ]
+    },
+    {
+        "type": "range",
+        "label": "Scrolling speed",
+        "id": "marqueeSpeeds",
+        "min": 10,
+        "max": 100,
+        "step": 5,
+        "default": 40
+    },
+    {
+        "type": "checkbox",
+        "id": "marqueePause",
+        "label": "Pause scrolling on hover",
+        "default": true
+    },
+    {
+      "type": "header",
+      "content": "Text"
+    },
+    {
+      "type": "range",
+      "id": "font_size",
+      "label": "Size - desktop",
+      "min": 1,
+      "max": 30,
+      "step": 1,
+      "default": 3
+    },
+    {
+      "type": "range",
+      "id": "font_size_mob",
+      "label": "Size - mobile",
+      "min": 1,
+      "max": 30,
+      "step": 1,
+      "default": 3
+    },
+    {
+        "type": "header",
+        "content": "Appearance"
+    },
+    {
+        "type": "checkbox",
+        "id": "global_color_scheme",
+        "label": "Use global color scheme",
+        "default": true
+    },
+    {
+        "type": "color_scheme",
+        "id": "color_scheme",
+        "label": "Color scheme",
+        "default": "coretex-1",
+        "visible_if": "{{ section.settings.global_color_scheme == false }}"
+    }
+  ]
+}
+{% endschema %}

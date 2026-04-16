@@ -1,0 +1,68 @@
+{%- comment -%}
+	- Used: globally as "product card"
+	- Include: {%- render 'global-product-card' for product as product, class: your-class -%}
+	- Enclose in <x-grid>
+{%- endcomment -%}
+
+{%- liquid 
+	# Used for image sizes
+	assign vw = 100 | divided_by: settings.cardGridCol | append: 'vw'
+	assign vw_s = 100 | divided_by: settings.cardGridCol-s | append: 'vw'
+-%}
+
+{% if placeholder %}
+
+    {%- for i in (1..settings.cardGridCol) -%}
+    <x-flex direction="column" class="card-body" {{ hscrollElement }}>
+    {%- # Image -%}
+        <x-cell class="media">{%- render 'inc-img', img: null, fallback: true -%}</x-cell>
+
+    {%- # Meta -%}
+        <x-flex direction="row" jc="between" class="meta">
+            <x-cell class="title"><h2 class="h4">{{ 'collection.featuredCollection' | t }}</h2></x-cell>
+        </x-flex>
+    </x-flex>
+    {%- endfor -%}
+
+{%- else -%}
+
+<x-flex direction="column" class="card-body" {{ hscrollElement }}>
+{%- # Image -%}
+    <x-cell class="media">
+        <a href="{{ collection.url }}">
+            {%- if img -%}
+                {%- capture sizes -%}(max-width:777px) {{ vw_s }}, (min-width:778px) {{ vw }}, 100vw{%- endcapture -%}
+                {%- liquid
+                    assign alt = collection.title | escape
+                    assign width = 1280
+                    assign widths = '450,550,750,950,1100,1280'
+                    assign loading = loading | default: 'lazy'
+                    assign ph = false
+
+                    render 'inc-img', img: img, width: width, widths: widths, sizes: sizes, ph: ph, loading: loading, alt: alt
+                -%}
+            {%- else -%}
+                {% # No image placeholder %}
+                {% # theme-check-disable %}
+                <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=" width="5000" height="5000" alt="No image" loading="lazy">
+                {% # theme-check-enable %}
+            {%- endif -%}
+        </a>
+    </x-cell>
+
+{%- # Meta -%}
+    <x-flex direction="row" jc="between" class="meta">
+        <x-cell class="title">
+            <h2 class="h4">
+                <a href="{{ collection.url }}" tabindex="-1">{{ collection.title }}</a>
+            </h2>
+        </x-cell>
+        {%- if collectionCount -%}
+        <x-cell class="counter">
+            <span>{{ collection.all_products_count }}</span>
+        </x-cell>
+        {%- endif -%}
+    </x-flex>
+</x-flex>
+
+{%- endif -%}

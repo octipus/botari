@@ -1,0 +1,487 @@
+{%- assign img = section.settings.image -%}
+
+<promo-popup
+    class="promo coretex-dialog"
+    data-section-id="{{ section.id }}"
+    data-expire="{{ section.settings.expire }}"
+    data-trigger="{{ section.settings.open_trigger }}"
+    data-delay="{{ section.settings.delay }}"
+    data-scroll-type="{{ section.settings.scroll_type }}"
+    data-scroll-percent="{{ section.settings.scroll_percent }}"
+    data-scroll-px="{{ section.settings.scroll_px }}"
+    data-design-mode="{{ request.design_mode }}"
+    image-position="{{ section.settings.imagePosition }}"
+    style="{{ section.settings.dialogWidth | prepend: '--dialogWidth:' | append: ';' }}"
+    {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}
+>
+    {%- if section.settings.show_reopen_button -%}
+        <button open-promo class="button reopen-button clippa" hidden>{{ section.settings.reopen_button_text }}</button>
+    {%- endif -%}
+
+    <dialog dialog-position="{{ section.settings.dialogPosition}}" dialog-position-s="{{ section.settings.dialogPositionMob }}" class="{{ section.settings.text_align | replace: 'left', 'start' | replace: 'right', 'end' }} promoModal">
+        <style>promo-popup.coretex-dialog dialog::backdrop { {%- unless section.settings.backdrop -%}background:transparent!important;backdrop-filter:none!important;{%- endunless -%} }</style>
+        <x-flex jc="between" ai="center" class="header">
+            <x-cell><h2 class="visually-hidden">{{ section.settings.heading }}</h2></x-cell>
+            <x-cell><form>
+                <button formmethod="dialog" value="cancel" class="has-icon is-circle" aria-label="{{ 'header.close' | t }}">
+                    <span class="visually-hidden">{{ 'header.close' | t }}</span>
+                    {%- render 'global-icon' with 'x' -%}
+                </button>
+            </form></x-cell>
+        </x-flex>
+
+        <x-grid columns="fit" class="contento" class="promoBody">
+            {%- liquid
+                if img != nil 
+                    if section.settings.showImageMob != true
+                        assign pclass = 'large-only'
+                    endif
+                    render 'inc-img', img: img, widths: '480,640,900', pclass: pclass
+                endif
+            -%}
+
+            <x-flex direction="column" jc="center" class="modal">
+                <x-cell order="1" class="heading">
+                    <h3 class="h1">{{ section.settings.heading }}</h3>
+                </x-cell>
+                <x-cell order="2" class="description">{{ section.settings.description }}</x-cell>
+                <x-flex wrap="wrap" jc="{{ section.settings.text_align | replace: 'left', 'start' | replace: 'right', 'end' }}" order="3" class="buttons">
+                    {%- if section.settings.button_1_text != blank and section.settings.button_1_link != blank -%}
+                        <a href="{{ section.settings.button_1_link }}" class="button clippa">{{ section.settings.button_1_text }}</a>
+                    {%- endif -%}
+                    {%- if section.settings.button_2_text != blank and section.settings.button_2_link != blank -%}
+                        <a href="{{ section.settings.button_2_link }}" class="button clippa">{{ section.settings.button_2_text }}</a>
+                    {%- endif -%}
+                </x-flex>
+            </x-flex>
+        </x-grid>
+    </dialog>
+</promo-popup>
+
+{% style %}
+/*** 
+    * [S] Overlay Promo
+***/
+promo-popup {
+    --hLine: 0px;
+    display: block;
+
+    &.coretex-dialog {
+        --dialogRadius: var(--radius-2);
+        --dialogPadding: 0px;
+        --dialogMaxW: var(--dialogWidth);
+        --dialogBorder: var(--globalBorder);
+        --dialogH: fit-content;
+    }
+
+    .clippa { max-width: 34ch; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+
+    button.reopen-button:not([hidden]) {
+        display: block;
+        position: fixed;
+        inset-block-end: 0px;
+        inset-inline-end: 0px;
+        width: fit-content;
+        margin: var(--space-2);
+        z-index: 999;
+        
+    }
+
+    .header {
+        position: absolute; top: var(--margin); right: var(--margin); z-index: 2;
+        button.is-blank svg.icon { transform: none; pointer-events: none }
+    }
+
+    .contento {
+        --rowGap: var(--space-1);
+        --columnGap: var(--space-1);
+
+        .heading {
+            h3 { --hMargin: 0px }
+        }
+        
+        .buttons { margin-block-start: var(--margin) }
+
+        > *:not(picture) { margin: var(--padding) }
+        picture { outline: var(--globalBorder); max-height: 700px }
+    }
+
+    &:where([image-position="top"],[image-position-m="top"]) .contento picture img { object-fit: cover }
+
+    @media (width >= 777px) {
+        &[image-position="right"] .contento picture { order: 2 }
+        &[image-position="right"] .contento .modal { order: 1 }
+        &[image-position="top"] .contento { --grid-tc: 1 }
+        &[image-position="top"] .contento picture img { height: 40ch }
+    }
+
+    @media (width <= 777px) {
+        &.coretex-dialog.promo dialog { margin-inline: var(--margin) }
+
+        .contento {
+            --grid-tc: 1;
+
+            picture { 
+                order: 1; 
+                img { height: 100% }
+            }
+            .modal { order: 2 }
+        }
+    }
+}
+{% endstyle %}
+
+<script>
+class promoPopup extends HTMLElement {
+    constructor() {
+        super();
+
+        this.modal = this.querySelector('dialog');
+        this.reopenBtn = this.querySelector('button.reopen-button');
+        this.cookieName = 'bullet:promo';
+
+        if (window.location.pathname === '/challenge') return; // On challenge page, close modal
+        if (!this.getCookie(this.cookieName) || this.dataset.designMode === 'true') {
+            this.init();
+        } else if (this.reopenBtn) {
+            this.reopenBtn.hidden = false;
+        }
+
+        // Register event listeners
+        {% if request.design_mode %}
+        if (Shopify.designMode) {
+          document.addEventListener('shopify:section:load',(event) => filterShopifyEvent(event, this, this.open.bind(this)));
+          document.addEventListener('shopify:section:select',(event) => filterShopifyEvent(event, this, this.open.bind(this)));
+          document.addEventListener('shopify:section:deselect',(event) => filterShopifyEvent(event, this, this.close.bind(this)));
+        }
+        {%- endif -%}
+
+        document.querySelectorAll('[open-promo]').forEach((button) => button.addEventListener('click', this.open.bind(this)));
+        document.querySelectorAll('[value="cancel"], [close-promo]').forEach((button) => button.addEventListener('click', this.close.bind(this)));
+        this.querySelectorAll('.buttons a').forEach((link) => link.addEventListener('click', () => this.setCookie(this.cookieName, this.dataset.expire)));
+    }
+
+    init() {
+        if (Shopify && Shopify.designMode) return;
+        if (this.getCookie(this.cookieName)) return;
+
+        const trigger = this.dataset.trigger;
+
+        if (trigger === 'delay') {
+            this._delayTimer = setTimeout(() => {
+                if (!this.modal.hasAttribute('open')) this.open();
+            }, parseInt(this.dataset.delay) * 1000);
+        }
+
+        if (trigger === 'exit_intent') {
+            this._onExitIntent = (e) => {
+                if (e.clientY <= 0) {
+                    this.open();
+                    document.removeEventListener('mouseout', this._onExitIntent);
+                }
+            };
+            document.addEventListener('mouseout', this._onExitIntent);
+        }
+
+        if (trigger === 'scroll') {
+            this._onScroll = () => {
+                const scrollType = this.dataset.scrollType;
+                const scrolled = window.scrollY;
+                let threshold;
+
+                if (scrollType === 'percent') {
+                    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+                    threshold = (parseInt(this.dataset.scrollPercent) / 100) * docHeight;
+                } else {
+                    threshold = parseInt(this.dataset.scrollPx);
+                }
+
+                if (scrolled >= threshold) {
+                    this.open();
+                    window.removeEventListener('scroll', this._onScroll);
+                }
+            };
+            window.addEventListener('scroll', this._onScroll, { passive: true });
+        }
+    }
+    
+
+    open() {
+        if (!this.modal.hasAttribute('open')) {
+            this.modal.showModal();
+            this.removeCookie(this.cookieName);
+            if (this.reopenBtn) this.reopenBtn.hidden = true;
+            this._cleanupTriggers();
+        }
+    }
+
+    _cleanupTriggers() {
+        if (this._delayTimer) clearTimeout(this._delayTimer);
+        if (this._onExitIntent) document.removeEventListener('mouseout', this._onExitIntent);
+        if (this._onScroll) window.removeEventListener('scroll', this._onScroll);
+    }
+
+    close() {
+        this.modal.close();
+        if (this.dataset.designMode === 'true') {
+            this.removeCookie(this.cookieName);
+            return;
+        } else { history.replaceState({}, document.title, window.location.pathname) }
+
+        this.setCookie(this.cookieName, this.dataset.expire);
+        if (this.reopenBtn) this.reopenBtn.hidden = false;
+    }
+
+    getCookie(name) { const match = document.cookie.match(`(^|;)\\s*${name}\\s*=\\s*([^;]+)`); return match ? match[2] : null;}
+    setCookie(name, expire) { document.cookie = `${name}=true; max-age=${expire * 24 * 60 * 60}; path=/`; }
+    removeCookie(name) { document.cookie = `${name}=; max-age=0`; }
+}
+
+customElements.define('promo-popup', promoPopup);
+</script>
+
+{% schema %}
+{
+    "name": "Promo popup",
+    "limit": 1,
+    "enabled_on": { "groups": ["aside"] },
+    "settings": [
+      {
+        "type": "header",
+        "content": "Triggers"
+      },
+      {
+        "type": "select",
+        "id": "open_trigger",
+        "label": "Open trigger",
+        "default": "delay",
+        "options": [
+            { "value": "delay", "label": "Time delay" },
+            { "value": "exit_intent", "label": "Exit intent" },
+            { "value": "scroll", "label": "Scroll position" }
+        ]
+      },
+      {
+        "type": "paragraph",
+        "content": "Exit intent works only on desktop devices.",
+        "visible_if": "{{ section.settings.open_trigger == 'exit_intent' }}"
+      },
+      {
+        "type": "range",
+        "id": "delay",
+        "label": "Delay",
+        "min": 1,
+        "max": 60,
+        "unit": "sec",
+        "step": 1,
+        "default": 5,
+        "visible_if": "{{ section.settings.open_trigger == 'delay' }}"
+      },
+      {
+        "type": "select",
+        "id": "scroll_type",
+        "label": "Scroll type",
+        "default": "percent",
+        "options": [
+            { "value": "percent", "label": "Percentage (%)" },
+            { "value": "px", "label": "Pixels (px)" }
+        ],
+        "visible_if": "{{ section.settings.open_trigger == 'scroll' }}"
+      },
+      {
+        "type": "range",
+        "id": "scroll_percent",
+        "label": "Scroll position",
+        "min": 5,
+        "max": 100,
+        "unit": "%",
+        "step": 5,
+        "default": 50,
+        "visible_if": "{{ section.settings.open_trigger == 'scroll' and section.settings.scroll_type == 'percent' }}"
+      },
+      {
+        "type": "range",
+        "id": "scroll_px",
+        "label": "Scroll position",
+        "min": 100,
+        "max": 5000,
+        "unit": "px",
+        "step": 100,
+        "default": 500,
+        "visible_if": "{{ section.settings.open_trigger == 'scroll' and section.settings.scroll_type == 'px' }}"
+      },
+      {
+        "type": "range",
+        "id": "expire",
+        "label": "Frequency",
+        "info": "Number of days before a closed popup reappears.",
+        "min": 1,
+        "max": 60,
+        "unit": "day",
+        "step": 1,
+        "default": 7
+      },
+      {
+        "type": "header",
+        "content": "Dialog"
+      },
+      {
+        "type": "select",
+        "id": "dialogWidth",
+        "label": "Dialog width",
+        "default": "65ch",
+        "options": [
+            { "value": "90ch", "label": "Normal" },
+            { "value": "65ch", "label": "Compact" }
+        ]
+      },
+      {
+        "type": "select",
+        "id": "dialogPosition",
+        "label": "Dialog position - desktop",
+        "default": "bottom right",
+        "options": [
+            { "value": "center", "label": "Center" },
+            { "value": "top left", "label": "Top left" },
+            { "value": "top center", "label": "Top center" },
+            { "value": "top right", "label": "Top right" },
+            { "value": "bottom left", "label": "Bottom left" },
+            { "value": "bottom center", "label": "Bottom center" },
+            { "value": "bottom right", "label": "Bottom right" }
+        ]
+      },
+      {
+        "type": "select",
+        "id": "dialogPositionMob",
+        "label": "Dialog position - mobile",
+        "default": "bottom",
+        "options": [
+            { "value": "top", "label": "Top" },
+            { "value": "center", "label": "Center" },
+            { "value": "bottom", "label": "Bottom" }
+        ]
+      },
+      {
+        "type": "header",
+        "content": "Image"
+      },
+      {
+        "type": "image_picker",
+        "id": "image",
+        "label": "Image"
+      },
+      {
+        "type": "checkbox",
+        "id": "showImageMob",
+        "label": "Show - mobile",
+        "default": false
+      },
+      {
+        "type": "select",
+        "id": "imagePosition",
+        "label": "Position - desktop",
+        "default": "top",
+        "info": "Mobile defaults to top.",
+        "options": [
+            { "value": "top", "label": "Top" },
+            { "value": "left", "label": "Left" },
+            { "value": "right", "label": "Right" }
+        ]
+      },
+      {
+        "type": "header",
+        "content": "Content"
+      },
+      {
+        "type": "text",
+        "id": "heading",
+        "label": "Heading",
+        "default": "Heading"
+      },
+      {
+        "type": "textarea",
+        "id": "description",
+        "label": "Description",
+        "default": "This is a promotional message."
+      },
+      {
+        "type": "text_alignment",
+        "id": "text_align",
+        "label": "Alignment",
+        "default": "left"
+      },
+      {
+        "type": "header",
+        "content": "Button 1"
+      },
+      {
+        "type": "text",
+        "id": "button_1_text",
+        "label": "Label"
+      },
+      {
+        "type": "url",
+        "id": "button_1_link",
+        "label": "Link"
+      },
+      {
+        "type": "header",
+        "content": "Button 2"
+      },
+      {
+        "type": "text",
+        "id": "button_2_text",
+        "label": "Label"
+      },
+      {
+        "type": "url",
+        "id": "button_2_link",
+        "label": "Link"
+      },
+      {
+        "type": "header",
+        "content": "Reopen button"
+      },
+      {
+        "type": "checkbox",
+        "id": "show_reopen_button",
+        "label": "Show",
+        "info": "Displays a fixed button after the popup is closed, allowing the user to reopen the dialog.",
+        "default": false
+      },
+      {
+        "type": "text",
+        "id": "reopen_button_text",
+        "label": "Label",
+        "default": "Get 10% off",
+        "visible_if": "{{ section.settings.show_reopen_button }}"
+      },
+      {
+        "type": "header",
+        "content": "Appearance"
+      },
+      {
+        "type": "checkbox",
+        "id": "backdrop",
+        "label": "Show backdrop",
+        "default": false
+      },
+      {
+        "type": "checkbox",
+        "id": "global_color_scheme",
+        "label": "Use global color scheme",
+        "default": true
+      },
+      {
+        "type": "color_scheme",
+        "id": "color_scheme",
+        "label": "Color scheme",
+        "default": "coretex-1",
+        "visible_if": "{{ section.settings.global_color_scheme == false }}"
+      }
+    ],
+    "presets": [
+        { "name": "Promo popup" }
+    ]
+}
+{% endschema %}

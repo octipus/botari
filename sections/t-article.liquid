@@ -1,0 +1,230 @@
+<div class="blog-page" {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}>
+<section class="post">
+<x-grid columns="8" columns-s="1">
+    <x-cell span="1+2" class="meta">
+    <aside class="stick">
+        <div>
+            <h1>{{ article.title }}</h1>
+            {%- if section.settings.date == true -%}<span class="date"><time datetime="{{ article.published_at | date: '%Y-%m-%d' }}">{{ article.published_at | time_tag: format: 'date' }}</time></span>{%- endif -%}
+            {%- if section.settings.author == true -%}<span class="author">{{ article.author }}</span>{%- endif -%}
+        </div>
+
+        {%- if section.settings.image == true and article.image != nil -%}
+        <picture>
+        {%- liquid
+            assign img = article.image 
+            echo img | image_url: width: 940, height: 940, crop: 'center' | image_tag: widths: '360,533,720,940', loading: 'eager', alt: img.alt | escape
+        -%}
+        </picture>
+        {%- endif -%}
+
+        {%- if section.settings.share == true -%}
+        <div class="sharing coverlayer">
+            <x-flex jc="between" ai="center" class="mob-scroller">
+                <x-cell><h3 class="h5">{{ 'product.share' | t }}</h3></x-cell>
+                <x-cell>
+                    <div>
+                    {%- liquid
+                        assign shareImage = article.image
+                        render 'global-share', shareTitle: article.title, shareUrl: article.url, shareImage: shareImage
+                    -%}
+                    </div>
+                </x-cell>
+            </x-flex>
+        </div>
+        {%- endif -%}
+    </aside>
+    </x-cell>
+
+    <x-cell span="3..">
+        <article>
+            <div class="rte">{{ article.content }}</div>
+        </article>
+
+        <comments-section id="comments">
+        {%- if blog.comments_enabled? -%}
+            {%- if article.comments_count > 0 -%}
+            {%- assign anchorId = '#Comments-' | append: article.id -%}
+
+            <h2 id="Comments-{{ article.id }}" class="text-hr">{{ 'blog.comments' | t: count: article.comments_count }}</h2>
+
+            {% paginate article.comments by 5 %}
+            <div>
+                {%- if comment.status == 'pending' and comment.content -%}
+                <article class="acomment" id="{{ comment.id }}">
+                    <x-grid columns-s="1" style="gap:1rem">
+                        <x-cell><span>{{ comment.author }}</span></x-cell>
+                        <x-cell span="2.." span-s="row">{{ comment.content }}</x-cell>
+                    </x-grid>
+                </article>
+                {%- endif -%}
+
+                {%- for comment in article.comments -%}
+                <article class="acomment" id="{{ comment.id }}">
+                    <x-grid columns-s="1" style="gap:1rem">
+                        <x-cell>
+                            <span>{{ comment.author }}</span> <br>
+                            <span><small>{{ comment.created_at | time_tag: format: 'date' }}</small></span>
+                        </x-cell>
+                        <x-cell span="2.." span-s="row">{{ comment.content }}</x-cell>
+                    </x-grid>
+                </article>
+                {%- endfor -%}
+
+                <hr>
+
+                {% render 'pagination', paginate: paginate, anchor: anchorId %}
+            </div>
+            {% endpaginate %}
+
+        {%- endif -%}
+
+        {% form 'new_comment', article %}
+            {%- liquid
+                assign post_message = 'blog.success'
+                if blog.moderated? and comment.status == 'unapproved'
+                assign post_message = 'blog.success_moderated'
+                endif
+            -%}
+            
+            <h2 class="text-hr">{{ 'blog.comment_form_title' | t }}</h2>
+        {%- if form.errors -%}
+            <div class="form-error" role="alert">
+                <p>
+                    {{ 'blog.error_heading' | t }}
+                </p>
+            </div>
+
+            <ul class="what2fix">
+            {%- for field in form.errors -%}
+            <li>
+                <a href="#CommentForm-{{ field }}">
+                {%- if form.errors.translated_fields[field] contains 'author' -%}
+                    {{ 'contact.name' | t }}
+                {%- elsif form.errors.translated_fields[field] contains 'body'-%}
+                    {{ 'contact.message' | t }}
+                {%- else -%}
+                    {{ form.errors.translated_fields[field] }}
+                {%- endif -%}
+                {{ form.errors.messages[field] }}
+                </a>
+            </li>
+            {%- endfor -%}
+            </ul>
+        {%- elsif form.posted_successfully? -%}
+            <div class="form-success" role="status">
+                <p class="form-status">{{ post_message | t }}</p>
+            </div>
+        {%- endif -%}
+
+        <div {% if blog.moderated? == false %} class="article-template__comments-fields"{% endif %}>
+        <div>
+            <div>
+                <label for="CommentForm-author">{{ 'contact.name' | t }}</label>
+                <input type="text" name="comment[author]" id="CommentForm-author" class="fullwidth" autocomplete="name" value="{{ form.author }}" placeholder="{{ 'contact.name' | t }}" aria-required="true"
+                {% if form.errors contains 'author' %}
+                aria-invalid="true"
+                aria-describedby="CommentForm-author-error"
+                {% endif %}>
+
+                {%- if form.errors contains 'author' -%}
+                <small id="CommentForm-author-error">
+                    <span>{{ 'contact.name' | t }} {{ form.errors.messages['author'] }}.</span>
+                </small>
+                {%- endif -%}
+            </div>
+
+            <div>
+                <label for="CommentForm-email">{{ 'contact.email' | t }}</label>
+                <input type="email" name="comment[email]" id="CommentForm-email" autocomplete="email" class="fullwidth" value="{{ form.email }}" placeholder="{{ 'contact.email' | t }}" autocorrect="off" autocapitalize="off" aria-required="true"
+                {% if form.errors contains 'email' %}
+                aria-invalid="true"
+                aria-describedby="CommentForm-email-error"
+                {% endif %}>
+
+                {%- if form.errors contains 'email' -%}
+                <small id="CommentForm-email-error">
+                    <span>{{ 'contact.email' | t }} {{ form.errors.messages['email'] }}.</span>
+                </small>
+                {%- endif -%}
+            </div>
+        </div>
+                    
+            <p>
+                <label for="CommentForm-body">{{ 'contact.message' | t }}</label>
+                <textarea rows="10" name="comment[body]" id="CommentForm-body" class="fullwidth" placeholder="{{ 'contact.message' | t }}" 
+                aria-required="true"
+                {% if form.errors contains 'body' %}
+                aria-invalid="true"
+                aria-describedby="CommentForm-body-error"
+                {% endif %}>{{ form.body }}</textarea>
+            </p>
+
+            {%- if form.errors contains 'body' -%}
+            <small id="CommentForm-body-error">
+                <span class="form__message">{{ 'contact.message' | t }} {{ form.errors.messages['body'] }}.</span>
+            </small>
+            {%- endif -%}
+        </div>
+                  
+            {%- if blog.moderated? -%}
+            <p class="text-end"><small>{{ 'blog.moderated' | t }}</small></p>
+            {%- endif -%}
+            <input type="submit" class="button" value="{{ 'blog.post' | t }}">
+        {% endform %}
+
+        {%- endif -%}
+        </comments-section>
+    </x-cell>
+</x-grid>
+</section>
+</div>
+
+{% schema %}
+{
+  "name": "Article",
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "author",
+      "label": "Show author",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "date",
+      "label": "Show date",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "image",
+      "label": "Show featured image",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "share",
+      "label": "Show share button",
+      "default": true
+    },
+    {
+        "type": "header",
+        "content": "Appearance"
+    },
+    {
+        "type": "checkbox",
+        "id": "global_color_scheme",
+        "label": "Use global color scheme",
+        "default": true
+    },
+    {
+        "type": "color_scheme",
+        "id": "color_scheme",
+        "label": "Color scheme",
+        "default": "coretex-1",
+        "visible_if": "{{ section.settings.global_color_scheme == false }}"
+    }
+  ]
+}
+{% endschema %}

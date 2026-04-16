@@ -1,0 +1,38 @@
+<x-cell class="bp" {{ block.shopify_attributes }}>
+<div>
+	{%- if thumbnail -%}
+	<a href="{{ article.url }}" class="no-style" tabindex="-1">
+		<picture>
+			{%- liquid 
+				assign widths = '450,550,750,950,1100'
+				assign sizes = '(max-width:777px) 100vw, (min-width:778px) 33vw, 100vw'
+                assign alt = img.alt
+
+				if img != nil
+					echo img | image_url: width: 800, height: 800, crop: 'center' | image_tag: sizes: sizes, widths: widths, loading: loading, alt: alt
+				else 
+					echo 'image' | placeholder_svg_tag: 'svg-placeholder blogimg'
+				endif
+            -%}
+		</picture>
+	</a>
+	{%- endif -%}
+
+	<div class="meta">
+		{%- if date -%}<span>{{ article.published_at | time_tag: format: 'date' }}</span>{%- endif -%}
+		{%- if title == true and article.title != nil -%}
+		<a href="{{ article.url }}" class="no-style">
+			<h3>{{ article.title }}</h3>
+		</a>
+		{%- endif -%}
+
+		{%- if title == true and article.title == nil -%}
+			<h3>Your post title</h3>
+		{%- endif -%}
+
+		{%- if excerpt -%}
+		<p>{{ article.excerpt_or_content | strip_html | escape | truncate: 100 }}</p>
+		{%- endif -%}
+	</div>
+</div>
+</x-cell>

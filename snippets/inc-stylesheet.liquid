@@ -1,0 +1,28 @@
+{%- comment -%}
+    This is responsible for loading CSS files across the theme.
+
+    Accepts:
+    - src: {String}
+    - loading: {String} - 'normal' (default), 'defer', 'inline'
+    - fetchpriority: {String} - 'auto' (default), 'low', 'high'
+
+    Usage:
+    {%- render 'inc-stylesheet', src: 't-product.css', loading: 'defer', fetchpriority: 'high' -%}
+{%- endcomment -%}
+
+{%- assign stylesheet_path = src | asset_url -%}
+
+{% # theme-check-disable %}
+{%- if loading == 'inline' -%}
+{%- liquid
+style
+    echo src | inline_asset_content
+endstyle
+-%}
+{% elsif section.index > 2 or loading == 'defer' %}
+    <link rel="preload" as="style" href="{{ stylesheet_path }}" fetchpriority="{{ fetchpriority | default: 'low' }}" onload="this.onload=null;this.removeAttribute('onload');if(document.querySelector('link[href=\'{{ stylesheet_path }}\']') !== this){this.remove()}else{this.rel='stylesheet'}">
+    <noscript><link rel="stylesheet" href="{{ stylesheet_path }}"></noscript>
+{%- else -%}
+    <link rel="stylesheet" type="text/css" href="{{ stylesheet_path }}" fetchpriority="{{ fetchpriority | default: 'auto' }}" onload="this.onload=null;this.removeAttribute('onload');if(document.querySelector('link[href=\'{{ stylesheet_path }}\']') !== this)this.remove()">
+{%- endif -%}
+{% # theme-check-enable %}

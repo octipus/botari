@@ -1,0 +1,350 @@
+{% comment %}
+    Renders filtering and sorting
+
+    Accepts:
+    - results: {Object} 'collection' or 'search' object
+
+    Usage:
+    {%- render 'global-filters', results: collection -%}
+{% endcomment %}
+
+{%- liquid
+    assign sort_by = results.sort_by | default: results.default_sort_by
+    if results.url
+      assign results_url = results.url
+    else
+      assign terms = results.terms | escape
+      assign results_url = '?q=' | append: terms | append: '&options%5Bprefix%5D=last&sort_by=' | append: sort_by
+    endif
+
+
+    # Load the CSS file for swatches
+    assign css_loaded = false 
+    for filter in results.filters
+        if filter.presentation == 'swatch' and css_loaded == false
+            echo 'swatches.css' | asset_url | stylesheet_tag
+            assign css_loaded = true
+        endif
+    endfor
+
+    # Product form ID
+    assign form_id = 'FacetFiltersFormMobile'
+-%}
+
+<details class="filter closex" detached="{{ section.settings.filtersDetached }}" data-close-outside>
+<summary class="dropdown-caret button is-blank text-normal">{{ 'collection.filters' | t }}</summary>
+<details-menu id="Details-{{ form_id }}">
+<form id="{{ form_id }}" x-flex direction="column">
+    {%- liquid 
+        if search.results
+            assign sort_by = search.sort_by | default: search.default_sort_by
+            assign sort_options = search.sort_options
+        else
+            assign sort_by = results.sort_by | default: results.default_sort_by
+            assign sort_options = results.sort_options
+        endif 
+    -%}
+    <details data-index="mobile-{{ forloop.index }}" open>
+        <summary class="dropdown-caret button is-blank text-normal">{{ 'collection.sortBy' | t }}</summary>
+        <div class="sortByBlock">
+            <label for="sort_by" class="visually-hidden">{{ 'collection.sortBy' | t }}</label>
+            <select name="sort_by" id="sort_by">
+            {%- for option in sort_options -%}
+                <option value="{{ option.value | escape }}"{% if option.value == sort_by %} selected="selected"{% endif %}>{{ option.name | escape }}</option>
+            {%- endfor -%}
+            </select>
+        </div>
+    </details>
+
+{%- for filter in results.filters -%}
+{%- liquid
+    # If color swatches
+    case filter.presentation
+    when 'swatch'
+        assign has_visual_display = true
+    else
+        assign has_visual_display = false
+    endcase
+
+    # Keep the selected values grouped together when operator is AND
+    assign sorted_values = filter.values
+    if filter.operator == 'AND'
+      assign active_filter_values = filter.values | where: 'active', true
+      assign inactive_filter_values = filter.values | where: 'active', false
+      assign sorted_values = active_filter_values | concat: inactive_filter_values
+    endif
+-%}
+
+{% case filter.type %}
+{% when 'boolean', 'list' %}
+
+    <details class="dm closex" data-index="mobile-{{ forloop.index }}" data-close-outside>
+        <summary class="dropdown-caret button is-blank text-normal">{{ filter.label | escape }}</summary>
+        {%- if filter.operator == 'AND' -%}<small style="display:block;margin-block-start:calc(-1 * var(--mardding))">{{ 'collection.filter_match_all' | t }}</small>{% endif %}
+        <details-menu class="filter-container">
+            <ul class="no-style" {% if has_visual_display %}x-grid columns="5" columns-s="3"{% endif %}> 
+            {%- for value in sorted_values -%}
+                {%- liquid
+                    assign input_id = 'Filter-' | append: filter.param_name | escape | append: forloop.index
+                    assign is_disabled = false
+                    if value.count == 0 and value.active == false
+                        assign is_disabled = true
+                    endif
+                -%}
+
+                {%- # Label class -%}
+                {%- capture label_class -%}
+                {% if is_disabled %}disabled{% endif %}{% if value.active %} active{% endif %}
+                {%- endcapture -%}
+
+                {%- # Text value  -%}
+                {%- capture text_value -%}
+                <span>
+                    <span>{{- value.label | escape }}</span>
+                    <sup>{{- value.count -}}</sup>
+                </span>
+              {%- endcapture -%}
+            
+                {%- if filter.presentation == 'swatch' -%}
+
+                            {%- # Visual swatches -%}
+                            <x-flex direction="column" ai="center" class="swatchee {{ label_class }}">
+                                {%- render 'product-swatch-input',
+                                    id: input_id,
+                                    type: 'checkbox',
+                                    name: value.param_name,
+                                    value: value.value,
+                                    product_form_id: form_id,
+                                    swatch: value.swatch,
+                                    checked: value.active,
+                                    disabled: is_disabled,
+                                    additional_props: 'data-facets-form-input',
+                                -%}
+                                {{ text_value }}
+                            </x-flex>
+
+                {%-  else -%}
+                    <li>
+                        <label 
+                            {% if has_visual_display %}x-grid columns="2" pi="center"{% endif %}  
+                            for="{{ input_id }}"
+                            class="{{ label_class }}"
+                            tabindex="0"
+                        >
+
+                            {% # General input %}
+                            {%- comment -%}
+                                === [ CORTEX FYI ] ===
+                                ⚠️ Input below needs to have `data-facets-form-input` 
+                                in order for it to be AJAXifed.
+                            {%- endcomment -%}
+                            <input
+                                data-facets-form-input
+                                type="checkbox"
+                                name="{{ value.param_name }}"
+                                value="{{ value.value }}"
+                                id="{{ input_id }}"
+                                {% if value.active %}checked{% endif %}
+                                {% if is_disabled %}disabled{% endif %}
+                                tabindex="-1"
+                            >
+
+                            {%- 
+                                liquid 
+                                if presentation == 'image'
+
+                                    # Image type
+                                    if value.image 
+                                        echo value.image | image_url: width: 300 | image_tag: class: 'facets__image', alt: value.alt
+                                    endif 
+
+                                else
+
+                                    # Text type
+                                    echo text_value
+
+                                endif 
+                            -%}
+                        </label>
+                    </li>
+                        {%-  endif -%}
+
+            {%- endfor -%}
+            </ul>
+        </details-menu>
+    </details>
+
+{% when 'price_range' %}
+    {%- liquid
+        assign currencies_using_comma_decimals = 'ANG,ARS,BRL,BYN,BYR,CLF,CLP,COP,CRC,CZK,DKK,EUR,HRK,HUF,IDR,ISK,MZN,NOK,PLN,RON,RUB,SEK,UYU,VES,VND' | split: ','
+        assign uses_comma_decimals = false
+        if currencies_using_comma_decimals contains cart.currency.iso_code
+            assign uses_comma_decimals = true
+        endif
+
+        # Get the global color scheme for slider colors
+        for scheme in settings.color_schemes
+            if scheme == settings.global_color_scheme
+                assign global_scheme = scheme
+                break
+            endif
+        endfor
+    -%}
+
+    <details class="closex" data-index="mobile-{{ forloop.index }}" data-close-outside>
+        <summary class="dropdown-caret button is-blank text-normal">{{ filter.label | escape }}</summary>
+        <details-menu>
+        <tc-range-slider id="priceSlider" class="js" style="--jsDisplay:block;display:block;margin:6rem auto 3rem;width:fit-content"
+            min="0" 
+            {% if uses_comma_decimals %}
+                max="{{ filter.range_max | money_without_currency | replace: '.', '' | replace: ',', '.' }}"
+            {% else %}
+                max="{{ filter.range_max | money_without_currency | replace: ',', '' }}"
+            {% endif %}
+
+            {% if filter.min_value.value %}
+                {% if uses_comma_decimals %}
+                    value1="{{ filter.min_value.value | money_without_currency | replace: '.', '' | replace: ',', '.' }}"
+                {%- else -%}
+                    value1="{{ filter.min_value.value | money_without_currency | replace: ',', '' }}"
+                {% endif %}
+            {% else %}
+                value1="0"
+            {% endif %}
+
+            {% if filter.max_value.value %}
+                {% if uses_comma_decimals %}
+                    value2="{{ filter.max_value.value | money_without_currency | replace: '.', '' | replace: ',', '.' }}"
+                {%- else -%}
+                    value2="{{ filter.max_value.value | money_without_currency | replace: ',', '' }}"
+                {% endif %}
+            {% else %}
+                {% if uses_comma_decimals %}
+                    value2="{{ filter.range_max | money_without_currency | replace: '.', '' | replace: ',', '.' }}"
+                {% else %}
+                    value2="{{ filter.range_max | money_without_currency | replace: ',', '' }}"
+                {% endif %}
+            {% endif %}
+
+            generate-labels="true"
+            mousewheel-disabled="true"
+            round="0"
+            step="5"
+
+            range-dragging="true"
+
+            pointers-min-distance="5"
+            pointer-width="28px"
+            pointer-height="28px"
+            pointer-radius="100vw"
+            pointer-bg="{{ global_scheme.settings.background }}"
+            pointer-bg-hover="{{ global_scheme.settings.background }}"
+            pointer-bg-focus="{{ global_scheme.settings.background }}"
+            pointer-border="1px solid {{ global_scheme.settings.border }}"
+            pointer-border-hover="1px solid {{ global_scheme.settings.border }}"
+            pointer-border-focus="1px solid {{ global_scheme.settings.border }}"
+            pointer-shadow="0 0px 5px rgba(0,0,0,0.2)"
+            pointer-shadow-hover="0 0px 5px rgba(0,0,0,0.2)"
+            pointer-shadow-focus="0 0px 10px rgba(0,0,0,0.3)"
+
+            slider-bg="{{ global_scheme.settings.background }}"
+            slider-bg-hover="{{ global_scheme.settings.background }}"
+            slider-bg-fill="{{ global_scheme.settings.text }}"
+            slider-height="1rem"
+
+            moving-tooltip="true"
+            moving-tooltip-units="&nbsp;{{ cart.currency.symbol }}"
+            moving-tooltip-distance-to-pointer="40"
+            moving-tooltip-width="50"
+            moving-tooltip-height="32"
+            moving-tooltip-bg="{{ global_scheme.settings.text }}"
+            moving-tooltip-text-color="{{ global_scheme.settings.background }}"
+            moving-tooltip-radius="{{ settings.globalBorderRadius }}"
+            moving-tooltip-size="1rem"
+        ></tc-range-slider>
+        {% comment %} Inputs needed for <form> {% endcomment %}
+        <input name="{{ filter.min_value.param_name }}" id="priceSlider-minor" type="hidden" {% if filter.min_value.value %}{% if uses_comma_decimals %}value="{{ filter.min_value.value | money_without_currency | replace: '.', '' | replace: ',', '.' }}"{%- else -%}value="{{ filter.min_value.value | money_without_currency | replace: ',', '' }}"{% endif %}{% endif %}>
+        <input name="{{ filter.max_value.param_name }}" id="priceSlider-major" type="hidden" {% if filter.max_value.value %}{% if uses_comma_decimals %}value="{{ filter.max_value.value | money_without_currency | replace: '.', '' | replace: ',', '.' }}"{%- else -%}value="{{ filter.max_value.value | money_without_currency | replace: ',', '' }}"{% endif %}{% endif %}>
+        {% comment %} Module {% endcomment %}
+        {%- render 'inc-script', src: 'ranger.min.js', loading: 'defer', fetchpriority: 'low' -%}
+
+        <noscript><x-grid columns="2" class="price-range">
+            <x-cell class="price-range-from">
+                <label for="Mobile-Filter-{{ filter.label | escape }}-GTE">{{ 'search.from' | t }}</label>
+                <span>{{ cart.currency.symbol }}</span>
+                <input
+                    name="{{ filter.min_value.param_name }}"
+                    id="Mobile-Filter-{{ filter.label | escape }}-GTE"
+                    type="number"
+                    inputmode="decimal"
+                    {% if filter.min_value.value %}
+                        {% if uses_comma_decimals %}
+                            value="{{ filter.min_value.value | money_without_currency | replace: '.', '' | replace: ',', '.' }}"
+                        {%- else -%}
+                            value="{{ filter.min_value.value | money_without_currency | replace: ',', '' }}"
+                        {% endif %}
+                    {% endif %}
+                    placeholder="0"
+                    min="0"
+                    {%- if uses_comma_decimals -%}
+                        max="{{ filter.range_max | money_without_currency | replace: '.', '' | replace: ',', '.' }}"
+                    {%- else -%}
+                        max="{{ filter.range_max | money_without_currency | replace: ',', '' }}"
+                    {% endif %}
+                >
+            </x-cell>
+            <x-cell class="price-range-to">
+                <label for="Mobile-Filter-{{ filter.label | escape }}-LTE">{{ 'search.to' | t }}</label>
+                <span class="field-currency">{{ cart.currency.symbol }}</span>
+                <input class="field__input"
+                    name="{{ filter.max_value.param_name }}"
+                    id="Mobile-Filter-{{ filter.label | escape }}-LTE"
+                    type="number"
+                    inputmode="decimal"
+                    {% if filter.max_value.value %}
+                        {% if uses_comma_decimals %}
+                            value="{{ filter.max_value.value | money_without_currency | replace: '.', '' | replace: ',', '.' }}"
+                        {%- else -%}
+                            value="{{ filter.max_value.value | money_without_currency | replace: ',', '' }}"
+                        {% endif %}
+                    {% else %}
+                        {% if uses_comma_decimals %}
+                            value="{{ filter.range_max | money_without_currency | replace: '.', '' | replace: ',', '.' }}"
+                        {% else %}
+                            value="{{ filter.range_max | money_without_currency | replace: ',', '' }}"
+                        {% endif %}
+                    {% endif %}
+                    min="0"
+                    {%- if uses_comma_decimals -%}
+                        placeholder="{{ filter.range_max | money_without_currency | replace: '.', '' | replace: ',', '.' }}"
+                        max="{{ filter.range_max | money_without_currency | replace: '.', '' | replace: ',', '.' }}"
+                    {%- else -%}
+                        placeholder="{{ filter.range_max | money_without_currency | replace: ',', '' }}"
+                        max="{{ filter.range_max | money_without_currency | replace: ',', '' }}"
+                    {% endif %}
+                >
+            </x-cell>
+        </x-grid></noscript>
+        </details-menu>
+
+    </details>
+{% endcase %}
+{%- endfor -%}
+
+{% if results.current_vendor or results.current_type %}
+    <input type="hidden" name="q" value="{{ results.current_vendor }}{{ results.current_type }}">
+{% endif %}
+
+{%- if results.terms -%}
+    <input type="hidden" name="q" value="{{ results.terms | escape }}">
+    <input name="options[prefix]" type="hidden" value="last">
+{%- endif -%} 
+
+    <x-grid columns="2" ai="center" class="padd">
+        <x-cell js="center"><a href="{{ results_url }}" class="button is-blank">{{ 'search.clear' | t }}</a></x-cell>
+        <x-cell><button type="submit" class="is-primary">{{ 'search.apply' | t }}</button></x-cell>
+    </x-grid>
+
+</form>
+</details-menu>
+</details>

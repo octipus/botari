@@ -1,0 +1,87 @@
+{% comment %}
+	Recursive Navigation Menu
+
+	Params:
+	- links: array of link objects
+	- level: current nesting level (integer)
+    - id: id of the menu
+{% endcomment %}
+
+{%- liquid
+	assign shouldGroup = false
+	if menuType == 'mega' and level == 2
+		assign shouldGroup = true
+	endif
+-%}
+
+<ul menu-list="{{ level }}">
+    {% comment %} 4 Mega menu {% endcomment %}
+	{%- if shouldGroup -%}
+		{%- comment -%} Group standalone links {%- endcomment -%}
+		<li data-type="grouped-links">
+			<div class="mob-scroller">
+				<ul menu-list="3">
+					{%- for link in links -%}
+						{%- if link.links == blank -%}
+							<li data-index="{{ forloop.index }}" data-type="link">
+								<a href="{{ link.url }}" class="button is-blank" data-name="{{ link.title | escape }}" data-active="{{ link.active }}">
+									{{ link.title }}
+								</a>
+							</li>
+						{%- endif -%}
+					{%- endfor -%}
+				</ul>
+			</div>
+		</li>
+
+		{%- comment -%} Render dropdowns first {%- endcomment -%}
+		{%- for link in links -%}
+			{%- if link.links != blank -%}
+				<li data-index="{{ forloop.index }}" data-type="dropdown">
+					{%- assign next_level = level | plus: 1 -%}
+					<details class="dm lv{{ level }} closex" id="Details-{{ id }}-lv{{ level }}-i{{ forloop.index }}" open>
+						<summary class="dropdown-caret button is-blank text-normal" data-name="{{ link.title | escape }}" data-active="{{ link.active }}" tabindex="-1">
+							{{ link.title }}
+						</summary>
+						<details-menu id="Details-{{ id }}-lv{{ level }}-i{{ forloop.index }}">
+							<div class="mob-scroller">
+								{% render 'c-menu-item', links: link.links, level: next_level, id: id, menuType: menuType %}
+							</div>
+						</details-menu>
+					</details>
+				</li>
+			{%- endif -%}
+		{%- endfor -%}
+
+	{%- else -%}
+
+		{%- for link in links -%}
+			{%- if link.links == blank -%}
+				<li data-index="{{ forloop.index }}" data-type="link">
+					<a href="{{ link.url }}" class="button is-blank text-normal" data-name="{{ link.title | escape }}" data-active="{{ link.active }}">
+						{{ link.title }}
+					</a>
+				</li>
+			{%- else -%}
+				<li data-index="{{ forloop.index }}" data-type="dropdown">
+					{%- assign next_level = level | plus: 1 -%}
+					<details class="dm lv{{ level }} closex" id="Details-{{ id }}-lv{{ level }}-i{{ forloop.index }}"
+						{% if menuType == 'mega' and level != 1 %}open{% else %}data-close-outside{% endif %}
+					>
+						<summary class="dropdown-caret button is-blank text-normal" data-name="{{ link.title | escape }}" data-active="{{ link.active }}"
+							{% if menuType == 'mega' and level != 1 %}tabindex="-1"{% endif %}
+						>
+							{{ link.title }}
+						</summary>
+						<details-menu id="Details-{{ id }}-lv{{ level }}-i{{ forloop.index }}">
+							<div class="mob-scroller">
+								{% render 'c-menu-item', links: link.links, level: next_level, id: id, menuType: menuType %}
+							</div>
+						</details-menu>
+					</details>
+				</li>
+			{%- endif -%}
+		{%- endfor -%}
+    
+	{%- endif -%}
+</ul>

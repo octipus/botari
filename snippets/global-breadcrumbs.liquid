@@ -1,0 +1,104 @@
+{%- if settings.showBreadcrumbs == true -%}
+  {%- liquid
+    if collection
+      assign genieCollection = collection
+    elsif product.collections[0]
+      assign genieCollection = product.collections[0]
+    else
+      assign genieCollection = false
+    endif
+
+    if genieCollection
+      assign geniePath = routes.collections_url | append: '/' | append: genieCollection.handle
+    else
+      assign geniePath = false
+    endif
+  -%}
+
+    {%- capture separator -%}
+    {%- if settings.breadcrumbSeparator == 'default' -%}&rsaquo;{%- endif -%}
+    {%- if settings.breadcrumbSeparator == 'greater' -%}&gt;{%- endif -%}
+    {%- if settings.breadcrumbSeparator == 'slash' -%}&sol;{%- endif -%}
+    {%- if settings.breadcrumbSeparator == 'endash' -%}&ndash;{%- endif -%}
+    {%- if settings.breadcrumbSeparator == 'emdash' -%}&mdash;{%- endif -%}
+    {%- if settings.breadcrumbSeparator == 'dot' -%}&middot;{%- endif -%}
+    {%- if settings.breadcrumbSeparator == 'bullet' -%}&bull;{%- endif -%}
+    {%- if settings.breadcrumbSeparator == 'wave' -%}&#8275;{%- endif -%}
+    {%- endcapture -%}
+
+  {%- unless template == 'index' or template == 'cart' or template == 'list-collections' -%}
+    <nav class="breadcrumb mob-scroller blockfader" aria-label="breadcrumbs">
+      <a href="{{ routes.root_url }}" title="{{ 'general.home' | t }}" class="no-style">{{ 'general.home' | t }}</a>
+      {%- case template.name -%}
+        {%- when 'page' -%}
+          <span aria-hidden="true">{{ separator }}</span>
+          <span>{{ page.title }}</span>
+
+        {%- when 'product' -%}
+          {%- if settings.breadcrumbsParentCollection == 'vendor' and product.vendor -%}
+            <span aria-hidden="true">{{ separator }}</span>
+            {{ product.vendor | link_to_vendor: class: 'no-style' }}
+          {% else %}
+            <span aria-hidden="true">{{ separator }}</span>
+            {%- if genieCollection -%}
+              <a href="{{ geniePath }}" class="no-style">{{ genieCollection.title }}</a>
+            {%- else -%}
+              <a href="{{ routes.all_products_collection_url }}" title="{{ 'general.products' | t }}" class="no-style">
+                {{- 'general.products' | t -}}
+              </a>
+            {%- endif -%}
+          {% endif %}
+          <span aria-hidden="true">{{ separator }}</span>
+          <span>{{ product.title }}</span>
+
+        {%- when 'collection' -%}
+          {%- if collection.handle -%}
+            <span aria-hidden="true">{{ separator }}</span>
+            {%- if current_tags -%}
+              {{ collection.title | link_to: collection.url }}
+              <span aria-hidden="true">{{ separator }}</span>
+              {%- capture tag_url -%}{{ collection.url }}/{{ current_tags | join: "+" }}{%- endcapture -%}
+              <a href="{{ tag_url }}">{{ current_tags | join: ' + ' }}</a>
+            {%- else -%}
+              <span>{{ collection.title }}</span>
+            {%- endif -%}
+          {%- endif -%}
+
+        {%- when 'blog' -%}
+          <span aria-hidden="true">{{ separator }}</span>
+          {%- if current_tags -%}
+            {{ blog.title | link_to: blog.url }}
+            <span aria-hidden="true">{{ separator }}</span>
+            <span>{{ current_tags | join: ' + ' }}</span>
+          {%- else -%}
+            <span>{{ blog.title }}</span>
+          {%- endif -%}
+
+        {%- when 'article' -%}
+          <span aria-hidden="true">{{ separator }}</span>
+          {{ blog.title | link_to: blog.url }}
+          <span aria-hidden="true">{{ separator }}</span>
+          <span>{{ article.title }}</span>
+
+        {%- when 'search' -%}
+          <span aria-hidden="true">{{ separator }}</span>
+          <a href="{{ routes.search_url }}" class="no-style">{{ 'search.search' | t }}</a>
+          <span aria-hidden="true">{{ separator }}</span>
+          <span>{{ page_title }}</span>
+
+        {%- else -%}
+          <span aria-hidden="true">{{ separator }}</span>
+          <a href="{{ request.path }}" class="no-style">{{ page_title }}</a>
+      {%- endcase %}
+    </nav>
+  {%- endunless -%}
+
+    {%- if settings.breadcrumbsParentCollection == 'collectionAware' -%}{%- if collection.handle != 'all' and collection -%}
+    <script>
+        const isCrawlingBot=()=>{const o=navigator.userAgent.toLowerCase(),t=['bot','robot','crawl','baidu','slurp','spider','yandex','bingbot','googlebot','yandexbot','duckduckbot'];for(const r of t)if(o.includes(r))return!0;return!1};
+        const handleDynamicBreadcrumbs=()=>{const e=document.getElementById('ajaxSection');e?e.querySelectorAll('a').forEach(t=>{t.addEventListener('click',n=>{if(null!==t.getAttribute('data-href')){n.preventDefault();const e=t.getAttribute('data-href');window.location.href=e}})}):console.error('#ajaxSection not found')};
+        document.addEventListener('DOMContentLoaded',()=>{ if (!isCrawlingBot()) handleDynamicBreadcrumbs() });
+    </script>
+    {%- endif -%}{%- endif -%}
+
+{%- endif -%}

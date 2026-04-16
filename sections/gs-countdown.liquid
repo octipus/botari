@@ -1,0 +1,334 @@
+{%- liquid
+    render 'inc-stylesheet', src: 's-sections.css', loading: 'lazy'
+
+    if section.settings.show_image
+        assign columns = 2
+    else 
+        assign columns = 1
+    endif
+-%}
+
+<section class="countdown" {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}>
+    <x-grid columns="{{ columns }}" columns-s="1">
+        {%- if section.settings.show_image -%}
+        <x-cell class="image" order="{{ section.settings.order }}" order-s="{{ section.settings.orderMob }}">
+            {%- liquid
+                # Optimize first section image
+                assign fetchpriority = nil
+                assign preload = false
+                assign loading = 'lazy'
+
+                if section.index == 1
+                    assign fetchpriority = 'high'
+                    assign preload = true
+                    assign loading = 'eager'
+                endif
+
+                assign img = section.settings.image
+                render 'inc-img' img: img, preload: preload, loading: loading, fetchpriority: fetchpriority, fallback: true
+            -%}
+        </x-cell>
+        {%- endif -%}
+
+        <x-cell class="meta" order="2" order-s="1">
+            <x-flex
+                direction="{% if section.settings.inline_layout and section.settings.show_image == false %}row{% else %}column{% endif %}" 
+                ai="{% if section.settings.inline_layout and section.settings.show_image == false %}center{% else %}{{ section.settings.items_alignment | replace: 'left', 'start' | replace: 'right', 'end' }}{% endif %}" 
+                jc="{% if section.settings.inline_layout and section.settings.show_image == false %}between{% else %}{{ section.settings.justify-content }}{% endif %}"
+                wrap="wrap"
+            >
+            {%- for block in section.blocks -%}
+            {%- case block.type -%}
+                {%- when 'heading' -%}
+                <x-cell {{ block.shopify_attributes }}>
+                    <h2 class="h6">{{ block.settings.heading }}</h2>
+                </x-cell>
+
+                {%- when 'countdown' -%}
+                <x-cell {{ block.shopify_attributes }}>
+                    <component-loader><coretex-countdown class="{% if section.settings.large_font %}lg{% endif %}"
+                        {% if block.settings.now == 'auto' and block.settings.timezone == blank %}
+                        data-now="{{ "now" | date: "%Y-%m-%dT%H:%M:%S" }}"
+                        {% else %}
+                        data-timezone="{{ block.settings.timezone }}"
+                        {% endif %}
+                        data-date="{{ block.settings.date | escape }}"
+                        data-time="{{ block.settings.time | escape }}"
+                        data-message="{{ block.settings.final_message | escape }}"
+                        data-weeks="{{ block.settings.show_weeks }}"
+                        data-seconds="{{ block.settings.show_seconds }}"
+                        data-hide-siblings="{{ block.settings.hide_others }}"
+                    >
+                        <x-flex class="countdowner timer {% if block.settings.show_border %}sb{% endif %}" style="gap:var(--mardding)">
+                            {% if block.settings.show_weeks == true %}<x-cell class="weeks"><span class="date">00</span> <span class="label">{{ 'countdown.weeks' | t }}</span></x-cell>{% endif %}
+                            <x-cell class="days"><span class="date">00</span> <span class="label">{{ 'countdown.days' | t }}</span></x-cell>
+                            <x-cell class="hours"><span class="date">00</span> <span clasS="label">{{ 'countdown.hours' | t }}</span></x-cell>
+                            <x-cell class="mins"><span class="date">00</span> <span clasS="label">{{ 'countdown.minutes' | t }}</span></x-cell>
+                            {% if block.settings.show_seconds == true %}<x-cell class="secs"><span class="date">00</span> <span clasS="label">{{ 'countdown.seconds' | t }}</span></x-cell>{% endif    %}
+                        </x-flex>
+                    </coretex-countdown></component-loader>
+                </x-cell>
+
+                {%- when 'text' -%}
+                <x-cell {{ block.shopify_attributes }}>
+                    <div class="rte">{{ block.settings.text }}</div>
+                </x-cell>
+
+                {%- when 'button' -%}
+                <x-cell {{ block.shopify_attributes }}>
+                    {% if block.settings.label != nil %}<a href="{{ block.settings.url }}" class="{% if block.settings.style == 'link' %}is-blank{% else %}button{% endif %}">{{ block.settings.label }}</a>{%- endif -%}
+                </x-cell>
+            {%- endcase -%}
+            {%- endfor -%}
+            </x-flex>
+        </x-cell>
+    </x-grid>
+</section>
+
+<script>window.dateStrings = { week: `{{ 'countdown.week' | t }}`, weeks: `{{ 'countdown.weeks' | t }}`, day: `{{ 'countdown.day' | t }}`, days: `{{ 'countdown.days' | t }}`, hour: `{{ 'countdown.hour' | t }}`, hours: `{{ 'countdown.hours' | t }}`, minute: `{{ 'countdown.minute' | t }}`, minutes: `{{ 'countdown.minutes' | t }}`, second: `{{ 'countdown.second' | t }}`, seconds: `{{ 'countdown.seconds' | t }}` }</script>
+
+{% schema %}
+{
+  "name": "Countdown timer",
+  "disabled_on": { "groups": ["aside"] },
+  "presets": [
+    {
+      "name": "Countdown timer",
+      "category": "Content",
+      "blocks": [
+        { "type": "heading" },
+        { "type": "countdown" },
+        { "type": "button" }
+      ]
+    }
+  ],
+  "settings": [
+    {
+        "type": "header",
+        "content": "Image"
+    },
+    {
+        "type": "checkbox",
+        "id": "show_image",
+        "label": "Show",
+        "default": true
+    },
+    {
+        "type": "image_picker",
+        "id": "image",
+        "label": "Image",
+        "visible_if": "{{ section.settings.show_image }}"
+    },
+    {
+        "type": "select",
+        "id": "order",
+        "label": "Position - desktop",
+        "default": "1",
+        "options": [
+            { "value": "1", "label": "Left" },
+            { "value": "3", "label": "Right" }
+        ],
+        "visible_if": "{{ section.settings.show_image }}"
+    },
+    {
+        "type": "select",
+        "id": "orderMob",
+        "label": "Position - mobile",
+        "default": "1",
+        "options": [
+            { "value": "1", "label": "Top" },
+            { "value": "3", "label": "Bottom" }
+        ],
+        "visible_if": "{{ section.settings.show_image }}"
+    },
+    {
+        "type": "header",
+        "content": "Content"
+    },
+    {
+          "type": "select",
+          "id": "justify-content",
+          "label": "Position",
+          "default": "center",
+          "visible_if": "{{ section.settings.show_image }}",
+          "options": [
+            { "value": "start", "label": "Top" },
+            { "value": "center", "label": "Center" },
+            { "value": "end", "label": "Bottom" }
+          ]
+    },
+    {
+        "type": "text_alignment",
+        "id": "items_alignment",
+        "label": "Alignment",
+        "default": "center"
+    },
+    {
+        "type": "checkbox",
+        "id": "inline_layout",
+        "label": "Inline layout",
+        "default": false,
+        "visible_if": "{{ section.settings.show_image == false }}"
+    },
+    {
+        "type": "checkbox",
+        "id": "large_font",
+        "label": "Large font size",
+        "default": true
+    },
+    {
+      "type": "header",
+      "content": "Appearance"
+    },
+    {
+      "type": "checkbox",
+      "id": "global_color_scheme",
+      "label": "Use global color scheme",
+      "default": true
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Color scheme",
+      "default": "coretex-1",
+      "visible_if": "{{ section.settings.global_color_scheme == false }}"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "heading",
+      "name": "Heading",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "text",
+          "id": "heading",
+          "label": "Heading",
+          "default": "Heading"
+        }
+      ]
+    },
+    {
+        "type": "countdown",
+        "name": "Countdown timer",
+        "limit": 1,
+        "settings": [
+            {
+                "type": "header",
+                "content": "Time"
+            },
+            {
+                "type": "text",
+                "id": "date",
+                "label": "Countdown target date",
+                "default": "12-31-2026",
+                "placeholder": "MM-DD-YYYY",
+                "info": "Enter the date in MM-DD-YYYY format (month-day-year). Example: 12-31-2026"
+            },
+            {
+                "type": "text",
+                "id": "time",
+                "label": "Countdown target time",
+                "default": "00:00:00",
+                "placeholder": "HH:MM:SS",
+                "info": "Enter the time in HH:MM:SS format (24-hour clock). Example: 15:30:59"
+            },
+            {
+                "type": "select",
+                "id": "now",
+                "label": "Time zone",
+                "default": "auto",
+                "info": "When set to auto, the time zone is retrieved from your store's [time zone settings](https://shopify.com/admin/settings/general). However, due to caching, this may occasionally fail to display the correct time.",
+                "options": [
+                    { "value": "auto", "label": "Auto" },
+                    { "value": "custom", "label": "Custom time zone" }
+                ]
+            },
+            {
+                "type": "text",
+                "id": "timezone",
+                "label": "Custom time zone",
+                "placeholder": "Europe/Copenhagen",
+                "info": "Format: Asia/Tokyo",
+                "visible_if": "{{ block.settings.now == 'custom' }}"
+            },
+            {
+                "type": "paragraph",
+                "content": "View the [complete list](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List) of IANA TZ identifiers.",
+                "visible_if": "{{ block.settings.now == 'custom' }}"
+            },
+            {
+                "type": "checkbox",
+                "id": "show_weeks",
+                "label": "Show weeks",
+                "default": false
+            },
+            {
+                "type": "checkbox",
+                "id": "show_seconds",
+                "label": "Show seconds",
+                "default": true
+            },
+            {
+                "type": "header",
+                "content": "Message"
+            },
+            {
+                "type": "textarea",
+                "id": "final_message",
+                "label": "Message",
+                "default": "It's over!",
+                "info": "Upon completion of the countdown, display a message."
+            },
+            {
+                "type": "checkbox",
+                "id": "hide_others",
+                "label": "Only show message",
+                "default": false,
+                "info": "Hide heading, text and button blocks when the countdown is over."
+            }
+        ]
+    },
+    {
+      "type": "text",
+      "name": "Text",
+      "limit": 2,
+      "settings": [
+        {
+          "type": "richtext",
+          "id": "text",
+          "label": "Text"
+        }
+      ]
+    },
+    {
+      "type": "button",
+      "name": "Button",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "text",
+          "id": "label",
+          "label": "Label",
+          "default": "Get the deal!"
+        },
+        {
+          "type": "url",
+          "id": "url",
+          "label": "URL"
+        },
+        {
+          "type": "select",
+          "id": "style",
+          "label": "Style",
+          "default": "button",
+          "options": [
+            { "value": "button", "label": "Button" },
+            { "value": "link", "label": "Link" }
+          ]
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

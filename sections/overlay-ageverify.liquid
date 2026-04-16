@@ -1,0 +1,296 @@
+<age-verify 
+    id="ageVerify"
+    data-section-id="{{ section.id }}"
+    style="--ageBg:{{ section.settings.ageBg }};--ageColor:{{ section.settings.ageColor }};--enterButtonBg:var(--ageColor);--enterButtonColor:var(--ageBg);--leaveButtonColor:var(--ageColor)" 
+    backdrop="{{ section.settings.backdrop }}"
+>
+    <verify-box>
+    <x-flex direction="column" style="gap:var(--padding)">
+{%- for block in section.blocks -%}
+{%- case block.type -%}
+    {%- when 'image' -%}
+        <x-cell class="logo" {{ block.shopify_attributes }}>
+        {%- if block.settings.image != blank -%}
+            {%- assign img = block.settings.image -%}
+            {{ img | image_url: width: 600 | image_tag: widths: '200,400,600', class: 'xlogo', loading: 'lazy', alt: shop.name | escape }}
+        {%- endif -%}
+        </x-cell>
+    {%- when 'heading' -%}
+        <x-cell class="heading" style="text-align:{{ block.settings.alignment }}" {{ block.shopify_attributes }}>
+            <h2 class="h1">{{ block.settings.heading }}</h2>
+        </x-cell>
+    {%- when 'text' -%}
+        <x-cell class="text" style="text-align:{{ block.settings.alignment }}" {{ block.shopify_attributes }}>
+            <p>{{ block.settings.text }}</p>
+        </x-cell>
+    {%- when 'verificationInput' -%}
+        <x-cell id="age-verification-input" data-age="{{ block.settings.adultAge }}" {{ block.shopify_attributes }}>
+            <p>
+                <label for="dateOfBirth_yyyy" style="justify-content:center">{{ block.settings.heading }}</label>
+                <input id="dateOfBirth_yyyy" name="dobYear" value="" type="number" inputMode="numeric" pattern="[0-9]*" min="1915" max="{{ 'now' | date: "%Y" }}" placeholder="YYYY" maxlength="4" oninput="if(this.value.length > this.maxLength) this.value = this.value.slice(0, this.maxLength)" required>
+            </p>
+            <script>
+            function ageVerificationInput() {
+                let adultAge = document.getElementById('age-verification-input').getAttribute('data-age');
+                let userAge = document.getElementById("dateOfBirth_yyyy");
+                let enterButton = document.getElementById('pleaseComeIn');
+                let leaveButton = document.getElementById('youveToLeave');
+                enterButton.setAttribute('disabled', '');
+                userAge.addEventListener("input", function () {
+                    let usersAge = this.value;
+                    let currentDate = new Date();
+                    let rightNow = currentDate.getFullYear();
+                    let isAdult = Math.floor(rightNow - usersAge);
+
+                    if (isAdult >= adultAge && isAdult <= 100) {
+                        //console.log(isAdult); 
+                        enterButton.removeAttribute('disabled');
+                    } else {
+                        enterButton.setAttribute('disabled', '');
+                    }
+                });
+            }
+            document.addEventListener("DOMContentLoaded", () => { ageVerificationInput() });
+            </script>
+        </x-cell>
+    {%- when 'actions' -%}
+        <x-cell class="actions" {{ block.shopify_attributes }}>
+            <x-flex direction="{{ block.settings.direction }}" jc="around">
+                <x-cell><button class="is-primary fullwidth" id="pleaseComeIn" close-ageverify type="submit">{{ block.settings.enterLabel }}</button></x-cell>
+                {%- if block.settings.showLeave -%}<x-cell><a href="{{ block.settings.heading | strip_html }}" class="button fullwidth is-blank" id="youveToLeave">{{ block.settings.label }}</a></x-cell>{%- endif -%}
+            </x-flex>
+        </x-cell>
+    {%- endcase -%}
+{%- endfor -%}
+    </x-flex>
+    </verify-box>
+</age-verify>
+
+{% style %}
+body.agev-active { overflow: hidden }
+body.agev-active age-verify { display: flex; place-items: center; position: fixed; inset: 0; z-index: 999 }
+age-verify { display: none }
+age-verify[backdrop="false"] { background: var(--bgColor) }
+age-verify[backdrop="true"] { background: var(--globalTransparentBg); -webkit-backdrop-filter: saturate(190%) blur(4px); backdrop-filter: saturate(190%) blur(4px) }
+verify-box { --hColor: var(--ageColor); display: block; background: var(--ageBg); color: var(--ageColor); min-width: 300px; padding: var(--padding); border: var(--globalBorder); margin: 0 auto; border-radius: var(--radius-2) }
+verify-box .h1 { margin: 0 auto }
+verify-box .logo img { margin: 0 auto; max-width: 200px; border-radius: 0; transform: none }
+verify-box #dateOfBirth_yyyy { --boxBgColor: transparent; font-size: 5rem; overflow: visible; width: 100%; text-align: center }
+verify-box #pleaseComeIn[disabled] { filter: grayscale(100%); opacity: 0.7 }
+verify-box button { --buttonBgColor: var(--enterButtonBg); --buttonColor:var(--enterButtonColor) } 
+verify-box .button.is-blank { --buttonColor: var(--leaveButtonColor) } 
+verify-box input { --boxColor: var(--ageColor); --boxPlaceholderColor: var(--ageColor) }
+@media (min-width: 777px) { verify-box { min-width: 600px } }
+@media (max-width: 777px) { verify-box { width: 95vw } }
+{% endstyle %}
+
+<script>
+class AgeVerify extends HTMLElement {
+    constructor() {
+        super();
+      
+        this.storageName = 'ageVerify';
+
+        const openButtons = this.querySelectorAll('[open-ageverify]');
+        const closeButtons = this.querySelectorAll('[close-ageverify]');
+      
+        openButtons.forEach((button) => {
+          button.addEventListener('click', () => this.open());
+        });
+      
+        closeButtons.forEach((button) => {
+          button.addEventListener('click', () => this.close());
+        });
+      
+        {%- if request.design_mode -%}
+        if (Shopify.designMode) {
+            document.addEventListener('shopify:section:load', (event) => filterShopifyEvent(event, this, () => this.open.bind(this)));
+            document.addEventListener('shopify:section:select', (event) => filterShopifyEvent(event, this, this.open.bind(this)));
+            document.addEventListener('shopify:section:deselect', (event) => filterShopifyEvent(event, this, this.close.bind(this)));
+        }
+        {%- endif -%}
+      
+        if (!Shopify.designMode) this.init();
+    }
+      
+    init() { if (!localStorage.getItem(this.storageName)) this.open(); }
+    open() { document.body.classList.add('agev-active'); localStorage.removeItem(this.storageName); }
+    close() { document.body.classList.remove('agev-active'); localStorage.setItem(this.storageName, 1); }
+}
+
+if (!customElements.get('age-verify')) customElements.define('age-verify', AgeVerify);     
+</script>
+
+{% schema %}
+{
+  "name": "Age verification",
+  "class": "age-overlay",
+  "limit": 1,
+  "enabled_on": { "groups": ["aside"] },
+    "settings": [
+      {
+        "type": "header",
+        "content": "Dialog appearance"
+      },
+      {
+        "type": "checkbox",
+        "id": "backdrop",
+        "label": "Enable translucent backdrop",
+        "default": true
+      },
+      {
+        "type": "color",
+        "id": "ageBg",
+        "label": "Background color",
+        "default": "#FFFFFF"
+      },
+      {
+        "type": "color",
+        "id": "ageColor",
+        "label": "Text color",
+        "default": "#000000"
+      }
+    ],
+  "blocks": [
+    {
+      "type": "image",
+      "name": "Image",
+      "limit": 1,
+      "settings": [
+        {
+            "type": "image_picker",
+            "id": "image",
+            "label": "Image"
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "name": "Heading",
+      "limit": 1,
+      "settings": [
+        {
+            "type": "text",
+            "id": "heading",
+            "label": "Heading",
+            "default": "Are you unusually aged?"
+        },
+        {
+            "type": "select",
+            "id": "alignment",
+            "label": "Alignment",
+            "default": "center",
+            "options": [
+                { "value": "start", "label": "Left" },
+                { "value": "center", "label": "Center" },
+                { "value": "end", "label": "Right" }
+            ]
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "name": "Text",
+      "limit": 2,
+      "settings": [
+        {
+            "type": "richtext",
+            "id": "text",
+            "label": "Text",
+            "default": "<p>You must be of legal age to enter this site.</p>"
+        },
+        {
+            "type": "select",
+            "id": "alignment",
+            "label": "Alignment",
+            "default": "center",
+            "options": [
+                { "value": "start", "label": "Left" },
+                { "value": "center", "label": "Center" },
+                { "value": "end", "label": "Right" }
+            ]
+        }
+      ]
+    },
+    {
+      "type": "verificationInput",
+      "name": "Year input",
+      "limit": 1,
+      "settings": [
+        {
+            "type": "text",
+            "id": "heading",
+            "label": "Label",
+            "default": "Please enter your year of birth"
+        },
+        {
+            "type": "number",
+            "id": "adultAge",
+            "label": "Adult age",
+            "default": 18
+        }
+      ]
+    },
+    {
+      "type": "actions",
+      "name": "Buttons",
+      "limit": 1,
+      "settings": [
+        {
+            "type": "select",
+            "id": "direction",
+            "label": "Buttons position",
+            "default": "column",
+            "options": [
+                { "value": "column", "label": "Column" },
+                { "value": "row", "label": "Row" }
+            ]
+        },
+        {
+          "type": "header",
+          "content": "Enter button"
+        },
+        {
+            "type": "text",
+            "id": "enterLabel",
+            "label": "Button label",
+            "default": "Enter"
+        },
+        {
+          "type": "header",
+          "content": "Leave button"
+        },
+        {
+            "type": "checkbox",
+            "id": "showLeave",
+            "label": "Enable",
+            "default": true
+        },
+        {
+            "type": "text",
+            "id": "label",
+            "label": "Button label",
+            "default": "Leave"
+        },
+        {
+            "type": "text",
+            "id": "heading",
+            "label": "Button URL",
+            "default": "https://disney.com/",
+            "info": "Visitors will be redirected to this link if they click the leave button."
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Age verification",
+      "blocks": [
+        { "type": "image" },
+        { "type": "heading" },
+        { "type": "actions" }
+      ]
+    }
+  ]
+}
+{% endschema %}

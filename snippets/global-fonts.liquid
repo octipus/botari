@@ -1,0 +1,25 @@
+{%- comment -%}
+	# Add here your custom fonts.
+	# Follow the step by step guide: https://docs.openthinking.net/themes/bullet/kb/fonts/
+
+	# The code below has to be modified in order to work with your custom font.
+	# Use our Font Face Generator to generate the needed code for you: https://openthinking.app/x/font-face-generator/
+{%- endcomment -%}
+
+<style>
+@font-face {
+	font-family: "Your-Font-Name";
+	font-weight: 100;
+	font-style: normal;
+	font-display: swap;
+	src: url("font-URL-eot") format("embedded-opentype"),
+		 url("font-URL-ttf") format("truetype"),
+		 url("font-URL-woff") format("woff"),
+		 url("font-URL-woff2") format("woff2");
+}
+
+:root { 
+	--fontFamily: "Your-Font-Name"; /* Body font */
+	--hFontFamily: "Your-Font-Name"; /* Headings font */
+}
+</style>

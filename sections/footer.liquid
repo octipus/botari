@@ -1,0 +1,515 @@
+<footer {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}>
+    <x-flex direction-s="column" wrap="wrap">
+        {%- for block in section.blocks -%}
+            {%- case block.type -%}
+                {%- when 'liquid' -%}
+                    <x-cell id="f-liquid-{{ block.id }}" class="hasb" data-fullwidth="{{ block.settings.fullwidth }}" {{ block.shopify_attributes }}>
+                        <div class="rte">{{ block.settings.liquid }}</div>
+                    </x-cell>
+                {%- when 'image' -%}
+                    <x-cell id="f-image" class="hasb" data-fullwidth="{{ block.settings.fullwidth }}" {{ block.shopify_attributes }}>
+                        <x-flex ai="center" {{ block.settings.alignment | replace: 'left', 'start' | replace: 'right', 'end' | prepend: 'jc="' | append: '"' }} class="image" style="--_imgSize:{% if block.settings.image_fullwidth %}100%{% else %}{{ block.settings.size | append: 'px' }}{% endif %};">
+                            {%- liquid 
+                            	assign img = block.settings.image
+                                assign width = block.settings.size
+                            	render 'inc-img' img: img, loading: 'lazy', fetchpriority: 'low', fallback: true, width: width
+                            -%}
+                        </x-flex>
+                    </x-cell>
+                {%- when 'motto' -%}
+                    <x-cell id="f-motto" class="hasb" data-fullwidth="{{ block.settings.fullwidth }}" {{ block.shopify_attributes }}>
+                        <div class="mpti rte">{{ block.settings.motto }}</div>
+                    </x-cell>
+                {%- when 'newsletter' -%}
+                    <x-cell id="f-newsletter" class="hasb" data-fullwidth="{{ block.settings.fullwidth }}" {{ block.shopify_attributes }}>
+                        <x-flex direction="column">
+                            <x-cell>
+                                <p>{{ block.settings.footerNewsletterTitle }}</p>
+                            </x-cell>
+                            <x-cell>{%- render 'global-newsletter', class: 'footer-newsletter', location: 'footer' -%}</x-cell>
+                        </x-flex>
+                    </x-cell>
+                {%- when 'menu' -%}
+                    <x-cell
+                        id="f-links"
+                        class="hasb"
+                        data-fullwidth="{{ block.settings.fullwidth }}"
+                        data-multicolumn="{{ block.settings.multicolumn }}"
+                        data-nested="{{ block.settings.show_nested }}"
+                        {{ block.shopify_attributes }}
+                    >
+                       <x-flex class="f-links" jc="{{ block.settings.alignment_desktop | replace: 'left', 'start' | replace: 'right', 'end' }}" jc-s="{{ block.settings.alignment_mobile | replace: 'left', 'start' | replace: 'right', 'end' }}">
+                                {%- liquid
+                                    # Footer Menu Logic
+                                    # - Supports flat (single-level) and nested (two-level) menu structures
+                                    # - Multi-column layout with configurable columns (max 3)
+                                    # - Groups standalone links when in nested mode
+
+                                    assign menu_links = linklists[block.settings.menu].links
+                                    assign show_nested = false
+                                    assign columns = 1
+                                    assign has_top_level_links = false
+                                    assign has_nested_items = false
+                                    assign element = 'x-flex'
+
+                                    # Calculate columns and determine display mode
+                                    if block.settings.multicolumn == true
+                                        assign element = 'x-grid'
+
+                                        if block.settings.show_nested == true
+                                            # Count nested items and check for standalone links
+                                            assign columns = 0
+                                            for link in menu_links
+                                                if link.links.size > 0
+                                                    assign has_nested_items = true
+                                                    assign columns = columns | plus: 1
+                                                else
+                                                    assign has_top_level_links = true
+                                                endif
+                                            endfor
+
+                                            # If nested items exist, enable nested mode and calculate final column count
+                                            if has_nested_items == true
+                                                assign show_nested = true
+                                                if has_top_level_links == true
+                                                    assign columns = columns | plus: 1
+                                                endif
+                                                # Cap at 4 columns maximum to prevent layout breaking
+                                                if columns > 4
+                                                    assign columns = 4
+                                                endif
+                                            else
+                                                # No nested items found, fall back to flat multi-column layout
+                                                assign total_links = menu_links.size
+                                                if total_links <= 5
+                                                    assign columns = 1
+                                                else
+                                                    assign columns = total_links | divided_by: 3 | plus: 1
+                                                endif
+                                                # Cap at 4 columns maximum to prevent layout breaking
+                                                if columns > 4
+                                                    assign columns = 4
+                                                endif
+                                            endif
+                                        else
+                                            # Flat menu with multi-column layout
+                                            assign total_links = menu_links.size
+                                            if total_links <= 5
+                                                assign columns = 1
+                                            else
+                                                assign columns = total_links | divided_by: 3 | plus: 1
+                                            endif
+                                            # Cap at 4 columns maximum to prevent layout breaking
+                                            if columns > 4
+                                                assign columns = 4
+                                            endif
+                                        endif
+                                    endif
+                                -%}
+
+                                {%- # Nested menu: parent links as titles with child links beneath -%}
+                                {%- if show_nested == true -%}
+                                    <x-grid columns="{{ columns }}" columns-s="2">
+                                        {%- # Render parent links with children first -%}
+                                        {%- for link in menu_links -%}
+                                            {%- if link.links.size > 0 -%}
+                                                <x-cell>
+                                                    <h3 class="h6"><a href="{{ link.url }}" class="no-style text-bold">{{ link.title }}</a></h3>
+                                                    <ul class="no-style">
+                                                        {%- for child_link in link.links -%}
+                                                            <li>
+                                                                <a href="{{ child_link.url }}" class="no-style">{{ child_link.title }}</a>
+                                                            </li>
+                                                        {%- endfor -%}
+                                                    </ul>
+                                                </x-cell>
+                                            {%- endif -%}
+                                        {%- endfor -%}
+
+                                        {%- # Group standalone links (no children) in last column -%}
+                                        {%- if has_top_level_links == true -%}
+                                            <x-cell>
+                                                <ul class="no-style">
+                                                    {%- for link in menu_links -%}
+                                                        {%- if link.links.size == 0 -%}
+                                                            <li>
+                                                                <a href="{{ link.url }}" class="no-style">{{ link.title }}</a>
+                                                            </li>
+                                                        {%- endif -%}
+                                                    {%- endfor -%}
+                                                </ul>
+                                            </x-cell>
+                                        {%- endif -%}
+                                    </x-grid>
+
+                                {%- else -%}
+                                    {%- # Flat menu: all links at same level -%}
+                                    <{{ element }} wrap="wrap" columns="{{ columns }}" columns-s="2">
+                                        {%- for link in menu_links -%}
+                                            <x-cell>
+                                                <a href="{{ link.url }}" class="no-style">{{ link.title }}</a>
+                                            </x-cell>
+                                        {%- endfor -%}
+                                    </{{ element }}>
+                                {%- endif -%}
+                        </x-flex>
+                    </x-cell>
+
+                {%- when 'legalLinks' -%}
+                    <x-cell
+                            id="f-links"
+                            class="hasb"
+                            data-fullwidth="{{ block.settings.fullwidth }}"
+                            data-multicolumn="{{ block.settings.multicolumn }}"
+                            {{ block.shopify_attributes }}
+                        >
+                        <x-flex class="f-links" jc="{{ block.settings.alignment_desktop | replace: 'left', 'start' | replace: 'right', 'end' }}" jc-s="{{ block.settings.alignment_mobile | replace: 'left', 'start' | replace: 'right', 'end' }}">
+                            <x-cell>
+                            <ul class="no-style">
+                                {%- if block.settings.legalMenu != null -%}
+                                    {%- assign linklist = block.settings.legalMenu -%}
+                                    {%- for link in linklists[linklist].links -%}
+                                        <li><a href="{{ link.url }}" class="no-style">{{ link.title }}</a></li>
+                                    {%- endfor -%}
+                                {%- else -%}
+                                    {%- for policy in shop.policies -%}
+                                    {%- if policy != blank -%}
+                                        <li><a href="{{ policy.url }}" class="no-style">{{ policy.title }}</a></li>
+                                    {%- endif -%}
+                                    {%- endfor -%}
+                                {%- endif -%}
+                            </ul>
+                            </x-cell>
+                        </x-flex>
+                    </x-cell>
+                {%- when 'socials' -%}
+                    {%- capture social_items -%}{%- render 'global-social' -%}{%- endcapture -%}
+                    {%- assign social_items = social_items | strip -%}
+                    {%- assign has_follow_on_shop = false -%}
+                    {%- if shop.features.follow_on_shop? and block.settings.enable_follow_on_shop -%}
+                        {%- assign has_follow_on_shop = true -%}
+                    {%- endif -%}
+                    {%- if social_items != blank or has_follow_on_shop -%}
+                    <x-cell id="f-socials" class="ssocialss" data-fullwidth="{{ block.settings.fullwidth }}" {{ block.shopify_attributes }}>
+                        <ul
+                            class="foosocial mob-scroll no-style{% if settings.iconsTrue == true %} iconstrue{% endif %}"
+                            jc="{{ block.settings.alignment_desktop | replace: 'left', 'start' | replace: 'right', 'end' }}"
+                            jc-s="{{ block.settings.alignment_mobile | replace: 'left', 'start' | replace: 'right', 'end' }}"
+                        >
+                            {{ social_items }}
+
+                            {%- if has_follow_on_shop -%}
+                                <li class="follow-on-shop">{{ shop | login_button: action: 'follow' }}</li>
+                            {%- endif -%}
+                        </ul>
+                    </x-cell>
+                    {%- endif -%}
+            {%- endcase -%}
+        {%- endfor -%}
+    </x-flex>
+</footer>
+ 
+{% schema %}
+{
+  "name": "Footer",
+  "class": "main-footer",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Appearance"
+    },
+    {
+        "type": "checkbox",
+        "id": "global_color_scheme",
+        "label": "Use global color scheme",
+        "default": true
+    },
+    {
+        "type": "color_scheme",
+        "id": "color_scheme",
+        "label": "Color scheme",
+        "default": "coretex-1",
+        "visible_if": "{{ section.settings.global_color_scheme == false }}"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "liquid",
+      "name": "Custom Liquid",
+      "settings": [
+        {
+            "type": "liquid",
+            "id": "liquid",
+            "label": "Custom Liquid"
+        },
+        {
+            "type": "header",
+            "content": "Layout",
+        },
+        {
+            "type": "checkbox",
+            "id": "fullwidth",
+            "label": "Full width row",
+            "default": false
+        }
+      ]
+    },
+    {
+      "type": "image",
+      "name": "Image",
+      "limit": 1,
+      "settings": [
+        {
+            "type": "image_picker",
+            "id": "image",
+            "label": "Image"
+        },
+        {
+            "type": "checkbox",
+            "id": "image_fullwidth",
+            "label": "Full width",
+            "default": true
+        },
+        {
+            "type": "range",
+            "id": "size",
+            "label": "Size",
+            "min": 20,
+            "max": 300,
+            "step": 5,
+            "unit": "px",
+            "default": 100,
+            "visible_if": "{{ block.settings.image_fullwidth == false }}"
+        },
+        {
+            "type": "text_alignment",
+            "id": "alignment",
+            "label": "Alignment",
+            "default": "left"
+        },
+        {
+            "type": "header",
+            "content": "Layout",
+        },
+        {
+            "type": "checkbox",
+            "id": "fullwidth",
+            "label": "Full width row",
+            "default": false
+        }
+      ]
+    },
+    {
+      "type": "newsletter",
+      "name": "Newsletter",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "header",
+          "content": "Footer newsletter",
+          "info": "Subscribers will be added to your “accepts marketing” [customer list.](/admin/customers?query=&accepts_marketing=1)"
+        },
+        {
+          "type": "text",
+          "id": "footerNewsletterTitle",
+          "label": "Heading",
+          "default": "Get 10% off your next purchase. Subscribe to our newsletter."
+        },
+        {
+            "type": "header",
+            "content": "Layout",
+        },
+        {
+            "type": "checkbox",
+            "id": "fullwidth",
+            "label": "Full width row",
+            "default": false
+        }
+      ]
+    },
+    {
+      "type": "menu",
+      "name": "Menu",
+      "limit": 1,
+      "settings": [
+        {
+            "type": "link_list",
+            "id": "menu",
+            "label": "Menu",
+            "default": "footer",
+        },
+        {
+            "type": "header",
+            "content": "Layout",
+        },
+        {
+            "type": "checkbox",
+            "id": "fullwidth",
+            "label": "Full width row",
+            "default": false
+        },
+        {
+            "type": "checkbox",
+            "id": "multicolumn",
+            "label": "Multi-column",
+            "default": false
+        },
+        {
+            "type": "checkbox",
+            "id": "show_nested",
+            "label": "Show nested menu items",
+            "default": false,
+            "info": "When enabled, first-level links become column titles with their child links displayed beneath.",
+            "visible_if": "{{ block.settings.multicolumn == true }}"
+        },
+        {
+            "type": "header",
+            "content": "Alignment",
+        },
+        {
+            "type": "text_alignment",
+            "id": "alignment_desktop",
+            "label": "Desktop",
+            "default": "left"
+        },
+        {
+            "type": "text_alignment",
+            "id": "alignment_mobile",
+            "label": "Mobile",
+            "default": "left"
+        },
+      ]
+    },
+    {
+      "type": "legalLinks",
+      "name": "Terms and policies",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "paragraph",
+          "content": "Your [Store policies](https://shopify.com/admin/settings/legal/) will be used by default unless you select a specific menu below."
+        },
+        {
+          "type": "link_list",
+          "id": "legalMenu",
+          "label": "Menu",
+          "info": "Only top-level menu items are displayed."
+        },
+        {
+            "type": "header",
+            "content": "Layout",
+        },
+        {
+            "type": "checkbox",
+            "id": "fullwidth",
+            "label": "Full width row",
+            "default": false
+        },
+        {
+            "type": "checkbox",
+            "id": "multicolumn",
+            "label": "Multi-column menu",
+            "default": false,
+            "visible_if": "{{ block.settings.fullwidth == false }}"
+        },
+        {
+            "type": "header",
+            "content": "Alignment",
+        },
+        {
+            "type": "text_alignment",
+            "id": "alignment_desktop",
+            "label": "Desktop",
+            "default": "left"
+        },
+        {
+            "type": "text_alignment",
+            "id": "alignment_mobile",
+            "label": "Mobile",
+            "default": "left"
+        }
+      ]
+    },
+    {
+      "type": "socials",
+      "name": "Social media",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "paragraph",
+          "content": "Link your social media accounts in your [Theme settings > Social media](/editor?context=theme&category=social+media) to display them."
+        },
+        {
+          "type": "header",
+          "content": "Follow on Shop"
+        },
+        {
+          "type": "checkbox",
+          "id": "enable_follow_on_shop",
+          "label": "Enable Follow on Shop",
+          "info": "Display follow button for your storefront on the Shop app. [Learn more](https://help.shopify.com/manual/online-store/themes/customizing-themes/follow-on-shop)",
+          "default": false
+        },
+        {
+            "type": "header",
+            "content": "Layout",
+        },
+        {
+            "type": "checkbox",
+            "id": "fullwidth",
+            "label": "Full width row",
+            "default": false
+        },
+        {
+            "type": "header",
+            "content": "Alignment",
+        },
+        {
+            "type": "text_alignment",
+            "id": "alignment_desktop",
+            "label": "Desktop",
+            "default": "left"
+        },
+        {
+            "type": "text_alignment",
+            "id": "alignment_mobile",
+            "label": "Mobile",
+            "default": "left"
+        }
+      ]
+    },
+    {
+      "type": "motto",
+      "name": "About your business",
+      "limit": 2,
+      "settings": [
+        {
+          "type": "richtext",
+          "id": "motto",
+          "label": "Description",
+          "default": "<p>Use this to add additional information about your business, e.g. address, opening hours etc.</p>"
+        },
+        {
+            "type": "header",
+            "content": "Layout",
+        },
+        {
+            "type": "checkbox",
+            "id": "fullwidth",
+            "label": "Full width row",
+            "default": false
+        }
+      ]
+    }
+  ],
+  "default": {
+    "blocks": [
+      { "type": "motto" },
+      { "type": "newsletter" },
+      { "type": "menu" },
+      { "type": "socials" },
+      { "type": "legalLinks" }
+    ]
+  }
+}
+{% endschema %}

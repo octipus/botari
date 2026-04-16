@@ -1,0 +1,128 @@
+/**** 
+ * Coretex dialog
+ * */
+body:is([class^="o-"],[class*=" o-"]) { overflow: clip }
+
+.coretex-dialog dialog:not([open]) { display: none }
+
+.coretex-dialog dialog:modal {
+    width: var(--dialogW);
+    max-width: var(--dialogMaxW);
+    height: var(--dialogH);
+    max-height: var(--dialogMaxH);
+    margin: var(--dialogMargin);
+    padding: var(--dialogPadding);
+    border: var(--dialogBorder, none);
+    border-radius: var(--dialogRadius);
+    background: var(--dialogBg);
+    color: var(--dialogColor);
+    font-size: var(--dialogSize);
+}
+
+@media (max-width: 777px) { .coretex-dialog { --dialogMargin: auto 1rem; --dialogMaxW: calc(100% - 2rem) } }
+
+/* Open/Close button */
+[data-open] > *, [data-close] > * { pointer-events: none }
+
+/*** Dialog different positions */
+.coretex-dialog dialog[dialog-position] { --dialogPosSize: var(--padding) }
+.coretex-dialog dialog[dialog-position="top left"] { --dialogTransOrigin: top left; margin-block-start: var(--dialogPosSize); margin-inline-start: var(--dialogPosSize) }
+.coretex-dialog dialog[dialog-position="top center"] { --dialogTransOrigin: top center; margin-block-start: var(--dialogPosSize) }
+.coretex-dialog dialog[dialog-position="top right"] { --dialogTransOrigin: top right; margin-block-start: var(--dialogPosSize); margin-inline-end: var(--dialogPosSize) }
+
+.coretex-dialog dialog[dialog-position="bottom left"] { --dialogTransOrigin: bottom left; margin-block-end: var(--dialogPosSize); margin-inline-start: var(--dialogPosSize) }
+.coretex-dialog dialog[dialog-position="bottom center"] { --dialogTransOrigin: bottom center; margin-block-end: var(--dialogPosSize); }
+.coretex-dialog dialog[dialog-position="bottom right"] { --dialogTransOrigin: bottom right;  margin-block-end: var(--dialogPosSize); margin-inline-end: var(--dialogPosSize) }
+
+/* close button */
+.coretex-dialog dialog[dialog-position~="left"] header > x-flex { justify-content: flex-start }
+.coretex-dialog dialog[dialog-position~="center"] header > x-flex { justify-content: space-around }
+.coretex-dialog dialog[dialog-position~="right"] header > x-flex { justify-content: flex-end }
+
+@media (max-width: 777px) {
+    .coretex-dialog dialog[dialog-position-s="top"] { --dialogTransOrigin: top center; margin-block-start: var(--dialogPosSize); margin-inline: auto }
+    .coretex-dialog dialog[dialog-position-s="center"] { --dialogTransOrigin: center; margin-block: auto }
+    .coretex-dialog dialog[dialog-position-s="bottom"] { --dialogTransOrigin: bottom center; margin-block-end: var(--dialogPosSize); margin-inline: auto }
+
+    .coretex-dialog dialog[dialog-position-s] header > x-flex { justify-content: flex-end }
+}
+
+/* Backdrop */
+.coretex-dialog dialog::-webkit-backdrop {
+	background: var(--dialogBackdropBg);
+    backdrop-filter: var(--overlayBlur);
+	opacity: 1;
+	cursor: var(--cursor-close-svg-url) 28 28, auto;
+	animation: var(--dialogBackdropAnimationIn);
+}
+
+.coretex-dialog dialog::backdrop {
+	background: var(--dialogBackdropBg);
+    -webkit-backdrop-filter: var(--dialogBackdropBlur);
+    backdrop-filter: var(--dialogBackdropBlur);
+	opacity: 1;
+	cursor: var(--cursor-close-svg-url) 28 28, auto;
+	animation: var(--dialogBackdropAnimationIn);
+}
+
+.coretex-dialog[closing] dialog::-webkit-backdrop { animation: var(--dialogBackdropAnimationOut) }
+.coretex-dialog[closing] dialog::backdrop { animation: var(--dialogBackdropAnimationOut) }
+
+.coretex-dialog dialog[open] { animation: var(--dialogAnimationOpen); transform-origin: var(--dialogTransOrigin) }
+.coretex-dialog[closing] dialog { animation: var(--dialogAnimationClose); transform-origin: var(--dialogTransOrigin, center) }
+
+/* Dialog wrap */
+.coretex-dialog header { z-index: 99 }
+.coretex-dialog footer { gap: 0; z-index: 3; width: 100%; }
+
+/*** NO JS */
+.no-js .coretex-dialog:where([id*=Box]):target dialog {
+    background: var(--dialogBg);
+    color: var(--dialogColor);
+    border: var(--dialogBorder);
+    display: block;
+    inset: 0;
+    isolation: isolate;
+    z-index: 9999;
+    width: var(--dialogMaxW);
+    overflow: auto;
+    height: fit-content;
+    padding: 0;
+    position: fixed;
+}
+
+.no-js .coretex-dialog .noJSbox { padding: var(--margin) }
+
+/*** /!\ DO NOT REMOVE /!\ needed for JS ***/
+[closing] { animation: 500ms dialog-closing forwards }
+@keyframes dialog-closing { 0% { transform: none; filter: none } 80% { filter: blur(10px) } 100% { opacity: 0 } }
+[opening] { animation: 500ms dialog-opening forwards }
+@keyframes dialog-opening { 0% { filter: blur(10px) } 100% { opacity: 0 } }
+/*** end ***/
+
+/*** Animations */
+/* Default pop - animation */
+@keyframes dialog-modal-zoomin { 0% { opacity: 0; transform: scale(0); filter: blur(5px) } 50% { filter: blur(4px) } 100% { opacity: 1; transform: scale(1); filter: none } }
+@keyframes dialog-modal-zoomout { 0% { filter: none } 50% { filter: blur(5px) } 100% { opacity: 0; transform: scale(0); filter: blur(12px) } }
+
+/* Vertical slide in/out - animation */
+@keyframes fadeInUpBlur { 
+    0% { opacity: 0; transform: translate3d(0, 20%, 0); filter: blur(12px) } 
+    100% { opacity: 1; transform: none; filter: blur(0) } 
+}
+
+@keyframes fadeOutDownBlur { 
+    0% { opacity: 1; transform: none; filter: blur(0) } 
+    100% { opacity: 0; transform: translate3d(0, 20%, 0); filter: blur(12px) } 
+}
+
+/* Spicy zoom in/out - animation */
+@keyframes spicy-zoommin {
+    0% { filter: blur(12px); opacity: 0; transform: scaleX(1.15) scaleY(1.15) }
+    100% { filter: blur(0); opacity: 1; transform: scaleX(1) scaleY(1) }
+}
+
+@keyframes spicy-zoomout {
+    0% { filter: blur(0); opacity: 1; transform: scaleX(1) scaleY(1) }
+    100% { filter: blur(10px); opacity: 0; transform: scaleX(1.15) scaleY(1.15) }
+}

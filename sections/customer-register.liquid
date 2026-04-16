@@ -1,0 +1,106 @@
+{%- render 'inc-stylesheet', src: 't-customer.css' -%}
+
+{%- assign formId = 'RegisterForm' -%}
+<section class="general-page customers register-page">
+<x-grid columns="2" columns-s="1">
+    <x-cell><h1>{{ 'register.register' | t }}</h1></x-cell>
+    <x-cell>
+    {%- form 'create_customer', novalidate: 'novalidate' -%}
+    {%- if form.errors -%}
+        <div class="errorMsg filed">
+            <h2 class="form__message" tabindex="-1" autofocus>{{ 'blog.error_heading' | t }}</h2>
+            <ul> 
+            {%- for field in form.errors -%}
+                <li>
+                {%- if field == 'form' -%}
+                    {{ form.errors.messages[field] }}
+                {%- else -%}
+                  <a href="#{{ formId }}-{{ field }}">
+                    {{ form.errors.translated_fields[field] | capitalize }}
+                    {{ form.errors.messages[field] }}
+                  </a>
+                {%- endif -%}
+                </li>
+            {%- endfor -%}
+          </ul>
+        </div>
+    {%- endif -%}
+
+    <div class="field">
+        <label for="{{ formId }}-FirstName">{{ 'register.firstName' | t }}</label>
+        <input type="text"
+            name="customer[first_name]"
+            id="{{ formId }}-FirstName"
+            class="fullwidth"
+            {% if form.first_name %}value="{{ form.first_name }}"{% endif %}
+            autocomplete="given-name"
+            placeholder="{{ 'register.firstName' | t }}"
+        >
+    </div>
+
+    <div class="field">
+        <label for="{{ formId }}-LastName">{{ 'register.lastName' | t }}</label>
+        <input
+            type="text"
+            name="customer[last_name]"
+            id="{{ formId }}-LastName"
+            class="fullwidth"
+            {% if form.last_name %}value="{{ form.last_name }}"{% endif %}
+            autocomplete="family-name"
+            placeholder="{{ 'register.lastName' | t }}"
+        >
+    </div>
+
+    <div class="field">
+        <label for="{{ formId }}-email">{{ 'login.email' | t }}</label>    
+        <input
+            type="email"
+            name="customer[email]"
+            id="{{ formId }}-email"
+            class="fullwidth"
+            {% if form.email %} value="{{ form.email }}"{% endif %}
+            spellcheck="false"
+            autocapitalize="off"
+            autocomplete="email"
+            {% if form.errors contains 'email' %}
+              aria-invalid="true"
+              aria-describedby="{{ formId }}-email-error"
+            {% endif %}
+            placeholder="{{ 'login.email' | t }}"
+            required
+        >
+
+        {%- if form.errors contains 'email' -%}
+        <span id="{{ formId }}-email-error" class="is-red">
+            {{ form.errors.translated_fields['email'] | capitalize }} {{ form.errors.messages['email'] }}.
+        </span>
+        {%- endif -%}
+    </div>
+
+    <div class="field">
+        <label for="{{ formId }}-password">{{ 'login.password' | t }}</label>  
+        <input
+            type="password" 
+            name="customer[password]" 
+            id="{{ formId }}-password" 
+            class="fullwidth"
+            {%- if form.errors contains 'email' -%}
+              aria-invalid="true"
+            {%- endif -%}
+            autocomplete="new-password"
+            placeholder="{{ 'login.password' | t }}"
+        >
+
+        {%- if form.errors contains 'password' -%}
+            <span id="{{ formId }}-password-error" class="is-red">{{ form.errors.translated_fields['password'] | capitalize }} {{ form.errors.messages['password'] }}.</span>
+        {%- endif -%}
+    </div>
+
+    <x-flex direction="row" jc="between" ai="center">
+        <span><button type="submit" class="is-primary fullwidth" style="width:inherit">{{ 'register.register' | t }}</button></span>
+        <span><a href="{{ routes.account_login_url }}" class="no-style">{{ 'header.login' | t }}</a></span>
+    </x-flex>
+    {%- endform -%}
+    </x-cell>
+</x-grid>
+</section>

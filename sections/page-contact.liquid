@@ -1,0 +1,255 @@
+{%- liquid 
+    assign colNum = 1
+
+    if section.settings.show_title
+        assign colNum = colNum | plus: 1
+    endif
+
+    if section.settings.show_content 
+        assign colNum = colNum | plus: 1
+    endif
+-%}
+
+<div class="general-page contact-page">
+<section class="contact" {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}>
+<x-grid columns="{{ colNum }}" columns-s="1">
+    {%- if section.settings.show_title -%}<x-cell><h1>{{ page.title }}</h1></x-cell>{%- endif -%}
+    {%- if section.settings.show_content -%}<x-cell><div class="rte">{{ page.content }}</div></x-cell>{%- endif -%}
+
+    <x-cell class="meta">
+    {%- form 'contact' -%}
+    {%- if form.posted_successfully? -%}<div class="msg ok">{{ 'contact.sent' | t }}</div>{%- endif -%}
+    {%- if form.errors -%}<div class="msg err">{{ form.errors | default_errors }}</div>{%- endif -%}
+
+    {%- for block in section.blocks -%}
+    {%- case block.type -%}
+    {%- when '@app' -%}
+        <p class="itsapp" {{ block.shopify_attributes }}>{% render block %}</p>
+    {%- when 'fname' -%}
+        <p {{ block.shopify_attributes }}>
+            <label for="ContactFormName">
+                {{ 'contact.name' | t }}
+                {% if block.settings.requiredInputName %}*{% endif %}
+            </label>
+            <input type="text" autocomplete="name" id="ContactFormName" class="fullwidth"  name="contact[{{ 'contact.name' | t | handleize }}]" placeholder="{{ 'contact.name' | t }}" {% if block.settings.requiredInputName %}required{% endif %}>
+        </p>
+    {%- when 'femail' -%}
+        <p {{ block.shopify_attributes }}>
+            <label for="ContactFormEmail">
+                {{ 'contact.email' | t }}
+                {% if block.settings.requiredInputEmail %}*{% endif %}
+            </label>
+            <input type="email" autocomplete="email" id="ContactFormEmail" class="fullwidth" name="contact[email]" spellcheck="false" autocapitalize="off" placeholder="{{ 'contact.email' | t }}" {% if block.settings.requiredInputEmail %}required{% endif %}>
+        </p>
+    {%- when 'fphone' -%}
+        <p {{ block.shopify_attributes }}>
+            <label for="ContactFormPhone">
+                {{ 'contact.phone' | t }}
+                {% if block.settings.requiredInputPhone %}*{% endif %}
+            </label>
+            <input type="tel" autocomplete="tel" id="ContactFormPhone" class="fullwidth" name="contact[{{ 'contact.phone' | t | handleize }}]" inputmode="decimal" placeholder="{{ 'contact.phone' | t }}" {% if block.settings.requiredInputPhone %}required{% endif %}>
+        </p>
+    {%- when 'fordernumber'-%}
+        <p {{ block.shopify_attributes }}>
+            <label for="order-number">
+                {{ 'contact.orderNumber' | t }} 
+                {% if block.settings.requiredInputOrderNumber %}*{% endif %}
+            </label>
+            <input type="text" id="order-number" class="fullwidth" name="contact[{{ 'contact.orderNumber' | t | handleize }}]" placeholder="{{ 'contact.orderNumber' | t }}" {% if block.settings.requiredInputOrderNumber %}required{% endif %}>
+        </p>
+    {%- when 'ftext' -%}
+        <p {{ block.shopify_attributes }}>
+            <label for="ContactFormText-{{ block.id }}">
+                {{ block.settings.text | escape }}
+                {% if block.settings.requiredInputText %}*{% endif %}
+            </label>
+            <input type="text" id="ContactFormText-{{ block.id }}" class="fullwidth" name="contact[{{ block.settings.text | handleize }}]" placeholder="{{ block.settings.text | escape }}" {% if block.settings.requiredInputText %}required{% endif %}>
+        </p>
+    {%- when 'furl' -%}
+        <p {{ block.shopify_attributes }}>
+            <label for="ContactFormUrl-{{ block.id }}">
+                {{ block.settings.text | escape }}
+                {% if block.settings.requiredInputUrl %}*{% endif %}
+            </label>
+            <input type="url" id="ContactFormUrl-{{ block.id }}" class="fullwidth" name="contact[{{ block.settings.text | handleize }}]" placeholder="{{ 'contact.url' | t }}" pattern="https://.*" {% if block.settings.requiredInputUrl %}required{% endif %}>
+        </p>
+    {%- when 'fcheckbox' -%}
+        <p {{ block.shopify_attributes }}>
+            <div style="display:flex;gap:var(--margin)">
+                <input type="checkbox" id="ContactFormCheckbox-{{ block.id }}" name="contact[{{ block.settings.text | handleize }}]" {% if block.settings.requiredInputCheckbox %}required{% endif %}>
+                <label for="ContactFormCheckbox-{{ block.id }}">{{ block.settings.text }}</label>
+            </div>
+        </p>
+    {%- when 'fmessage' -%}
+        <p {{ block.shopify_attributes }}>
+            <label for="ContactFormMessage">{{ 'contact.message' | t }}</label>
+            <textarea rows="12" id="ContactFormMessage" class="fullwidth" name="contact[body]" placeholder="{{ 'contact.message' | t }}"></textarea>
+        </p>
+    {%- when 'fbutton' -%}
+        <p {{ block.shopify_attributes }}>
+            <button type="submit" class="fullwidth">{{ 'contact.send' | t }}</button>
+        </p>
+    {%- endcase -%}
+    {%- endfor -%}
+    {%- endform -%}
+    </x-cell>
+</x-grid>
+</section>
+</div>
+
+{% schema %}
+{
+  "name": "Contact page",
+  "settings": [
+    {
+        "type": "checkbox",
+        "id": "show_title",
+        "label": "Show title",
+        "default": true
+    },
+    {
+        "type": "checkbox",
+        "id": "show_content",
+        "label": "Show content",
+        "info": "You can add content to the center column from the contact page's content area. [Online store > Pages](https://shopify.com/admin/pages)",
+        "default": true
+    },
+    {
+        "type": "header",
+        "content": "Appearance"
+    },
+    {
+        "type": "checkbox",
+        "id": "global_color_scheme",
+        "label": "Use global color scheme",
+        "default": true
+    },
+    {
+        "type": "color_scheme",
+        "id": "color_scheme",
+        "label": "Color scheme",
+        "default": "coretex-1",
+        "visible_if": "{{ section.settings.global_color_scheme == false }}"
+    }
+  ],
+  "blocks": [
+    { "type": "@app" },
+    {
+      "type": "fname",
+      "name": "Name",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "checkbox",
+          "id": "requiredInputName",
+          "label": "Required field",
+          "default": false
+        }
+      ]
+    },
+    {
+      "type": "femail",
+      "name": "Email",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "checkbox",
+          "id": "requiredInputEmail",
+          "label": "Required field",
+          "default": false
+        }
+      ]
+    },
+    {
+      "type": "fphone",
+      "name": "Phone number",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "checkbox",
+          "id": "requiredInputPhone",
+          "label": "Required field",
+          "default": false
+        }
+      ]
+    },
+    {
+      "type": "fordernumber",
+      "name": "Order number",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "checkbox",
+          "id": "requiredInputOrderNumber",
+          "label": "Required field",
+          "default": false
+        }
+      ]
+    },
+    {
+      "type": "ftext",
+      "name": "Input",
+      "settings": [
+        {
+          "type": "text",
+          "id": "text",
+          "label": "Label",
+          "default": "Text input label"
+        },
+        {
+          "type": "checkbox",
+          "id": "requiredInputText",
+          "label": "Required field",
+          "default": false
+        }
+      ]
+    },
+    {
+      "type": "furl",
+      "name": "URL",
+      "settings": [
+        {
+          "type": "text",
+          "id": "text",
+          "label": "Input label",
+          "default": "URL"
+        },
+        {
+          "type": "checkbox",
+          "id": "requiredInputUrl",
+          "label": "Required field",
+          "default": false
+        }
+      ]
+    },
+    {
+      "type": "fcheckbox",
+      "name": "Checkbox",
+      "settings": [
+        {
+          "type": "text",
+          "id": "text",
+          "label": "Text",
+          "default": "I have read and agree with terms and privacy policy."
+        },
+        {
+          "type": "checkbox",
+          "id": "requiredInputCheckbox",
+          "label": "Required field",
+          "default": true
+        }
+      ]
+    },
+    {
+      "type": "fmessage",
+      "name": "Message",
+      "limit": 1
+    },
+    {
+      "type": "fbutton",
+      "name": "Send button",
+      "limit": 1
+    }
+  ]
+}
+{% endschema %}

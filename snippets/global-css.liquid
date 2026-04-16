@@ -1,0 +1,339 @@
+<style id="global-css-vars" data-otid="ba22326d40dbd392ea828ea3848766ad">
+{%- liquid
+# Body 
+    assign bodyFontFamily = settings.bodyFontFamily
+
+    assign bodyFontBold = bodyFontFamily | font_modify: 'weight', 'bold'
+    assign bodyFontItalic = bodyFontFamily | font_modify: 'style', 'italic'
+    assign bodyFontBoldItalic = bodyFontBold | font_modify: 'style', 'italic'
+
+# Headings
+    assign headingsFontFamily = settings.headingsFontFamily
+
+    assign headingsFontFamilyBold = headingsFontFamily | font_modify: 'weight', 'bold'
+    assign headingsFontFamilyItalic = headingsFontFamily | font_modify: 'style', 'italic'
+    assign headingsFontFamilyBoldItalic = headingsFontFamilyBold | font_modify: 'style', 'italic' 
+
+# Fonts
+    echo bodyFontFamily | font_face: font_display: 'swap'
+    echo bodyFontBold | font_face: font_display: 'swap'
+    echo bodyFontItalic | font_face: font_display: 'swap'
+    echo bodyFontBoldItalic | font_face: font_display: 'swap'
+
+    echo headingsFontFamily | font_face: font_display: 'swap'
+    echo headingsFontFamilyBold | font_face: font_display: 'swap'
+    echo headingsFontFamilyItalic | font_face: font_display: 'swap'
+    echo headingsFontFamilyBoldItalic | font_face: font_display: 'swap'
+-%}
+
+{%- liquid
+    # Global border with for elements that need it
+    # Used by inputs so that they still have an outline if the border is set to 0
+    if settings.globalBorderWidth == 0
+        assign globalBorderWidthSafe = '1px'
+    else
+        assign globalBorderWidthSafe = settings.globalBorderWidth | append: 'px'
+    endif
+-%}
+
+{%- comment -%}
+/**** 
+ * Color schemes
+ * */
+{%- endcomment -%}
+{% for scheme in settings.color_schemes -%}
+{%- if scheme == settings.global_color_scheme %}:root,{% endif %}
+:is([color-scheme="{{ scheme.id }}"]) {
+    {%- liquid 
+        if settings.boxBorderColorGlobal 
+            assign boxBorderColor = scheme.settings.border | color_to_hsl
+            assign boxBorderHover = scheme.settings.border | color_to_hsl
+            assign buttonBorderColor = scheme.settings.border | color_to_hsl
+            assign buttonBorderHover = scheme.settings.border | color_to_hsl
+        else
+            assign boxBorderColor = scheme.settings.input_border | color_to_hsl
+            assign boxBorderHover = scheme.settings.input_border_hover | color_to_hsl
+            assign buttonBorderColor = scheme.settings.button_border | color_to_hsl
+            assign buttonBorderHover = scheme.settings.button_border_hover | color_to_hsl
+        endif
+    -%}
+
+    {%- # Global border %}
+    --globalBorderColor: {{ scheme.settings.border | color_to_hsl }};
+
+    {%- # General %}
+    --bgColor: {{ scheme.settings.background }}; --bg: {{ scheme.settings.background }}; --bgRGB: {{ scheme.settings.background.rgb }};
+    --bgColorOpacity: {{ settings.bgColor | color_modify: 'alpha', 0.85 }};
+    --color: {{ scheme.settings.text | color_to_hsl }}; --colorRGB: {{ scheme.settings.text.rgb }};
+    --primary: {{ scheme.settings.text | color_to_hsl }};
+    --hColor: {{ scheme.settings.text | color_to_hsl }};
+    --linkColor: {{ scheme.settings.link | color_to_hsl }};
+    --linkHover: {{ scheme.settings.link_hover | color_to_hsl }};
+
+    {%- # Buttons %}
+    --buttonBgColor: {{ scheme.settings.button_bg | color_to_hsl }};
+    --buttonBgHover: {{ scheme.settings.button_bg_hover | color_to_hsl }};
+    --buttonColor: {{ scheme.settings.button_color | color_to_hsl }};
+    --buttonColorHover: {{ scheme.settings.button_color_hover | color_to_hsl }};
+    --buttonBorderColor: {{ buttonBorderColor }};
+    --buttonBorderHover: {{ buttonBorderHover }};
+
+    {%- # Inputs %}
+    --boxBgColor: {{ scheme.settings.input_bg | color_to_hsl }};
+    --boxBgHover: {{ scheme.settings.input_bg_hover | color_to_hsl }};
+    --boxBgActive: {{ scheme.settings.input_bg_hover | color_to_hsl }};
+
+    --boxColor: {{ scheme.settings.input_color | color_to_hsl }};
+    --boxColorHover: {{ scheme.settings.input_color_hover | color_to_hsl }};
+    --boxPlaceholderColor: {{ scheme.settings.input_color | color_to_hsl | color_modify: 'alpha', 0.6 }};
+
+    --boxBorderColor: {{ boxBorderColor }};
+    --boxBorderHover: {{ boxBorderHover }};
+    --boxBorderActive: {{ boxBorderHover }};
+
+    {%- # Accent %}
+    --accentBg: {{ scheme.settings.accent_bg | color_to_hsl }}; --accentBgRGB: {{ scheme.settings.accent_bg.rgb }};
+    --accentColor: {{ scheme.settings.accent_color | color_to_hsl }}; --accentColorRGB: {{ scheme.settings.accent_color.rgb }};
+    --accentBorderColor: {{ scheme.settings.accent_border | color_to_hsl }};
+}
+{%- endfor %}
+
+{%- comment -%}
+/**** 
+ * ROOT
+ * */
+{%- endcomment -%}
+:root {
+    --hFontFamily: var(--fontFamily);
+    --fontWeight: 400;
+    --fontStyle: normal;
+    --hWeight: 600;
+    --hStyle: normal;
+
+    --plyr-color-main: var(--primary);
+    --plyr-video-background: transparent;
+
+    --iconSize: var(--fontSize);
+
+    --buttonTransform: {{ settings.buttonTransform }};
+    --buttonWeight: {{ settings.buttonWeight }};
+    --buttonAlign: {{ settings.buttonAlign }};
+    --buttonBorderWidth: {{ globalBorderWidthSafe }};
+
+    --boxBorderWidth: {{ globalBorderWidthSafe }};
+    --boxTransform: {{ settings.boxTransform }};
+    --boxAlign: {{ settings.boxAlign }};
+
+{% comment %} /* Product card */ {% endcomment %} 
+    --prodCardRatio: {{ settings.card_ratio }};
+    {% if settings.card_ratio == 'auto' %}
+    --prodCardHeight: {{ settings.card_height | append: 'px' }};
+    {% endif %}
+    --prodCardFit: {{ settings.card_crop_fit }};
+    --prodCardPosition: {{ settings.card_crop_position }};
+    {% if settings.card_media_outline %}
+    --cardMediaOutline: var(--globalBorder);
+    {% endif %}
+
+    --globalBorderWidth: {{ settings.globalBorderWidth | append: 'px' }};
+    --globalBorder: var(--globalBorderWidth) solid var(--globalBorderColor);
+
+    --globalBorderSafeWidth: {{ globalBorderWidthSafe }}; 
+    --globalBorderSafeColor: var(--globalBorderColor);
+    --globalBorderSafe: var(--globalBorderSafeWidth) solid var(--globalBorderSafeColor);
+
+    --radius: {{ settings.globalBorderRadius }};
+    --radius-2: {% if settings.globalBorderRadius == 'var(--space-10)' %}var(--space-4){%- else -%}{{ settings.globalBorderRadius }}{%- endif -%};
+    --radiusImg: {{ settings.globalImgRadius }};
+
+    --globalShadow: 0 0 8px rgb(0 0 0 / 0.15);
+    --globalTransparentBg: {{ settings.bgColor | color_modify: 'alpha', 0.9 }};
+
+    --padding: var(--space-4);
+    --mardding: var(--space-3);
+    --margin: var(--space-2);
+    --boxRadius: var(--radius);
+    --boxPadding: var(--space-3);
+    --buttonPadding: var(--space-3);
+    --buttonRadius: var(--radius);
+    --rowGap: 0;
+    --columnGap: 0;
+
+    {%- if settings.cardGridGap -%}
+    --cardGridGapSize: {{ settings.cardGridGapSize | prepend: 'var(--space-' | append: ');' }}
+    {%- endif -%}
+
+    --logoSize: var(--space-4);
+
+    --fontSizeBase: {{ settings.fontSize | divided_by: 100.0 }};
+    --fontSize: calc(var(--fontSizeBase) * 1.4rem);
+
+    --hSizeBase: {{ settings.hSize | times: 1.0 | divided_by: settings.fontSize }};
+    --hSize: calc(var(--hSizeBase) * 1.6rem);
+    --h1Size: var(--hSize);
+    --h2Size: var(--hSize);
+    --h3Size: var(--hSize);
+    --h4Size: var(--hSize);
+    --h5Size: var(--hSize);
+    --h6Size: var(--hSize);
+
+    --hLine: 1.4;
+    --h1Line: var(--hLine);
+    --h2Line: var(--hLine);
+    --h3Line: var(--hLine);
+    --h4Line: var(--hLine);
+    --h5Line: var(--hLine);
+    --h6Line: var(--hLine);
+
+    --fontFamily: {{ bodyFontFamily.family }}, {{ bodyFontFamily.fallback_families }};
+    --fontWeight: {{ bodyFontFamily.weight }};
+    --fontStyle: {{ bodyFontFamily.style }};
+
+    --hFontFamily: {{ headingsFontFamily.family }}, {{ headingsFontFamily.fallback_families }};
+    --hWeight: {{ headingsFontFamily.weight }};
+    --hStyle: {{ headingsFontFamily.style }};
+    --hTxTransform: {{ settings.hTxTransform }};
+
+    --boxedLayoutMaxWidth: {{ settings.boxedLayoutWidth }}px;
+    
+    {%- if settings.a11yFocusStyles == 'a11y-custom' -%}
+    --a11yWidth: calc(var(--globalBorderWidth) * 2);
+    --a11yOffset: calc(-1 * (var(--globalBorderWidth) * 1));
+    --a11yColor: var(--globalBorderColor);
+    --a11yOutline: var(--a11yWidth) solid var(--a11yColor);
+    --a11yShadow: 0 0 0 var(--a11yWidth), 0 0 0 var(--a11yOffset) var(--a11yColor);
+    {%- endif -%}
+
+    {%- liquid
+        if settings.media_padding == 'none' 
+            assign mediaPadding = '1'
+        elsif settings.media_padding == 'small'
+            assign mediaPadding = '0.98'
+        elsif settings.media_padding == 'large'
+            assign mediaPadding = '0.97'
+        endif
+    -%} 
+
+    --mediaPadding: {{ mediaPadding }};
+
+    --overlayBg: {{ settings.overlayBg }};
+    --overlayBlur: blur({{ settings.overlayBlur | append: 'px' }});
+}
+
+{%- if template contains 'product' -%}
+{% # View transition API for product body %}
+@media (prefers-reduced-motion: no-preference) {
+    @view-transition { navigation: auto } 
+    product-info { view-transition-name: product-info } 
+    ::view-transition-old(product-info) { animation: fadeOut 250ms ease-in-out both } 
+    ::view-transition-new(product-info) { animation: fadeIn 250ms ease-in-out both }
+}
+{%- endif -%}
+
+{%- if settings.fadeOutCont -%}body:is(.open-cart,.open-search) :where(main,#shopify-section-footer) { opacity: 0.04; pointer-events: none; }{%- endif -%}
+
+img,video,iframe:not([title="reCAPTCHA"]),.lazyframe,.plyr__video-wrapper { border-radius: var(--radiusImg) }
+
+img,video,.lazyframe,.plyr__video-wrapper { scale: var(--mediaPadding) }
+
+{%- # Dropdown carets -%}
+summary.dropdown-caret::-webkit-details-marker { display:none }
+.dropdown-caret { --caretSize: 6px; width: 100%; list-style: none; display: flex; align-items: center; justify-content: space-between; gap: .7rem; user-select: none }
+
+{%- case settings.caretType -%}
+{%- # Dropdown OG caret -%}
+{%- when 'caret' -%}
+    .dropdown-caret::after {
+        content: "";
+        display: inline-block;
+        width: 0;
+        height: 0;
+        vertical-align: middle;
+        border-style: solid;
+        border-width: var(--caretSize) var(--caretSize) 0;
+        border-right-color: transparent;
+        border-bottom-color: transparent;
+        border-left-color: transparent;
+    }
+
+    details[open] > summary.dropdown-caret::after,
+    .dropdown-caret[aria-expanded="true"]::after { transform: rotate(180deg) }
+
+{%- # Dropdown Arrow caret -%}
+{%- when 'arrow' -%}
+    .dropdown-caret::after {
+        content: "";
+        display: inline-block;
+        width: var(--caretSize);
+        height: var(--caretSize);
+        vertical-align: middle;
+        border-block-start: 2px solid currentColor;
+        border-inline-start: 2px solid currentColor;
+        transform: rotate(225deg) translateY(3px);
+    }
+    [dir="rtl"] .dropdown-caret::after { transform: rotate(136deg) translateY(3px) }
+
+    details[open] > summary.dropdown-caret::after,
+    .dropdown-caret[aria-expanded="true"]::after { transform: rotate(45deg) translate(4px, 1px) }
+    [dir="rtl"] .dropdown-caret[aria-expanded="true"]::after { transform: rotate(314deg) translate(4px, 1px) }
+    
+
+{% # Dropdown DOT caret -%}
+{%- when 'dot' -%}
+    .dropdown-caret::after {
+        content: "";
+        display: inline-block;
+        width: var(--caretSize);
+        height: var(--caretSize);
+        border-width: 1px;
+        border-style: solid;
+        border-color: none;
+        background-color: currentColor;
+        border-radius: 100vw;
+        vertical-align: middle;
+    }
+
+    details[open] > summary.dropdown-caret::after,
+    .dropdown-caret[aria-expanded="true"]::after { background: transparent; border-color: currentColor }
+{%- endcase -%}
+
+{%- if settings.boxedLayout -%}
+@media (min-width: {{ settings.boxedLayoutWidth }}px) { #app { max-width: var(--boxedLayoutMaxWidth); margin: 0 auto; border-inline: var(--globalBorder) } }
+{%- endif -%}
+
+{%- comment %} Coretex dialog {% endcomment -%}
+.coretex-dialog {
+    --dialogBg: var(--bgColor);
+    --dialogColor: var(--color);
+        --hColor: var(--dialogColor);
+    --dialogRadius: var(--radius-2);
+    --dialogW: calc(100% - var(--dialogMargin));
+    --dialogMaxW: 500px;
+    --dialogH: 600px;
+    --dialogMaxH: calc(100dvh - (var(--margin) * 2));
+    --dialogBorder: var(--globalBorder);
+    --dialogPadding: var(--padding);
+    --dialogMargin: auto;
+
+    --dialogSize: inherit;
+    --hSize: var(--dialogSize);
+
+    --dialogAnimationOpen: fadeIn 0ms ease forwards;
+    --dialogAnimationClose: fadeOut 0ms ease forwards;
+    --dialogTransOrigin: center;
+}
+
+{% capture dialog_backdrop -%}
+    --dialogBackdropBg: {{ settings.overlayBg }};
+    --dialogBackdropBlur: blur({{ settings.overlayBlur | append: 'px' }});
+    --dialogBackdropAnimationIn: fadeIn 0ms ease forwards;
+    --dialogBackdropAnimationOut: fadeOut 0ms ease forwards;
+    pointer-events: all;
+{%- endcapture -%}
+
+.coretex-dialog dialog::-webkit-backdrop { {{ dialog_backdrop }} }
+.coretex-dialog dialog::backdrop { {{ dialog_backdrop }} }
+
+@keyframes fadeIn { 0% { opacity: 0 } 100% { opacity: 1 } }
+@keyframes fadeOut { from { opacity: 1 } to { opacity: 0 } }
+</style>

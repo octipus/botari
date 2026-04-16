@@ -1,0 +1,228 @@
+<sub-footer {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}>
+	<x-grid columns="2" columns-s="1">
+	{%- for block in section.blocks -%}
+	{%- case block.type -%}
+	{%- when 'copyright' -%}
+		<x-cell x-flex ai="center" jc="{{ block.settings.text_alignment | replace: 'left', 'start' | replace: 'right', 'end' }}" jc-s="center" class="copyright text-{{ block.settings.text_alignment | replace: 'left', 'start' | replace: 'right', 'end' }} text-center-s" {% if block.settings.fullwidth %}span="row"{% endif %} {{ block.shopify_attributes }}>
+			{%- if block.settings.copyright != blank -%}
+                <span>{{ block.settings.copyright }}</span>
+			{%- else -%}
+				<span>&copy; {{ 'now' | date: "%Y" }} <a href="{{ routes.root_url }}" class="no-style">{{ shop.name }}</a>. {{ 'footer.all_rights' | t }}</span>
+			{%- endif -%}
+		</x-cell>
+
+	{%- when 'credits' -%}
+		<x-cell x-flex ai="center" jc="{{ block.settings.text_alignment | replace: 'left', 'start' | replace: 'right', 'end' }}" jc-s="center" id="shopify-credits" {% if block.settings.fullwidth %}span="row"{% endif %} {{ block.shopify_attributes }}>{{ powered_by_link }}</x-cell>
+
+	{%- when 'payments' -%}
+		<x-cell x-flex ai="center" jc="{{ block.settings.text_alignment | replace: 'left', 'start' | replace: 'right', 'end' }}" jc-s="center" class="payment-icons" {% if block.settings.fullwidth %}span="row"{% endif %} {{ block.shopify_attributes }}>
+	        {%- if shop.enabled_payment_types != empty -%}
+	        <x-flex ai="center"  style="gap:var(--margin);{% if block.settings.monochrome %}filter:grayscale(1){% endif %}">
+	            {%- render 'global-paymenticons' -%}
+	        </x-flex>
+	        {%- endif -%}
+		</x-cell>
+
+	{%- when 'selectors' -%}
+		<x-cell class="selectors" {% if block.settings.fullwidth %}span="row"{% endif %} {{ block.shopify_attributes }}>
+			<x-flex ai="center" jc="{{ block.settings.text_alignment | replace: 'left', 'start' | replace: 'right', 'end' }}" jc-s="center" style="gap:1rem;--rowGap:0" direction-s="column" wrap="wrap">
+
+                {% # Country/region selector %}
+                {%- if block.settings.show_country and localization.available_countries.size > 1  -%}
+                <x-cell class="selector-country">
+                    {%- capture selector_country -%}
+                    <x-flex ai="center" jc="between" wrap="nowrap">
+                        <x-cell class="country-name{% if block.settings.country_name_format == 'flag' %} visually-hidden{% endif %}">{{- localization.country.name }}</x-cell>
+                        {%- if block.settings.country_name_format == 'flag' -%}<x-cell class="country-image">{{ localization.country | image_url: width: 20 | image_tag }}</x-cell>{%- endif -%}
+                        <x-cell class="country-currency">({{ localization.country.currency.iso_code }} {{ localization.country.currency.symbol -}})</x-cell>
+                        <x-cell><span class="dropdown-caret"></span></x-cell>
+                    </x-flex>
+                    {%- endcapture -%}
+
+                    <button class="is-blank fake-select js" data-open="#countryBox">{{ selector_country }}</button>
+                    <noscript><a href="#countryBox" class="button is-blank fake-select">{{ selector_country }}</a></noscript>
+                </x-cell>
+                {%- endif -%}
+
+                {% # Language selector %}
+                {%- if block.settings.show_language and localization.available_languages.size > 1 -%}
+                <x-cell class="selector-language">
+                    {%- capture selector_language -%}
+                    <x-flex ai="center" jc="between" wrap="nowrap">
+                        <x-cell class="language">{{ localization.language.endonym_name | capitalize }}</x-cell>
+                        <x-cell><span class="dropdown-caret"></span></x-cell>
+                    </x-flex>
+                    {%- endcapture -%}
+                    <button class="is-blank fake-select js" data-open="#languageBox">{{ selector_language }}</button>
+                    <noscript><a href="#languageBox" class="button is-blank fake-select">{{ selector_language }}</a></noscript>
+                </x-cell>
+                {%- endif -%}
+
+			</x-flex>
+		</x-cell>
+
+	{%- endcase -%}
+	{%- endfor -%}
+	</x-grid>
+</sub-footer>
+
+{% schema %}
+{
+  "name": "Bottom bar",
+  "class": "sub-footer",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Appearance"
+    },
+    {
+        "type": "checkbox",
+        "id": "global_color_scheme",
+        "label": "Use global color scheme",
+        "default": true
+    },
+    {
+        "type": "color_scheme",
+        "id": "color_scheme",
+        "label": "Color scheme",
+        "default": "coretex-1",
+        "visible_if": "{{ section.settings.global_color_scheme == false }}"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "credits",
+      "name": "Credits",
+      "limit": 1,
+      "settings": [
+        {
+            "type": "text_alignment",
+            "id": "text_alignment",
+            "label": "Alignment - desktop",
+            "default": "right"
+        },
+        {
+          "type": "checkbox",
+          "id": "fullwidth",
+          "label": "Full width row",
+          "default": false
+        }
+      ]
+    },
+    {
+      "type": "copyright",
+      "name": "Copyright",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "textarea",
+          "id": "copyright",
+          "label": "Custom copyright",
+          "info": "Leave blank for default copyright notice."
+        },
+        {
+            "type": "text_alignment",
+            "id": "text_alignment",
+            "label": "Alignment - desktop",
+            "default": "left"
+        },
+        {
+          "type": "checkbox",
+          "id": "fullwidth",
+          "label": "Full width row",
+          "default": false
+        }
+      ]
+    },
+    {
+      "type": "payments",
+      "name": "Payment icons",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "header",
+          "content": "Payment icons",
+          "info": "The payment icons that show in your theme are determined by your store’s [payment settings.](/admin/settings/payments) and the customer’s region and currency. [Learn more...](https://docs.openthinking.net/themes/bullet/kb/payment-icons/)"
+        },
+        {
+          "type": "checkbox",
+          "id": "monochrome",
+          "label": "Monochrome payment icons",
+          "default": false
+        },
+        {
+            "type": "text_alignment",
+            "id": "text_alignment",
+            "label": "Alignment - desktop",
+            "default": "left"
+        },
+        {
+          "type": "checkbox",
+          "id": "fullwidth",
+          "label": "Full width row",
+          "default": false
+        }
+      ]
+    },
+    {
+      "type": "selectors",
+      "name": "Selectors",
+      "limit": 1,
+      "settings": [
+        {
+            "type": "header",
+            "content": "Country/region selector",
+            "info": "To add a country/region, go to your [payment settings.](/admin/settings/payments)"
+          },
+          {
+            "type": "select",
+            "id": "country_name_format",
+            "label": "Contry/region format",
+            "default": "flag",
+            "options": [
+                { "value": "name", "label": "Name" },
+                { "value": "flag", "label": "Flag" }
+            ]
+        },
+          {
+            "type": "checkbox",
+            "id": "show_country",
+            "label": "Enable country/region selector",
+            "default": true
+        },
+          {
+            "type": "header",
+            "content": "Language selector",
+            "info": "To add a language, go to your [language settings.](/admin/settings/languages)"
+          },
+          {
+            "type": "checkbox",
+            "id": "show_language",
+            "label": "Enable language selector",
+            "default": true
+        },
+        {
+            "type": "text_alignment",
+            "id": "text_alignment",
+            "label": "Alignment - desktop",
+            "default": "right"
+        },
+        {
+          "type": "checkbox",
+          "id": "fullwidth",
+          "label": "Full width row",
+          "default": false
+        }
+      ]
+    }
+  ],
+  "default": {
+    "blocks": [
+      { "type": "payments" },
+      { "type": "selectors" },
+      { "type": "copyright" },
+      { "type": "credits" }
+    ]
+  }
+}
+{% endschema %}

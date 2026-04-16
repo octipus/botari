@@ -1,0 +1,160 @@
+{%- render 'inc-stylesheet', src: 's-sections.css' -%}
+
+{%- capture style -%}
+{{ section.settings.alignment | replace: 'left', 'start' | replace: 'right', 'end' | prepend: '--_align:' | append: ';' }}
+{{ section.settings.logo_width | prepend: '--logoWidth:' | append: 'px;' }}
+{{ section.settings.logo_padding | prepend: '--logoPadding:' | append: 'px;' }}
+{%- endcapture -%}
+
+<section class="logo-list scrolling"
+    style="{{ style | strip_newlines | strip }}"
+    {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}>
+    {%- if section.settings.heading != blank -%}<h2 class="gs-title">{{ section.settings.heading }}</h2>{%- endif -%}
+    <bullet-marquee go
+        bullet-reverse="{{ section.settings.marqueeDirection }}" 
+        bullet-speed="{{ section.settings.marqueeSpeeds }}" 
+        bullet-pause="{{ section.settings.marqueePause }}"
+        bullet-image="true"
+    >
+        {%- for i in (1..10) -%}
+        <x-flex direction="row" ai="center" class="projectile" {% unless forloop.first %}aria-hidden="true"{% endunless %}>
+            {% for block in section.blocks %}
+                <span {{ block.shopify_attributes }}> 
+                    {% if block.settings.link != blank %}<a href="{{ block.settings.link }}" class="no-style" aria-label="{{ block.settings.image.alt | default: 'Logo' | escape }}" {%- if block.settings.newTab == true -%}rel="nofollow noopener noreferrer" target="_blank"{%- endif -%}>{% endif %}
+                    <picture>
+                    {%- liquid
+                        assign img = block.settings.image
+                        assign widths = '200,300,400,500'
+                        render 'inc-img' img: img, widths: widths, fallback: true
+                    -%}
+                    </picture>
+                    {% if block.settings.link != blank %}</a>{% endif %}
+                </span>
+            {% endfor %}
+        </x-flex>
+        {%- endfor -%}
+    </bullet-marquee>
+</section>
+
+{% schema %}
+{
+  "name": "Scrolling logo list",
+  "disabled_on": { "groups": ["header", "aside"] },
+  "presets": [
+    {
+      "name": "Scrolling logo list",
+      "category": "Content",
+      "blocks": [
+        { "type": "logo_image" },
+        { "type": "logo_image" },
+        { "type": "logo_image" },
+        { "type": "logo_image" },
+        { "type": "logo_image" },
+        { "type": "logo_image" }
+      ]
+    }
+  ],
+  "settings": [
+    {
+        "type": "text",
+        "id": "heading",
+        "label": "Heading",
+        "info": "Leave blank to remove heading."
+    },
+    {
+        "type": "text_alignment",
+        "id": "alignment",
+        "label": "Text alignment",
+        "default": "left"
+    },
+    {
+        "type": "range",
+        "label": "Logo size",
+        "id": "logo_width",
+        "min": 40,
+        "max": 200,
+        "step": 10,
+        "default": 70
+    },
+    {
+        "type": "range",
+        "label": "Spacing",
+        "id": "logo_padding",
+        "min": 0,
+        "max": 100,
+        "step": 5,
+        "default": 30,
+        "unit": "px",
+        "info": "Adjust the horizontal spacing between logos"
+    },
+    {
+        "type": "select",
+        "id": "marqueeDirection",
+        "label": "Scroll direction",
+        "default": "false",
+        "options": [
+            { "value": "false", "label": "Right to left" },
+            { "value": "true", "label": "Left to right" }
+        ]
+    },
+    {
+        "type": "range",
+        "label": "Scrolling speed",
+        "id": "marqueeSpeeds",
+        "min": 20,
+        "max": 200,
+        "step": 5,
+        "default": 100
+    },
+    {
+        "type": "checkbox",
+        "id": "marqueePause",
+        "label": "Pause scrolling on hover",
+        "default": true
+    },
+    {
+        "type": "header",
+        "content": "Appearance"
+    },
+    {
+        "type": "checkbox",
+        "id": "global_color_scheme",
+        "label": "Use global color scheme",
+        "default": true
+    },
+    {
+        "type": "color_scheme",
+        "id": "color_scheme",
+        "label": "Color scheme",
+        "default": "coretex-1",
+        "visible_if": "{{ section.settings.global_color_scheme == false }}"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "logo_image",
+      "name": "Logo",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Image"
+        },
+        {
+          "type": "url",
+          "id": "link",
+          "label": "Link",
+          "visible_if": "{{ block.settings.image }}"
+        },
+        {
+            "type": "checkbox",
+            "id": "newTab",
+            "label": "Open link in tab",
+            "default": false,
+            "visible_if": "{{ block.settings.image and block.settings.link }}"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,92 @@
+/* component-swatch.css */
+/* swatch lives in its own file for reusability of the swatch in swatch-input and dropdown */
+.swatch {
+    --swatch--size: var(--swatch-input--size, 3.5rem);
+    --swatch--border-radius: var(--swatch-input--border-radius, 100vw);
+  
+    display: block;
+    width: var(--swatch--size);
+    max-width: 100%;
+    aspect-ratio: 1 / 1;
+    background: var(--swatch--background);
+    background-position: var(--swatch-focal-point, initial);
+    background-size: cover;
+    background-origin: border-box;
+    border: 1px solid var(--globalBorderColor);
+    border-radius: var(--swatch--border-radius)
+}
+
+.swatch--square { --swatch--border-radius: 0 }
+.swatch--unavailable { border-style: dashed; border-color: var(--globalBorderColor) }
+
+/* component-swatch-input.css */
+/* swatch-input lives in its own file for reusability of the swatch in other areas than the product form context */
+.swatch-group { gap: var(--margin) }
+.swatch-group:has(.has-showText) { gap: var(--padding) }
+.swatch-group :where(label span, li) { margin: 0 }
+
+.swatch-input__input + .swatch-input__label {
+    --swatch-input--size: 3.5rem;
+    --swatch-input--border-radius: 50%;
+  
+    display: inline-block;
+    border-radius: var(--swatch-input--border-radius);
+    cursor: pointer;
+    outline-offset: 2px;
+    forced-color-adjust: none;
+}
+  
+.swatch-input__input + .swatch-input__label.swatch-input__label--square { --swatch-input--border-radius: 0 }
+  
+.swatch-input__input + .swatch-input__label:hover .swatch,
+.swatch-input__input:active + .swatch-input__label .swatch,
+.swatch-input__input:checked + .swatch-input__label .swatch {
+    outline: 1px solid var(--globalBorderColor);
+    outline-offset: 2px;
+}
+  
+/* Visually disabled */
+.swatch-input__input.disabled:not(:active):not(:checked) + .swatch-input__label:hover { outline: none }
+  
+/* Focus visible */
+.swatch-input__input:focus-visible + .swatch-input__label .swatch { outline: 1px solid var(--globalBorderColor) }
+  
+/* Overrides for swatch snippet when used inside disabled swatch-input */
+.swatch-input__input:disabled + .swatch-input__label > .swatch,
+.swatch-input__input.disabled + .swatch-input__label > .swatch {
+    position: relative;
+    overflow: hidden;
+    cursor: not-allowed
+}
+  
+  /* Display white semi-transparent overlay over swatch when input is disabled */
+.swatch-input__input:disabled + .swatch-input__label > .swatch::before,
+.swatch-input__input.disabled + .swatch-input__label > .swatch::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.6);
+}
+  
+/* Display crossed out line over swatch when input is disabled */
+.swatch-input__input:disabled + .swatch-input__label > .swatch::after,
+.swatch-input__input.disabled + .swatch-input__label > .swatch::after {
+    /* Diagonal of a square = length of the side * sqrt(2)  */
+    --diagonal--size: calc(var(--swatch-input--size) * 1.414);
+    --crossed-line--size: 1px;
+    --crossed-line--color: var(--globalBorderColor);
+
+    content: '';
+    position: absolute;
+    bottom: calc(var(--crossed-line--size) * -0.5);
+    left: 0;
+    width: var(--diagonal--size);
+    height: var(--crossed-line--size);
+    background-color: var(--crossed-line--color);
+    transform: rotate(-45deg);
+    transform-origin: left;
+}  
+
+.swatchee { border: none }
+.swatchee input[type="checkbox"] { display: none }
+.swatchee label span.swatch-help-text:empty { display: none }

@@ -1,0 +1,73 @@
+section.slideShow {
+    coretex-slideshow {
+        display: block;
+        position: relative;
+        overflow: clip;
+        width: 100%;
+        border-bottom: var(--globalBorder);
+    }
+
+    coretex-slideshow li { margin: 0 }
+
+    coretex-slideshow [slideshow-container] {
+        display: flex;
+        align-items: flex-start;
+        transition: height 250ms ease-in-out;
+
+        max-height: var(--heightDesktop);
+
+        @media (max-width: 777px) { max-height: var(--heightMobile) }
+    }
+
+    @media(min-width: 778px) { coretex-slideshow[auto-height="desktop"] [slideshow-slide] img { height: fit-content } }
+    @media(max-width: 777px) { coretex-slideshow[auto-height="mobile"] [slideshow-slide] img { height: fit-content } }
+
+    coretex-slideshow [slideshow-slide] { position: relative; flex: 0 0 100%; user-select: none; }
+
+    coretex-slideshow [slideshow-slide] img {
+        width: 100vw;
+        height: var(--heightDesktop, 700px);
+        object-fit: cover;
+        object-position: var(--imagePosition);
+
+        @media (max-width: 777px) { height: var(--heightMobile, 600px) }
+    }
+
+    coretex-slideshow [slideshow-slide] video {
+        width: 100vw;
+        height: var(--heightDesktop, 700px);
+        object-fit: cover;
+        object-position: var(--imagePosition);
+
+        @media (max-width: 777px) { height: var(--heightMobile, 600px) }
+    }
+
+    coretex-slideshow svg.svgph { height: fit-content }
+
+    coretex-slideshow [slideshow-slide] .meta {
+        padding: var(--padding);
+        pointer-events: none;
+
+        & > x-flex { height: 100% }
+    }
+
+    coretex-slideshow slider-controls {
+        display: block;
+        padding: var(--margin);
+        border-block-start: var(--globalBorder);
+
+        [control-dots] { gap: var(--margin) }
+
+        button.control-dot {
+            --buttonPadding: var(--space-1);
+            --buttonRadius: 100vw;
+
+            background: var(--bgColor);
+            border: var(--globalBorderSafe);
+            width: var(--space-1);
+            height: var(--space-1);
+
+            &.is-selected { background: var(--color) }
+        }
+    }
+}

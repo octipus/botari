@@ -1,0 +1,68 @@
+<section class="press-page" {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}>
+<x-grid columns="3" columns-s="1">
+    {% for block in section.blocks %}
+    <x-cell {{ block.shopify_attributes }}>
+        {% if block.settings.link != blank %}<a href="{{ block.settings.link }}" class="no-style" rel="nofollow noopener noreferrer" target="_blank">{% endif %}
+            <picture>
+            {%- assign img = block.settings.image -%}
+            {%- if img != nil -%}
+                {{ img | image_url: width: 600 | image_tag: widths: '200,400,600', loading: 'lazy', alt: img.alt | escape }}
+            {%- else -%}
+                {{ 'image' | placeholder_svg_tag: 'svg-imglogolist' }}
+            {%- endif -%}
+            </picture>
+            <div class="meta">{{ block.settings.content }}</div>
+        {% if block.settings.link != blank %}</a>{% endif %}
+    </x-cell>
+    {% endfor %}
+</x-grid>
+</section>
+
+{% schema %}
+{
+  "name": "Press coverage",
+  "settings": [
+    {
+        "type": "header",
+        "content": "Appearance"
+    },
+    {
+        "type": "checkbox",
+        "id": "global_color_scheme",
+        "label": "Use global color scheme",
+        "default": true
+    },
+    {
+        "type": "color_scheme",
+        "id": "color_scheme",
+        "label": "Color scheme",
+        "default": "coretex-1",
+        "visible_if": "{{ section.settings.global_color_scheme == false }}"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "logo_image",
+      "name": "Magazine",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Image"
+        },
+        {
+          "type": "richtext",
+          "id": "content",
+          "label": "Quote"
+        },
+        {
+          "type": "url",
+          "id": "link",
+          "label": "Link",
+          "info": "(Optional)"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

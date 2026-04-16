@@ -1,0 +1,257 @@
+{%- render 'inc-stylesheet', src: 's-sections.css' -%}
+
+<section
+    class="guarantee"
+    style="{{ section.settings.alignment | replace: 'left', 'start' | replace: 'right', 'end' | prepend: 'text-align:' | append: ';' }}"
+    {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}
+    data-section-id="{{ section.id }}"
+    uniform-media="{{ section.settings.uniformMedia }}"
+>
+    {%- if section.settings.heading != blank %}<h2 class="gs-title">{{ section.settings.heading }}</h2>{% endif -%}
+    <x-grid columns="{{ section.settings.columns }}" columns-s="{{ section.settings.columnsMob }}" block-count="{{ section.blocks.size }}">
+        {%- for block in section.blocks -%}
+            {%- if block.type == 'column' -%}
+            <x-flex direction="column" {{ block.shopify_attributes }}>
+
+                {% if block.settings.showImage %}
+                <x-cell class="media">
+                    {%- liquid                        
+                        assign img = block.settings.image
+                        assign icon = block.settings.icon
+
+                        # Check if an image is provided
+                        if img != blank
+                            # Render the image using the 'inc-img' snippet
+                            render 'inc-img', img: img
+                    
+                        # If no image, check for a valid icon (not 'none')
+                        elsif icon != 'none'
+                            # Render the icon using the 'global-icon' snippet
+                            render 'global-icon' with icon
+
+                        else                    
+                            # Render the fallback image using the 'inc-img' snippet
+                            render 'inc-img', img: nil, fallback: true
+                        endif
+                    -%}    
+                </x-cell>
+                {% endif %}
+
+                <x-flex wrap="wrap" direction="column" class="meta">
+                    {% if block.settings.heading != blank %}<x-cell><h3 class="h6 title">{{ block.settings.heading | escape }}</h3></x-cell>{% endif %}
+                    {% if block.settings.text != blank %}<x-cell><div class="content rte">{{ block.settings.text | replace: '\n', '<br/>' }}</div></x-cell>{% endif %}
+                    {% if block.settings.url != blank %}<x-cell><a href="{{ block.settings.url }}" class="{% if block.settings.linkAsButton %}button{% endif %}">{{ block.settings.label | escape }}</a></x-cell>{% endif %}
+                </x-flex>
+
+            </x-flex>
+        {% endif %}
+        {%- endfor -%}
+    </x-grid>
+</section>
+
+{% schema %}
+{
+  "name": "Guarantee",
+  "disabled_on": { "groups": ["header", "aside"] },
+  "presets": [
+    {
+      "name": "Guarantee",
+      "category": "Content",
+      "blocks": [
+        { "type": "column" },
+        { "type": "column" },
+        { "type": "column" },
+        { "type": "column" }
+      ]
+    }
+  ],
+  "settings": [
+    {
+        "type": "text",
+        "id": "heading",
+        "label": "Heading",
+        "info": "Leave blank to remove heading.",
+        "default": "Heading"
+    },
+    {
+      "type": "header",
+      "content": "Grid"
+    },
+    {
+        "type": "select",
+        "id": "columns",
+        "label": "Columns - desktop",
+        "default": "4",
+        "options": [
+            { "value": "2", "label": "2 columns" },
+            { "value": "3", "label": "3 columns" },
+            { "value": "4", "label": "4 columns" },
+            { "value": "5", "label": "5 columns" },
+            { "value": "6", "label": "6 columns" }
+        ]
+    },
+    {
+        "type": "select",
+        "id": "columnsMob",
+        "label": "Columns - mobile",
+        "default": "2",
+        "options": [
+            { "value": "1", "label": "1 column" },
+            { "value": "2", "label": "2 columns" }
+        ]
+    },
+    {
+        "type": "text_alignment",
+        "id": "alignment",
+        "label": "Text alignment",
+        "default": "left"
+    },
+    {
+        "type": "header",
+        "content": "Media"
+    },
+    {
+        "type": "checkbox",
+        "id": "uniformMedia",
+        "label": "Enable uniform media",
+        "info": "Keep all media elements the same size for a consistent appearance.",
+        "default": true
+    },
+    {
+      "type": "header",
+      "content": "Appearance"
+    },
+    {
+        "type": "checkbox",
+        "id": "global_color_scheme",
+        "label": "Use global color scheme",
+        "default": true
+    },
+    {
+        "type": "color_scheme",
+        "id": "color_scheme",
+        "label": "Color scheme",
+        "default": "coretex-1",
+        "visible_if": "{{ section.settings.global_color_scheme == false }}"
+    }
+  ],
+  "blocks": [
+    {
+        "type": "column",
+        "name": "Column",
+        "limit": 6,
+        "settings": [
+            {
+                "type": "header",
+                "content": "Media"
+            },
+            {
+                "type": "checkbox",
+                "id": "showImage",
+                "label": "Show",
+                "default": true
+            },
+            {
+                "type": "image_picker",
+                "id": "image",
+                "label": "Image",
+                "visible_if": "{{ block.settings.showImage }}"
+            },
+            {
+                "type": "select",
+                "id": "icon",
+                "label": "Icon",
+                "default": "none",
+                "visible_if": "{{ block.settings.showImage and block.settings.image == blank }}",
+                "options": [
+                    { "value": "none", "label": "None" },
+                    { "value": "certificate", "label": "Certificate" },
+                    { "value": "check-heart", "label": "Check heart" },
+                    { "value": "check-verified", "label": "Check verified" },
+                    { "value": "lock", "label": "Lock" },
+                    { "value": "shield", "label": "Shield" },
+                    { "value": "shield-tick", "label": "Shield tick" },
+                    { "value": "box", "label": "Box" },
+                    { "value": "globe", "label": "Globe" },
+                    { "value": "lightning", "label": "Lightning" },
+                    { "value": "plane", "label": "Plane" },
+                    { "value": "truck", "label": "Truck" },
+                    { "value": "bank", "label": "Bank" },
+                    { "value": "bank-note", "label": "Bank note" },
+                    { "value": "coins-hand", "label": "Coins hand" },
+                    { "value": "credit-card", "label": "Credit card" },
+                    { "value": "star", "label": "Star" },
+                    { "value": "star-multi", "label": "Multi star" },
+                    { "value": "star-shine", "label": "Star shine" },
+                    { "value": "thumb-up", "label": "Thumbs up" },
+                    { "value": "trophy", "label": "Trophy" },
+                    { "value": "leaf", "label": "Leaf" },
+                    { "value": "recycle", "label": "Recycle" },
+                    { "value": "refresh", "label": "Refresh" },
+                    { "value": "mail", "label": "Mail" },
+                    { "value": "message-chat", "label": "Message chat" },
+                    { "value": "mobile-phone", "label": "Mobile phone" },
+                    { "value": "telephone", "label": "Telephone" },
+                    { "value": "eye", "label": "Eye" },
+                    { "value": "help-circle", "label": "Help circle" },
+                    { "value": "o-info", "label": "Info circle" },
+                    { "value": "face-content", "label": "Face content" },
+                    { "value": "face-wink", "label": "Face wink" },
+                    { "value": "o-account", "label": "Account" },
+                    { "value": "user", "label": "User" },
+                    { "value": "users", "label": "Users" },
+                    { "value": "map", "label": "Map" },
+                    { "value": "marker-pin", "label": "Marker pin" },
+                    { "value": "calendar", "label": "Calendar" },
+                    { "value": "clock", "label": "Clock" },
+                    { "value": "book-closed", "label": "Book closed" },
+                    { "value": "gift", "label": "Gift" },
+                    { "value": "heart", "label": "Heart" },
+                    { "value": "ruler", "label": "Ruler" }
+                ]
+            },
+            {
+                "type": "header",
+                "content": "Content"
+            },
+            {
+                "type": "text",
+                "id": "heading",
+                "label": "Heading",
+                "default": "Heading",
+                "info": "Leave blank to hide."
+            },
+            {
+                "type": "inline_richtext",
+                "id": "text",
+                "label": "Description",
+                "default": "Describe something here.",
+                "info": "Leave blank to hide."
+            },
+            {
+                "type": "header",
+                "content": "Button"
+            },
+            {
+                "type": "url",
+                "id": "url",
+                "label": "URL"
+            },
+            {
+                "type": "text",
+                "id": "label",
+                "label": "Button label",
+                "default": "Button label",
+                "info": "Leave blank to hide."
+            },
+            {
+                "type": "checkbox",
+                "id": "linkAsButton",
+                "label": "Link as button",
+                "default": true
+            }
+        ]
+    }
+  ]
+}
+{% endschema %}

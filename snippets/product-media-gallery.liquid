@@ -1,0 +1,182 @@
+{% comment %}
+    Renders a product media gallery. Should be used with 'media-gallery.js'
+    Also see 'product-media-modal'
+
+    Accepts:
+    - product: {Object} Product liquid object
+    - variant_images: {Array} Product images associated with a variant
+    - limit: {Number} (optional) When passed, limits the number of media items to render
+
+    Usage:
+    {% render 'product-media-gallery' %}
+{% endcomment %}
+
+{%- liquid
+    # theme-check-disable UnusedAssign
+    if variant_images.size == product.media.size
+        assign single_media_visible = true
+    endif
+
+    assign media_count = product.media.size
+    if hideVariantImages and media_count > 1 and variant_images.size > 0
+        assign media_count = media_count | minus: variant_images.size | plus: 1
+    endif
+
+    assign id_append = ''
+    if is_duplicate
+        assign id_append = '-duplicate'
+    endif
+
+    assign feat_id = ''
+    if featured_product
+        assign sectionId = section.id | remove: '-' | remove: '_' 
+        assign feat_id = sectionId
+    endif
+
+    # If media slider is active
+    if media_count > 1
+        if mediaLayout == 'slider' and mediaLayoutMob != 'slider'
+            assign slider_on = 'desktop'
+            assign media_classes = 'scroll-snap mandatory align-start'
+            if showThumbnailSlider
+                assign thumbnails_on = true
+                assign thumbnails_class = 'large-only'
+            endif
+        elsif mediaLayoutMob == 'slider' and mediaLayout != 'slider'
+            assign slider_on = 'mobile'
+            assign media_classes = 'scroll-snap-m mandatory align-start'
+            if showThumbnailSlider
+                assign thumbnails_on = true
+                assign thumbnails_class = 'small-only'
+            endif
+        elsif mediaLayout == 'slider' and mediaLayoutMob == 'slider'
+            assign slider_on = 'deskmob'
+            assign media_classes = 'scroll-snap scroll-snap-m mandatory align-start'
+            if showThumbnailSlider
+                assign thumbnails_on = true
+                assign thumbnails_class = nil
+            endif
+        else
+            assign slider_on = false
+            assign media_classes = nil
+            assign thumbnails_on = false
+            assign thumbnails_class = nil
+        endif
+    else    
+        assign slider_on = false
+        assign media_classes = nil
+        assign thumbnails_on = false
+        assign thumbnails_class = nil
+    endif
+    # theme-check-enable UnusedAssign
+-%}
+
+<media-gallery id="MediaGallery-{{ section.id }}" data-slider="{{ slider_on }}" data-media-layout="{{ mediaLayout }}" data-media-thumbnails="{{ thumbnails_on }}">
+    <div id="GalleryStatus-{{ section.id }}" class="visually-hidden" role="status"></div>
+
+    {%- comment -%} 
+        Image slider
+    {%- endcomment -%}
+    {%- if featured_product and slider_on == false and product.media.size > 1 -%}
+        <input type="checkbox" id="xpand-{{ section.id }}" data-menu hidden>
+        <label role="button" for="xpand-{{ section.id }}" class="is-xpand" tabindex="0">
+            <span class="button">
+                <div class="viewall">{{ 'product.viewAllMedia' | t }}</div>
+                <div class="viewless">{{ 'product.viewLessMedia' | t }}</div>
+            </span>
+        </label>
+    {%- endif -%}
+
+    <slider-component id="GalleryViewer-{{ section.id }}" {% if featured_product and slider_on == false and product.media.size > 1 %}class="xpand"{% endif %}>
+        <x-flex direction="column" class="{{ media_classes }}" id="Slider-Gallery-{{ section.id }}">
+
+        {%- comment -%} If selected or first available variant {%- endcomment -%}
+            {%- if product.selected_or_first_available_variant.featured_media != null -%}
+                {%- assign featured_media = product.selected_or_first_available_variant.featured_media -%}
+                <x-cell 
+                    id="Slide-{{ section.id }}-{{ featured_media.id }}"
+                    data-media-id="{{ section.id }}-{{ featured_media.id }}"
+                    data-media-group="{{ featured_media.alt | escape }}"
+                    class="slider__slide is-active"
+                >
+                    {%- assign media_position = 1 -%}
+                    {%- render 'product-media', 
+                        media: featured_media, 
+                        media_count: media_count, 
+                        position: media_position, 
+                        modal_id: section.id, 
+                        xr_button: true, 
+                        lazy_load: false, 
+                        imageZoom: imageZoom,
+                        loop: loop
+                    -%}
+                </x-cell>
+            {%- endif -%}
+
+        {%- comment -%} Give me the loop {%- endcomment-%}
+            {%- for media in product.media -%}
+                {%- unless media.id == product.selected_or_first_available_variant.featured_media.id -%}
+                <x-cell 
+                    id="Slide-{{ section.id }}-{{ media.id }}"
+                    class="slider__slide"
+                    data-media-id="{{ section.id }}-{{ media.id }}"
+                    data-media-group="{{ media.alt | escape }}"
+                >
+                {%- liquid
+                    assign media_position = media_position | default: 0 | plus: 1
+                    assign lazy_load = false
+                        
+                    if media_position > 1
+                        assign lazy_load = true
+                    endif
+
+                    render 'product-media', media: media, media_count: media_count, position: media_position, modal_id: section.id, xr_button: true, lazy_load: lazy_load, imageZoom: imageZoom, loop: loop, id_append: id_append
+                -%}
+                </x-cell>
+                {%- endunless -%}
+            {%- endfor -%}
+
+        </x-flex>
+
+        {%- comment -%} 
+            Image slider navigation
+        {%- endcomment-%}
+        {%- if slider_on -%}
+        {%- unless thumbnails_on -%}
+        <x-grid columns="3" class="slider-buttons no-js-hidden">
+            <x-cell js="start"><button type="button" name="previous" class="is-blank">
+                {%- render 'global-icon' with 'arrow-left' -%}
+                <span class="visually-hidden">{{ 'pagination.previous' | t }}</span>
+            </button></x-cell>
+
+            <x-flex class="slider-counter" ps="center" style="{%- unless showSlideCounter -%}opacity:0{%- endunless -%}">
+                <x-cell class="slider-counter--current">1</x-cell>
+                <x-cell aria-hidden="true"> / </x-cell>
+                <x-cell class="slider-counter--total" counter-total="{{ media_count }}">{{ media_count }}</x-cell>
+            </x-flex>
+
+            <x-cell js="end"><button type="button" name="next" class="is-blank">
+                {%- render 'global-icon' with 'arrow-right' -%}
+                <span class="visually-hidden">{{ 'pagination.next' | t }}</span>
+            </button></x-cell>
+        </x-grid>
+        {%- endunless -%}
+        {%- endif -%}
+    </slider-component>
+
+    {%- liquid
+        # Thumbnail slider
+    
+        if thumbnails_on
+            render 'product-media-thumbnail', class: thumbnails_class, variant_images: variant_images, hide_variants: hideVariantImages, id_append: id_append, featured_media: featured_media
+        endif
+    -%}
+</media-gallery>
+
+{%- liquid
+    # Image modal - Image zoomer
+
+    if imageZoom
+        render 'product-media-modal' variant_images: variant_images 
+    endif
+-%}

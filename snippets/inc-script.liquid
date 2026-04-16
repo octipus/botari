@@ -1,0 +1,23 @@
+{%- comment -%}
+    This is responsible for loading JS files across the theme.
+
+    Accepts:
+    src: file.js
+    loading: 'defer' | 'module'
+    fetchpriority: 'auto' | 'low' | 'high'
+
+    Usage:
+    {%- render 'inc-script', src: 't-product.js', loading: 'module', fetchpriority: 'high' -%}
+{%- endcomment -%}
+
+{% # theme-check-disable %}  
+{%- liquid
+    assign script_path = src | asset_url 
+    if loading == 'module'
+        assign script_type = 'type="module"'
+    else 
+        assign script_type = 'defer="defer"'
+    endif
+-%}
+<script src="{{ script_path }}" {{ script_type }} fetchpriority="{{ fetchpriority | default: 'auto' }}"></script>
+{% # theme-check-enable %}

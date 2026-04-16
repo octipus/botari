@@ -1,0 +1,99 @@
+{%- comment -%}
+	Quick Buy section fragment for Shopify Section Rendering API
+	Used via /products/{handle}?section_id=x-quickbuy
+{%- endcomment -%}
+
+{%- liquid
+	# Product form ID for quick view
+	assign product_form_id = 'qv-product-form-' | append: section.id
+
+	# Get selected or first available variant - may be null for invalid combinations
+	assign current_variant = product.selected_or_first_available_variant
+
+	# Check availability - handle null variant case
+	assign variant_available = false
+	if current_variant
+		assign variant_available = current_variant.available
+	endif
+
+	# Check if we have a valid variant combination
+	assign has_valid_variant = false
+	if current_variant
+		assign has_valid_variant = true
+	endif
+
+    # Check if product has preorder tag
+    # Preorder tag (normalize + handle spelling variants)
+    assign pre_order = false
+    assign tags_csv = product.tags | join: ',' | downcase
+    if tags_csv contains 'preorder' or tags_csv contains 'pre-order' or tags_csv contains 'pre order'
+        assign pre_order = true
+    endif
+
+    capture cartSubmitButton
+        unless has_valid_variant
+            echo 'product.unavailable' | t
+        else
+
+            unless variant_available
+                echo 'product.soldOut' | t
+            else
+
+                # Check if product has preorder tag.
+                unless pre_order
+                    echo 'product.addToCart' | t
+                else
+                    echo 'product.preorder' | t
+                endunless
+
+            endunless
+        endunless
+    endcapture
+-%}
+
+<div class="qvContainer">
+	{%- comment -%} Product Form {%- endcomment -%}
+    <ajax-cart-product-form cart-type="{{ settings.cart_type }}">
+		{%- form 'product', product, id: product_form_id, novalidate: 'novalidate', data-type: 'add-to-cart-form', class: 'qvForm' -%}
+        <x-flex direction="column">
+			{%- comment -%} Hidden variant ID - handled by variant-pickers snippet or fallback {%- endcomment -%}
+			{%- if product.has_only_default_variant -%}
+				{%- comment -%} Single variant product - add hidden input directly {%- endcomment -%}
+				<input type="hidden" name="id" value="{{ product.variants.first.id }}" class="variant-id-input">
+			{%- else -%}
+				{%- comment -%} Scalable Variant Picker for multi-variant products {%- endcomment -%}
+				<div class="qvVariantPicker">
+					{%- render 'c-prod-variant-picker', product: product, form_id: product_form_id, picker_type: 'select', context: 'quickview' -%}
+				</div>
+			{%- endif -%}
+
+            {% # Cart error messages %}
+            <div data-ajax-cart-errors="form"></div>
+
+            <button 
+                type="submit" name="add" 
+                preorder="{{ pre_order }}" 
+                class="cardButton is-primary" 
+                id="QbSubmitButton-{{ section.id }}"
+                {% unless has_valid_variant and variant_available %}disabled{% endunless %}
+            >
+                <span class="cartPriceAdd fullwidth">
+                    <x-flex class="cta" jc="around" ai="center">
+                        <x-cell class="xPrice">{%- render 'c-price', product: product, use_variant: true -%}</x-cell>
+                        <x-cell class="xCTA clipper">
+                            <span class="cartDefault" data-button-text>
+                                <span class="txt">{{ cartSubmitButton }}</span>
+                                <i class="sprites g-cart"><svg class="icon"><use xlink:href="#sprites-cart"></use></svg></i>
+                            </span>
+                            <span class="cartLoading" aria-hidden="true">{{ 'product.addingToCart' | t }}</span>
+                        </x-cell>
+                    </x-flex>
+                </span>
+            </button>
+
+        </x-flex>
+		{%- endform -%}
+    </ajax-cart-product-form>
+
+	{%- comment -%} No variants JSON needed - handled by variant-pickers snippet {%- endcomment -%}
+</div>

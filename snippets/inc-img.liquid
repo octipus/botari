@@ -1,0 +1,93 @@
+{% comment %}
+    This is responsible for all images across the theme.
+
+    Accepts:
+	- img: the image to render [REQUIRED]
+
+	- dynamic: If image block has mobile/desktop versions. - true/false - (default: false)
+		- imgMob: Mobile image - [REQUIRED]
+	- alt: image alt tag
+	- pclass: picture class
+	- width: The max width of the image.
+	- widths: list of sizes for the srcset.
+	- sizes: used for srcset
+	- loading: eager/lazy/auto/[blank]
+	- class: if you want to pass a class to img tag
+    - fallback: if you do not want to display a fallback svg image when img is empty.
+	- fetchpriority: 'high' or 'low' - prioritizes image loading (useful for LCP images)
+    - preload: Specify whether the image should be preloaded. - boolean - (default: false)
+	- svg: the svg image to show if no image available.
+
+    Usage:
+    {%- render 'inc-img'
+        img: block.settings.image,
+        widths: '480,640,768,1024,1280,1536,1920,2560',
+		sizes: '(min-width: 777px) 450px, 78.75vw',
+        fetchpriority: 'high',
+        preload: true
+    -%}
+
+    Usage option II:
+	{%- liquid 
+		assign img = 
+		assign widths = 
+		assign sizes = '(min-width: 777px) 450px, 78.75vw'
+
+		render 'inc-img' img: img, width: width, widths: widths, sizes: sizes, ph: ph
+	-%}
+{% endcomment %}
+
+{%- if img -%}
+	{%- liquid
+		assign dynamic = dynamic | default: false
+        assign alt = alt | default: img.alt | escape | strip | strip_html
+		assign ph = ph | default: false
+		assign pclass = pclass | default: null | prepend: 'class="' | append: '"'
+        assign widths = widths | default: '480,640,768,1024,1280,1536,1920,2560'
+        assign widths_array = widths | split: ','
+        assign width = widths_array | last
+		assign sizes = sizes | default: '100vw'
+		assign class = class | default: null
+		assign id = id | default: null
+
+        if loading == blank or loading == null
+            assign loading = 'lazy'
+        endif
+
+        # #image_tag-html-attributes
+        # Respect explicit values, use null for blank (allows caller to control optimization)
+        if fetchpriority == blank or fetchpriority == null
+            assign fetchpriority = null
+        endif
+
+        # #image_tag-preload
+        # Respect explicit values, use false for blank
+        if preload == blank or preload == false or preload == null
+            assign preload = false
+        endif
+	-%}
+
+	<picture {{ pclass }}>
+		{%- if dynamic -%}
+	    {%- if imgMob -%}<source srcset="{{ imgMob | image_url: width: 970 }} 1x, {{ imgMob | image_url: width: 1750 }} 2x" media="(max-width:777px)">{%- endif -%}
+	    {%- endif -%}
+		{{ img | image_url: width: width | 
+            image_tag: 
+                widths: widths,
+                sizes: sizes, 
+                alt: alt, 
+                class: class, 
+                id: id, 
+                loading: loading, 
+                fetchpriority: fetchpriority,
+                preload: preload
+        }}
+	</picture>
+{%- else -%}
+	{%- liquid
+        if fallback
+		    assign svg = svg | default: 'image'
+		    echo svg | placeholder_svg_tag: 'svgph'
+        endif
+	-%}
+{%- endif -%}

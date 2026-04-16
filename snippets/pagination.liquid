@@ -1,0 +1,19 @@
+<x-grid columns="3" ai="center">
+    <x-cell>
+        {% unless paginate.previous.is_link %}
+        <button disabled class="is-blank" style="width:inherit">&larr;</button>
+        {% else %}
+        <a href="{{ paginate.previous.url }}" class="button is-blank">&larr; {{ 'pagination.previous' | t }}</a>
+        {% endunless %}
+    </x-cell>
+
+    <x-cell js="center">{{ 'pagination.currentPage' | t: current: paginate.current_page, total: paginate.pages }}</x-cell>
+
+    <x-cell js="end">
+        {% unless paginate.next.is_link %}
+        <button disabled class="is-blank" style="width:inherit">&rarr;</button>
+        {% else %}
+        <a href="{{ paginate.next.url }}" class="button is-blank">{{ 'pagination.next' | t }} &rarr;</a>
+        {% endunless %}
+    </x-cell>
+</x-grid>

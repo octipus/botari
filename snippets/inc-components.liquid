@@ -1,0 +1,33 @@
+{%- comment -%}
+    🚨 Code #AA-M
+
+    This is responsible for loading Components. Only works for web components.
+
+    Usage:
+    {%- render 'inc-components' -%}
+{%- endcomment -%}
+
+<script>
+{%- capture content %}
+window.components = {
+    "coretex-cart": "{{ 'c-cart.js' | asset_url }}",
+    "coretex-slideshow": "{{ 'c-slideshow.js' | asset_url }}",
+    "hscroll-slider": "{{ 'm-hscroll.js' | asset_url }}",
+    "video-player": "{{ 'videoplayer.js' | asset_url }}",
+    "image-comparison": "{{ 'gs-comparison.js' | asset_url }}",
+    "coretex-dialog": "{{ 'c-dialog.js' | asset_url }}",
+    "localization-form": "{{ 'localization.js' | asset_url }}",
+    "shop-the-look": "{{ 'c-shopthelook.js' | asset_url }}",
+    "cart-discount": "{{ 'c-cart-discount.js' | asset_url }}",
+    "predictive-search": "{{ 'predictive-search.js' | asset_url }}",
+    "details-menu": "{{ 'c-details.js' | asset_url }}",
+    "coretex-variant-picker": "{{ 'c-prod-card-picker.js' | asset_url }}",
+    "coretex-quickbuy": "{{ 'c-quickbuy.js' | asset_url }}",
+    "hero-scroll": "{{ 'c-heroscroll.js' | asset_url }}",
+    "coretex-reveal": "{{ 'c-content-reveal.js' | asset_url }}",
+    "coretex-countdown": "{{ 'c-countdown.js' | asset_url }}",
+}
+{%- endcapture -%}{%- render 'inc-compressor', content: content, sWd: 'true' -%}
+</script>
+
+<script>(()=>{const e=window.components||{},n=async(n,o)=>{const c=document.getElementById("OpenThinking");if(!c)return console.warn("Target container #OpenThinking not found, falling back to body"),t(n,o);const d=document.createElement("script");d.type="module",d.src=n,c.appendChild(d),d.addEventListener("error",()=>{document.querySelectorAll(o).forEach(e=>e.classList.add("no-js"))}),d.addEventListener("load",()=>{document.dispatchEvent(new CustomEvent("component-loaded",{detail:{component:o,components:e}}))})},t=async(n,t)=>{const o=document.createElement("script");o.type="module",o.src=n,document.body.appendChild(o),o.addEventListener("error",()=>{document.querySelectorAll(t).forEach(e=>e.classList.add("no-js"))}),o.addEventListener("load",()=>{document.dispatchEvent(new CustomEvent("component-loaded",{detail:{component:t,components:e}}))})};customElements.define("component-loader",class extends HTMLElement{connectedCallback(){Object.keys(e).forEach(t=>{this.querySelector(t)&&(n(e[t],t).catch(e=>console.error(`Error loading component ${t}:`,e)),delete e[t])})}})})();</script>

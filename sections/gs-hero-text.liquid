@@ -1,0 +1,113 @@
+{%- render 'inc-stylesheet', src: 's-sections.css' -%}
+
+<section class="hero-text" 
+    {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %} 
+    style="{{ section.settings.alignment | replace: 'left', 'start' | replace: 'right', 'end' | prepend: 'text-align:' | append: ';' }}"
+>
+    {%- for block in section.blocks -%}
+    {%- case block.type -%}
+    {%- when 'text' -%}
+        {%- capture block_style %}
+        {{ block.settings.size | prepend: '--_size:var(--type-' | append: ');' }}
+        {{ block.settings.sizeMob | prepend: '--_size-s:var(--type-' | append: ');' }}
+        {%- endcapture -%}
+        {%- if block.settings.body %}<div class="cta" style="{{ block_style | strip_newlines | strip }}">{{ block.settings.body }}</div>{% endif -%}
+    {%- when 'button' -%}
+        {%- if block.settings.cta -%}<a href="{{ block.settings.url }}" class="button">{{ block.settings.cta }}</a>{%- endif -%}
+    {%- endcase -%}
+    {%- endfor -%}
+</section>
+
+{% schema %}
+{
+  "name": "Hero text",
+  "disabled_on": { "groups": ["header", "footer", "aside"] },
+  "presets": [
+    {
+      "name": "Hero text",
+      "category": "Banners",
+      "blocks": [
+        { "type": "text" },
+        { "type": "button" },
+        { "type": "button" }
+      ]
+    }
+  ],
+  "settings": [
+    {
+        "type": "text_alignment",
+        "id": "alignment",
+        "label": "Alignment",
+        "default": "center"
+    },
+    {
+      "type": "header",
+      "content": "Appearance"
+    },
+    {
+        "type": "checkbox",
+        "id": "global_color_scheme",
+        "label": "Use global color scheme",
+        "default": true
+    },
+    {
+        "type": "color_scheme",
+        "id": "color_scheme",
+        "label": "Color scheme",
+        "default": "coretex-1",
+        "visible_if": "{{ section.settings.global_color_scheme == false }}"
+    }
+  ],
+  "blocks": [
+        {
+            "type": "text",
+            "name": "Text",
+            "limit": 1,
+            "settings": [
+                {
+                    "type": "richtext",
+                    "id": "body",
+                    "label": "Heading",
+                    "default": "<p>Use this section to describe a product or welcome your customers.</p>"
+                },
+                {
+                    "type": "range",
+                    "id": "size",
+                    "label": "Size - desktop",
+                    "min": 1,
+                    "max": 30,
+                    "step": 1,
+                    "default": 8
+                },
+                {
+                    "type": "range",
+                    "id": "sizeMob",
+                    "label": "Size - mobile",
+                    "min": 1,
+                    "max": 30,
+                    "step": 1,
+                    "default": 4
+                }
+            ]
+        },
+        {
+            "type": "button",
+            "name": "Button",
+            "limit": 3,
+            "settings": [
+                {
+                    "type": "text",
+                    "id": "cta",
+                    "label": "Label",
+                    "default": "Button label"
+                },
+                {
+                    "type": "url",
+                    "id": "url",
+                    "label": "Link"
+                }
+            ]
+        }
+  ]
+}
+{% endschema %}

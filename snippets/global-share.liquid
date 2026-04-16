@@ -1,0 +1,36 @@
+{%- comment -%}
+	Usage: 
+
+	{%- liquid
+		assign shareImage = product.selected_or_first_available_variant.featured_media.preview_image | default: product.featured_media.preview_image
+        assign share_link = product.selected_variant.url | default: product.url | prepend: request.origin
+        render 'global-share', shareTitle: product.title, shareUrl: share_link, shareImage: share_image
+	-%}
+{%- endcomment -%}
+<ul class="no-style large-only" x-flex style="gap:var(--buttonPadding)">
+	<li><a href="mailto:?subject={{ shareTitle | escape }}&body={{ shop.url | append: shareUrl | url_param_escape }}" class="no-style">Email</a></li>
+	<li><a href="https://x.com/intent/post?text={{ shareTitle | escape }}&amp;url={{ shop.url | append: shareUrl | url_param_escape }}" target="_blank" rel="nofollow" class="no-style">X</a></li>
+	<li><a href="https://pinterest.com/pin/create/button/?url={{ shop.url | append: shareUrl | url_param_escape }}&amp;media={{ shareImage | image_url }}&amp;description={{ shareTitle | escape }}" target="_blank" rel="nofollow" class="no-style">Pinterest</a></li>
+	<li><a href="https://facebook.com/sharer/sharer.php?u={{ shop.url | append: shareUrl | url_param_escape }}" target="_blank" rel="nofollow" class="no-style">Facebook</a></li>
+	<li><a href="https://web.whatsapp.com/send?text={{ shop.url | append: shareUrl | url_param_escape }}" target="_blank" rel="nofollow" class="no-style">WhatsApp</a></li>
+	<li><a href="https://telegram.me/share/url?url={{ shop.url | append: shareUrl | url_param_escape }}&media={{ shareImage | image_url }}" target="_blank" rel="nofollow" class="no-style">Telegram</a></li>
+</ul>
+
+{%- comment -%}
+	Mobile
+{%- endcomment -%}
+<button class="mobshare is-blank small-only" style="font-weight:normal;display:flex;gap:var(--mardding)">
+	<span>{% render 'global-icon' with 'share' %}</span>
+	<span>{{ 'product.share' | t }}</span>
+</button>
+
+<script>
+const shareData = { title: '{{ shop.name }}', text: '{{ shareTitle | escape }}', url: '{{ shop.url | append: shareUrl | url_param_escape }}' }
+const shareButton = document.querySelector('.mobshare');
+const resultPara = document.querySelector('.share-result');
+
+shareButton.addEventListener('click', async () => {
+	try { await navigator.share(shareData) } 
+	catch (err) { return }
+});
+</script>

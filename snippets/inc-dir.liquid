@@ -1,0 +1,18 @@
+{%- comment -%}
+    This is responsible for determining the themes' language.
+
+    Usage:
+    {%- render 'inc-dir' -%}
+{%- endcomment -%}
+
+{%- liquid
+    assign locale_parts = request.locale.iso_code | split: '-'
+    assign language_code = locale_parts | first
+    assign rtl_languages = 'ae,ar,arc,bcc,bqi,ckb,dv,fa,glk,ha,he,kwh,ks,ku,mzn,nqo,pnb,ps,sd,ug,ur,yi' | split: ','
+
+    if rtl_languages contains language_code
+        echo 'rtl'
+    else
+        echo 'ltr'
+    endif
+-%}

@@ -1,0 +1,113 @@
+{% assign openthinking_seo_pages = 'product,collection,blog,article' | split: ',' %}
+{%- if openthinking_seo_pages contains request.page_type -%}
+
+{%- liquid
+    capture openthinking_structured_data
+
+        if request.page_type == 'product' 
+            echo product | structured_data
+        elsif request.page_type == 'article'
+            echo article | structured_data
+        endif
+
+    endcapture
+-%}
+
+<script type="application/ld+json" class="openthinking-schema-graph">{{ openthinking_structured_data | strip_html | strip }}</script>
+{%- endif -%}
+
+<script type="application/ld+json" class="openthinking-schema-graph">
+{
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [{
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Home",
+      "item": "{{ shop.url }}"
+    }
+    {%- if request.page_type == 'product' -%}, {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "{{ product.title | strip_html | strip_newlines | strip | escape }}",
+      "item": "{{ shop.url }}{{ product.url }}"
+    }
+    {%- endif -%}
+    {%- if request.page_type == 'collection' -%}, {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "{{ collection.title | strip_html | strip_newlines | strip | escape }}",
+      "item": "{{ shop.url }}{{ collection.url }}"
+    }
+    {%- endif -%}
+    {%- if request.page_type == 'blog' -%}, {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "{{ blog.title | strip_html | strip_newlines | strip | escape }}",
+      "item": "{{ shop.url }}{{ blog.url }}"
+    }
+    {%- endif -%}
+    {%- if request.page_type == 'article' -%}, {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "{{ blog.title | strip_html | strip_newlines | strip | escape }}",
+      "item": "{{ shop.url }}{{ blog.url }}"
+    }, {
+      "@type": "ListItem",
+      "position": 3,
+      "name": "{{ article.title | strip_html | strip_newlines | strip | escape }}",
+      "item": "{{ shop.url }}{{ article.url }}"
+    }
+    {%- endif -%}
+    ]
+}
+</script>
+
+{%- if request.page_type == 'index' -%}
+{% assign potential_action_target = request.origin | append: routes.search_url | append: '?q={search_term_string}' %}
+<script type="application/ld+json" class="openthinking-schema-graph">
+{
+    "@context":"https://schema.org",
+    "@graph":[
+    	{
+            "@type": "WebSite",
+            "@id": "{{ shop.url }}/#website",
+            "url": {{ request.origin | append: page.url | json }},
+            "name": {{ shop.name | json }},
+            "description": "{{ page_description | default: shop.description | default: shop.brand.short_description | strip_html | strip_newlines | strip | escape }}",
+    		"inLanguage":"{{ shop.locale }}",
+    		"publisher":{
+               "@id":"{{ shop.url }}/#organization"
+            },
+    		"potentialAction": {
+    			"@type": "SearchAction",
+    			"target": {{ potential_action_target | json }},
+    			"query-input": "required name=search_term_string"
+    		}
+    	},
+    	{
+            "@type": "Organization",
+            "@id": "{{ shop.url }}/#organization",
+            "name": {{ shop.name | json }},
+    		"description": {{ shop.description | default: shop.brand.short_description | default: page_description | json }},
+            "url": "{{ shop.url }}"
+    		{%- if shop.brand.metafields.social_links.size > 0 -%},
+    		"sameAs": [
+    			{%- for social_link in shop.brand.metafields.social_links -%}
+    			{{- social_link.last.value | json -}}{%- unless forloop.last -%},{%- endunless -%}
+    			{%- endfor -%}
+    		]
+    		{%- endif -%}
+
+    		{%- if shop.brand.logo -%},
+    		"logo": {{ shop.brand.logo | image_url: width: shop.brand.logo.width | prepend: "https:" | json }}
+    		{%- endif -%}
+
+    		{%- if shop.brand.slogan -%},
+    		"slogan": {{ shop.brand.slogan | json }}
+    		{%- endif -%}
+    	}
+    ]
+}
+</script>
+{%- endif -%}

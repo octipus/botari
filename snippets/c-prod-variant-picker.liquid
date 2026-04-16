@@ -1,0 +1,116 @@
+{%- comment -%}
+    Scalable Variant Picker - Shopify Requirements Compliant
+  
+    Uses product.options_with_values and product_option_value instead of full variants array
+    Scales beyond 250 variants by using Section Rendering API with option_values parameter
+  
+    Accepts:
+    - product: {Object} Product object
+    - form_id: {String} ID of the product form
+    - picker_type: {String} 'radio' or 'select' (default: 'radio')
+    - context: {String} 'quickview' or 'pdp' (optional)
+{%- endcomment -%}
+
+{%- unless product.has_only_default_variant -%}
+
+{%- liquid
+    # Set default picker type
+    if picker_type == blank
+        assign picker_type = 'select'
+    endif
+
+    # If disabled show visually hidden
+    unless settings.card_quick_buy_select_label
+        assign show_picker_label = 'visually-hidden'
+    endunless
+
+    # Generate unique IDs for this picker instance
+    assign picker_id = form_id | default: 'variant-picker' | append: '-' | append: section.id
+-%}
+
+<component-loader><coretex-variant-picker 
+    x-flex direction="column" class="variant-pickers" 
+    id="{{ picker_id }}"
+    data-product-url="{{ product.url }}"
+    data-context="{{ context | default: 'pdp' }}"
+>
+
+{%- for option in product.options_with_values -%}
+    {%- liquid
+      assign option_index = forloop.index0
+      assign fieldset_id = picker_id | append: '-option-' | append: option_index
+    -%}
+
+    <fieldset class="variant-option" data-option-position="{{ option.position }}">
+        <legend x-flex ai="center" wrap="wrap" class="{{ show_picker_label }}">
+            {%- liquid
+                # Display option name
+                echo option.name | prepend: '<span>' | append: ': </span>'
+
+                # Display selected value
+                echo '<span data-selected-value>'
+                for value in option.values
+                    if value.selected
+                        echo value
+                        break 
+                    endif
+                endfor 
+                echo '</span>'
+            -%}
+        </legend>
+
+        <div class="variant-option__values" role="group" aria-labelledby="{{ fieldset_id }}-legend">
+
+          {%- comment -%} Select dropdown variant {%- endcomment -%}
+          <select class="optionValueSelector"
+                  data-option-value-selector
+                  name="option{{ option.position }}"
+                  data-option-position="{{ option.position }}"
+                  {% if form_id %}form="{{ form_id }}"{% endif %}
+                  autofocus
+            >
+            {%- for value in option.values -%}
+              {%- liquid
+                assign is_selected = value.selected
+                assign is_available = value.available
+                assign option_value_id = value.id
+                assign product_url = value.product_url | default: product.url
+              -%}
+              <option value="{{ value | escape }}"
+                      data-option-value-id="{{ option_value_id }}"
+                      data-product-url="{{ product_url }}"
+                      {% if is_selected %}selected{% endif %}
+                      {% unless is_available %}disabled{% endunless %}
+              >
+                {%- liquid
+                    if is_available
+                        echo value
+                    else
+                        echo 'product.value_unavailable' | t: option_value: value
+                    endif
+                -%}
+              </option>
+            {%- endfor -%}
+          </select>
+
+      </div>
+    </fieldset>
+{%- endfor -%}
+
+{%- comment -%} Hidden input for currently selected variant ID {%- endcomment -%}
+<input type="hidden" name="id" value="{{ product.selected_or_first_available_variant.id }}" class="variant-id-input" data-menu-button-contents>
+
+{%- comment -%} Data for JavaScript - minimal, no full variants array {%- endcomment -%}
+<script type="application/json" class="variant-picker-data" data-variant-picker-data>
+{
+    "productUrl": {{ product.url | json }},
+    "productId": {{ product.id | json }},
+    "hasVariants": {{ product.has_only_default_variant | json | replace: 'true', 'false' | replace: 'false', 'true' }},
+    "selectedVariantId": {{ product.selected_or_first_available_variant.id | default: null | json }},
+    "selectedVariantAvailable": {{ product.selected_or_first_available_variant.available | default: false | json }},
+    "selectedVariantImage": {%- if product.selected_or_first_available_variant.featured_image -%}{{ product.selected_or_first_available_variant.featured_image | image_url: width: 600 | json }}{%- else -%}null{%- endif -%},
+    "productFeaturedImage": {%- if product.featured_image -%}{{ product.featured_image | image_url: width: 600 | json }}{%- else -%}null{%- endif -%}
+}
+</script>
+</coretex-variant-picker></component-loader>
+{%- endunless -%}

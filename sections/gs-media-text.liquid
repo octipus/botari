@@ -1,0 +1,258 @@
+{%- render 'inc-stylesheet', src: 's-sections.css' -%}
+
+<section class="media-text" {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}>
+	<x-grid columns="2" columns-s="1">
+		<x-cell order="{{ section.settings.image_order }}" order-s="1" class="text-center">
+		{% if section.settings.mediaType == 'video' -%}
+			{%- liquid
+				assign vid = section.settings.video
+				assign vidMobile = section.settings.videoMob | default: nil
+				assign loop = section.settings.videoLoop
+				assign autoplay = section.settings.videoAutoplay
+				assign muted = section.settings.videoMute
+				assign clickToPlay = section.settings.clickToPlay
+				assign controls = section.settings.playPause
+
+				render 'global-video' vid: vid, vidMobile: vidMobile, loop: loop, autoplay: autoplay, muted: muted, clickToPlay: clickToPlay, controls: controls
+			-%}
+		{%- else -%}
+            {%- liquid
+                assign dynamic = true
+                assign img = section.settings.image
+                assign imgMob = section.settings.imageMob
+                assign width = 1426
+                assign widths = '200,300,400,500,750,1000,1280,1426'
+                assign sizes = '(max-width:777px) 100vw, (min-width:778px) 50vw, 100vw'
+
+                render 'inc-img' dynamic: dynamic, img: img, imgMob: imgMob, width: width, widths: widths, sizes: sizes, fallback: true
+            -%}
+		{%- endif -%}
+		</x-cell>
+
+		<x-cell order="2" order-s="1" class="meta">
+            <x-flex direction="column" jc="{{ section.settings.textAlignment }}" {% if section.settings.sticky_content %}class="sticky"{% endif %} style="--sticky:calc(var(--headerHeightWM) + var(--mardding));gap:var(--padding);">
+                {%- for block in section.blocks -%}
+                {% case block.type %}
+                {%- when 'heading' -%}
+                    <x-cell {{ block.shopify_attributes }}><h2 class="h2">{{ block.settings.heading | escape }}</h2></x-cell>
+                {%- when 'text' -%}
+                    <x-cell {{ block.shopify_attributes }}><div class="rte">{{ block.settings.text }}</div></x-cell>
+                {%- when 'button' -%}
+                    {%- if block.settings.button_label != blank -%}
+                    <x-cell {{ block.shopify_attributes }}>
+                        <a href="{{ block.settings.button_link }}" class="button">{{ block.settings.button_label | escape }}</a>
+                    </x-cell>
+                    {%- endif -%}
+                {%- endcase -%}
+                {%- endfor -%}
+            </x-flex>
+		</x-cell>
+	</x-grid>
+</section>
+
+{% schema %}
+{
+  "name": "Media with text",
+  "disabled_on": { "groups": ["header", "footer", "aside"] },
+  "presets": [
+    {
+      "name": "Media with text",
+      "category": "Banners",
+      "blocks": [
+        { "type": "heading" },
+        { "type": "text" },
+        { "type": "button" }
+      ]
+    }
+  ],
+  "settings": [
+    {
+      "type": "header",
+      "content": "Media"
+    },
+	{
+		"type": "select",
+		"id": "mediaType",
+		"label": "Type",
+		"default": "image",
+		"options": [
+			{ "value": "image", "label": "Image" },
+			{ "value": "video", "label": "Video" }
+		]
+	},
+	{
+		"type": "image_picker",
+		"id": "image",
+		"label": "Desktop",
+		"visible_if": "{{ section.settings.mediaType == 'image' }}"
+	},
+	{
+		"type": "image_picker",
+		"id": "imageMob",
+		"label": "Mobile",
+		"visible_if": "{{ section.settings.mediaType == 'image' }}"
+	},
+	{
+		"type": "video",
+		"id": "video",
+		"label": "Desktop",
+		"visible_if": "{{ section.settings.mediaType == 'video' }}"
+	},
+	{
+		"type": "video",
+		"id": "videoMob",
+		"label": "Mobile",
+		"visible_if": "{{ section.settings.mediaType == 'video' }}"
+	},
+	{
+		"type": "checkbox",
+		"id": "videoLoop",
+		"label": "Loop",
+		"default": true,
+		"visible_if": "{{ section.settings.mediaType == 'video' }}"
+	},
+	{
+		"type": "checkbox",
+		"id": "videoMute",
+		"label": "Mute",
+		"default": true,
+		"visible_if": "{{ section.settings.mediaType == 'video' and section.settings.videoAutoplay == false }}"
+	},
+	{
+		"type": "checkbox",
+		"id": "videoAutoplay",
+		"label": "Autoplay",
+		"default": true,
+		"info": "May not be supported on mobile and is often disabled by browsers.",
+		"visible_if": "{{ section.settings.mediaType == 'video' }}"
+	},
+	{
+		"type": "checkbox",
+		"id": "clickToPlay",
+		"label": "Click to play",
+		"info": "Toggles play and pause when the video container is clicked.",
+		"default": true,
+		"visible_if": "{{ section.settings.mediaType == 'video' }}"
+	},
+	{
+		"type": "checkbox",
+		"id": "playPause",
+		"label": "Enable play/pause button",
+		"default": true,
+		"visible_if": "{{ section.settings.mediaType == 'video' and section.settings.clickToPlay == false }}"
+	},
+    {
+      "type": "select",
+      "id": "image_order",
+      "label": "Position - desktop",
+      "info": "Media first on mobile.",
+      "default": "1",
+      "options": [
+        {
+          "value": "1",
+          "label": "Left"
+        },
+        {
+          "value": "3",
+          "label": "Right"
+        }
+      ]
+    },
+    {
+      "type": "header",
+      "content": "Content"
+    },
+    {
+        "type": "checkbox",
+        "id": "sticky_content",
+        "label": "Sticky",
+        "default": false
+    },
+    {
+      "type": "select",
+      "id": "textAlignment",
+      "label": "Position - desktop",
+      "default": "start",
+      "options": [
+        {
+          "value": "start",
+          "label": "Top"
+        },
+        {
+          "value": "center",
+          "label": "Center"
+        },
+        {
+          "value": "end",
+          "label": "Bottom"
+        }
+      ],
+      "visible_if": "{{ section.settings.sticky_content == false }}"
+    },
+    {
+      "type": "header",
+      "content": "Appearance"
+    },
+    {
+        "type": "checkbox",
+        "id": "global_color_scheme",
+        "label": "Use global color scheme",
+        "default": true
+    },
+    {
+        "type": "color_scheme",
+        "id": "color_scheme",
+        "label": "Color scheme",
+        "default": "coretex-1",
+        "visible_if": "{{ section.settings.global_color_scheme == false }}"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "heading",
+      "name": "Heading",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "text",
+          "id": "heading",
+          "label": "Heading",
+          "default": "Media with text"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "name": "Text",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "richtext",
+          "id": "text",
+          "label": "Description",
+          "default": "<p>Pair text with media to focus on your chosen product, collection, or blog post. Add details on availability, style, or even provide a review.</p>"
+        }
+      ]
+    },
+    {
+      "type": "button",
+      "name": "Button",
+      "limit": 2,
+      "settings": [
+        {
+          "type": "text",
+          "id": "button_label",
+          "label": "Label",
+          "default": "Button label",
+          "info": "Leave the label blank to hide the button."
+        },
+        {
+          "type": "url",
+          "id": "button_link",
+          "label": "Link"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

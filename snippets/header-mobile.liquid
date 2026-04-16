@@ -1,0 +1,47 @@
+<section popover id="mobmenu">
+<div class="mobnav">
+{%- comment -%} Controls {%- endcomment -%}
+<header x-flex direction="row" ai="center" jc="between" class="sticky">
+    <x-cell><h3 class="h3 headingTitle">{{ 'header.menu' | t }}</h3></x-cell>
+    <x-cell>
+            <button class="is-blank has-icon" popovertarget="mobmenu" popovertargetaction="hide">
+                <span class="visually-hidden">{{ 'header.close' | t }}</span>
+                {%- render 'global-icon' with 'x' -%}
+            </button>
+    </x-cell>
+</header>
+
+<nav>
+{%- comment -%} Quick links {%- endcomment -%}
+<x-grid columns="2" class="bordi quicks">
+    {%- comment -%} Accounts {%- endcomment -%}
+	{%- if accountLinkMob and customer -%}
+		<x-cell><a href="{{ routes.account_url }}" class="button is-blank text-normal">{{ 'header.account' | t }}</a></x-cell>
+		<x-cell><a href="{{ routes.account_logout_url }}" class="button is-blank text-normal">{{ 'header.logOut' | t }}</a></x-cell>
+	{%- else -%}
+        <x-cell><a href="{{ routes.account_register_url }}" class="button is-blank text-normal">{{ 'header.register' | t }}</a></x-cell>
+        <x-cell><a href="{{ routes.account_login_url }}" class="button is-blank text-normal">{{ 'header.login' | t }}</a></x-cell>
+	{%- endif -%}
+
+    {%- comment -%} Localization {%- endcomment -%}
+    {%- if localization.available_countries.size > 1 or localization.available_languages.size > 1 -%}
+        {%- if language_selector -%}
+            <x-cell><button class="is-custom text-normal dropdown-caret" data-open="#languageBox">{{ localization.language.iso_code | upcase }}</button></x-cell>
+        {%- endif -%}
+        {%- if country_selector -%}
+            <x-cell><button class="is-custom text-normal dropdown-caret" data-open="#countryBox">
+            {{ localization.country.currency.iso_code }} {{ localization.country.currency.symbol -}}
+            </button></x-cell>
+        {%- endif -%}
+    {%- endif -%}
+</x-grid>
+
+{%- comment -%} Menu links {%- endcomment -%}
+<x-grid columns="1" class="bordi menus">
+    <nav aria-label="{{ 'header.menu' | t }}">
+        {%- render 'c-menu-item', links: links, level: 1, id: 'mainMobileMenu', menuType: 'mobile' -%}
+    </nav>
+</x-grid>
+</nav>
+</div>
+</section>

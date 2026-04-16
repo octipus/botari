@@ -1,0 +1,84 @@
+<!-- OpenThinking SEO Engine -->
+{% liquid
+    # Title setup
+    capture SEOTitle
+        if page_title == blank
+            echo shop.name
+            # Password
+            if request.page_type == 'password'
+                if shop.brand.slogan != blank
+                    echo ' &ndash; '
+                    echo shop.brand.slogan
+                else
+                    echo ' &ndash; '
+                    echo 'login.password' | t
+                endif
+            endif
+        else
+            echo page_title
+            # Pagination
+            if current_page != 1
+                echo ' &ndash; '
+                echo 'general.meta.page' | t: page: current_page
+            endif
+            # Shop name
+            unless page_title contains shop.name
+                echo ' &ndash; '
+                echo shop.name
+            endunless
+        endif
+    endcapture
+
+    # Assign
+    assign og_title = SEOTitle | default: page_title | default: shop.name
+    assign og_url = canonical_url | default: request.origin
+    assign og_type = 'website'
+    assign og_description = page_description | default: shop.description | default: shop.brand.short_description | default: shop.name
+
+    # Getting theme color from color scheme bg
+    capture themeColor
+        for scheme in settings.color_schemes
+            if scheme == settings.global_color_scheme
+                echo scheme.settings.background
+            endif
+        endfor
+    endcapture
+%}
+
+{%- comment -%} Building meta {%- endcomment -%}
+<link rel="canonical" href="{{ canonical_url }}">
+<title>{{ SEOTitle }}</title>
+{% if og_description %}
+<meta name="description" content="{{ og_description | escape }}">
+{% endif %}
+<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+<meta name="theme-color" content="{{ themeColor }}">
+
+<meta name="Bullet" property="OpenThinking" content="https://openthinking.net/">
+<meta name="designer" content="OpenThinking">
+<meta property="og:site_name" content="{{ shop.name }}">
+<meta property="og:url" content="{{ og_url }}">
+<meta property="og:title" content="{{ og_title }}">
+<meta property="og:type" content="{{ og_type }}">
+<meta property="og:description" content="{{ og_description | escape }}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ og_title }}">
+<meta name="twitter:description" content="{{ og_description | escape }}">
+<meta name="ot:id" content="ba22326d40dbd392ea828ea3848766ad"> 
+
+{%- if page_image -%}
+<meta property="og:image" content="http:{{ page_image | image_url }}">
+<meta property="og:image:secure_url" content="https:{{ page_image | image_url }}">
+<meta property="og:image:width" content="{{ page_image.width }}">
+<meta property="og:image:height" content="{{ page_image.height }}">
+<meta name="twitter:image" content="https:{{ page_image | image_url }}">
+{%- endif -%}
+
+{%- if request.page_type == 'product' -%}
+<meta property="og:type" content="product">
+<meta property="product:price:amount" content="{{ product.selected_or_first_available_variant.price | money_without_currency | strip_html | escape }}">
+<meta property="product:price:currency" content="{{ cart.currency.iso_code }}">
+{%- endif -%}
+
+{%- render 'global-meta-json' %}
+<!-- / OpenThinking SEO Engine -->

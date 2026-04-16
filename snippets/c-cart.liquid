@@ -1,0 +1,695 @@
+{% comment %}
+    This is the cart's core. Changes to this file will affect both "cart dawers" and "cart page".
+
+    Accepts:
+    - location: 'drawer' / 'page'
+    - blocks: section.blocks
+
+    Usage:
+	{%- render 'c-cart', location: 'drawer' -%}
+{% endcomment %}
+
+{%- liquid
+    assign cartLocation = location | default: 'page'
+
+    # Cart form id
+    assign cartFormId = 'coretex-cart-form'
+    # Drawer cart form id
+    if cartLocation == 'drawer'
+        assign cartFormId = 'coretex-cart-form-drawer'
+    endif
+
+    assign showImage = settings.cart_image
+    assign showPreorderLabel = settings.cart_preorder_label
+    assign showVendor = settings.cart_vendor
+    assign showTax = settings.cart_tax
+    assign showContinue = settings.cart_continue
+    assign showViewCart = settings.cart_viewButton
+    assign showExtraButtons = settings.cart_dynamicButtons
+    assign showNotes = settings.cart_notes
+    assign showDiscount = settings.cart_discount
+    assign showPaymentIcons = settings.cart_icons
+    assign freeShippingBar = settings.cart_free_shipping
+    assign showAnnouncement = settings.cart_announcement
+
+    # upsell
+    assign upsellSection = false
+    if settings.cart_upsell_products != null
+        assign upsellSection = true
+    endif
+-%}
+
+{%- comment -%} Title for Cart Page {%- endcomment -%}
+{%- if cartLocation == 'page' -%}<h1 class="h1 gs-title" style="margin:0">{{ 'cart.cart' | t }}</h1>{% endif %}
+
+{%- comment -%} The cart component {%- endcomment -%}
+<coretex-cart empty="{{ cart.empty? }}" counter="{{ cart.item_count }}" layout="{{ cartLocation }}" upsell-section="{{ upsellSection }}" data-ajax-cart-section>
+{%- # Cart is empty -%}
+{%- if cart.empty? -%}
+    <section class="empty">
+        <x-flex direction="column" style="gap:var(--margin)"> 
+            <h2>{{ 'cart.empty' | t }}</h2>
+            <a href="{{ routes.all_products_collection_url }}" class="button is-blank fullwidth">{{ 'cart.continue_shopping' | t }}</a>
+        </x-flex>
+    </section>
+{% else %}
+
+<x-grid columns="3" columns-m="1f" columns-s="1f" class="coretex-cart">
+    <x-flex span="row" direction="column" style="gap:var(--globalBorderWidth)">
+    {% comment %} Free shipping bar {% endcomment %}
+    {%- if freeShippingBar -%}
+        {%- liquid
+            # Check if free shipping is enabled for current market
+            assign market_free_shipping_enabled = true
+                    
+            if settings.cart_free_shipping_threshold_market
+                assign free_shipping_threshold = localization.market.metafields.openthinking.free_shipping_threshold
+                # If market-specific setting is enabled, ONLY show bar if market has a valid threshold set
+                unless free_shipping_threshold and free_shipping_threshold > 0
+                    assign market_free_shipping_enabled = false
+                endunless
+            endif
+        -%}
+                
+        {%- if market_free_shipping_enabled -%}
+            {%- liquid
+                assign calculated_total_price = 0
+                for line_item in cart.items
+                    if line_item.requires_shipping
+                        assign calculated_total_price = calculated_total_price | plus: line_item.final_line_price
+                    endif
+                endfor
+                        
+                # Free shipping threshold per market
+                if settings.cart_free_shipping_threshold_market
+                    if free_shipping_threshold
+                        assign threshold = free_shipping_threshold | times: 100.0
+                    else 
+                        # fallback to global setting if market metafield is not set
+                        assign threshold = settings.cart_free_shipping_threshold | times: 100.0
+                    endif
+                else 
+                    assign threshold = settings.cart_free_shipping_threshold | times: 100.0
+                endif
+                        
+                if calculated_total_price >= threshold
+                    assign free_shipping_away = 0
+                else
+                    assign free_shipping_away = threshold | minus: calculated_total_price | money_without_trailing_zeros
+                endif
+                assign free_shipping_threshold = threshold | money_without_trailing_zeros
+            -%}
+
+            <cart-shipping span="row" style="--progressFg: var(--color); --progressBg: color-mix(in srgb, var(--bgColor) 80%, var(--color) 15%)">        
+                {% if calculated_total_price >= threshold %}
+                    {{ 'cart.free_shipping_ok' | t }}
+                {% elsif calculated_total_price < threshold %}
+                    <span class="text-center">{{ 'cart.free_shipping_away_html' | t: amount: free_shipping_away }}</span>
+                    <progress max="{{ threshold | round }}" value="{{ calculated_total_price | round }}"></progress>
+                {% endif %}
+            </cart-shipping>
+        {%- endif -%}
+    {%- endif -%}
+
+    {% comment %} Announcement bar {% endcomment %}
+    {%- if showAnnouncement -%}
+        <cart-announcement class="rte" style="height:100%">
+            {{ settings.cart_announcement_message }}
+        </cart-announcement>
+    {%- endif -%}
+    </x-flex>
+
+    {% comment %}
+        # Cart Items
+    {% endcomment %}    
+    <cart-body x-flex span="2" direction="column" class="cart-items" data-ajax-cart-section-scroll>
+
+        {%- for item in cart.items -%}
+        {% assign line_item_index = forloop.index %}
+        <cart-item item-number="{{ line_item_index }}" x-grid columns="7" columns-s="4">
+
+            {%- # Image -%}
+            {%- if showImage -%}
+            <x-grid columns="stack" pi="center" span="1" span-y-s="1-3" class="image">
+                {%- # Pre-order -%}
+                {%- liquid 
+                    # Check if product has preorder tag
+                    # Preorder tag (normalize + handle spelling variants)
+                    assign pre_order = false
+                    assign tags_csv = item.product.tags | join: ',' | downcase
+                    if tags_csv contains 'preorder' or tags_csv contains 'pre-order' or tags_csv contains 'pre order'
+                        assign pre_order = true
+                    endif
+                -%}
+                {%- if pre_order and showPreorderLabel -%}
+                <span class="button is-primary preorder clipThis" style="--clipWidth:95cqi">{{ 'product.preorder' | t }}</span>
+                {%- endif -%}
+
+                <a href="{{ item.url | escape }}" class="no-style">
+                {%- liquid 
+                    if item.image
+
+                        assign img = item.image
+                        assign alt = item.image.alt | default: item.title
+                        assign width = 500
+                        assign widths = '100,200,300,500'
+                        assign sizes = '(min-width: 777px) 300px, 78.75vw'
+                        assign loading = 'lazy'
+                        render 'global-img' img: img, width: width, widths: widths, sizes: sizes, loading: loading, alt: alt
+
+                    endif
+                -%}
+                </a>
+            </x-grid>
+            {%- endif -%}
+
+            {%- # Meta -%}
+            <x-flex direction="column" span="3" class="meta">
+                {%- # Vendor -%}
+                {%- if showVendor -%}
+                <span class="vendor"><a href="{{ item.product.vendor | url_for_vendor }}" class="no-style">{{ item.product.vendor }}</a></span>
+                {%- endif -%}
+
+                {%- # Title -%}
+                <span class="title"><a href="{{ item.url | escape }}" class="no-style">{{ item.title | escape }}</a></span>
+
+                {%- # Bundle components -%}
+                {% if item.item_components.size > 0 %}
+                <x-cell>
+                    <ul class="product-components smaller"> 
+                    {%- for component in item.item_components -%}
+                          <li>
+                            {{ component.title }}
+                            {%- if component.quantity > 1 -%}
+                              <span> × {{ component.quantity }}</span>
+                            {%- endif -%}
+                          </li>
+                        {%- endfor -%}
+                    </ul>
+                </x-cell>
+                {%- endif -%}
+
+                {%- # Selling plans -%}
+                {%- if item.product.has_only_default_variant == false or item.properties.size != 0 or item.selling_plan_allocation != nil -%}
+                    <dl class="properties smaller">
+                    {%- for property in item.properties -%}
+                        {%- assign property_first_char = property.first | slice: 0 -%}
+                        {%- if property.last != blank and property_first_char != '_' -%}
+                        <div class="options">
+                            <dt>{{ property.first }}:</dt>
+                            <dd>
+                            {%- if property.last contains '/uploads/' -%}
+                                <a href="{{ property.last }}" target="_blank">{{ property.last | split: '/' | last }}</a>
+                            {%- else -%}
+                                {{ property.last }}
+                            {%- endif -%}
+                            </dd>
+                        </div>
+                        {%- endif -%}
+                    {%- endfor -%}
+                    </dl>
+
+                    {%- if item.selling_plan_allocation != nil -%}
+                    <div class="properties">{{ item.selling_plan_allocation.selling_plan.name }}</div>
+                    {%- endif -%}
+                {%- endif -%}
+            </x-flex>
+
+            {% # Price %}
+            <x-cell span="2" span-s="2-4" class="price">
+                {%- comment -%} 
+                    Price 
+                {%- endcomment -%}
+                {%- liquid
+                    # Check if product has compare_at_price (on sale)
+                    assign has_compare_price = false
+                    assign compare_line_price = 0
+                    if item.variant.compare_at_price and item.variant.compare_at_price > item.original_price
+                        assign has_compare_price = true
+                        assign compare_line_price = item.variant.compare_at_price | times: item.quantity
+                    endif
+
+                    # Check if discount is applied
+                    assign has_discount = false
+                    if item.original_line_price != item.final_line_price
+                        assign has_discount = true
+                    endif
+                -%}
+
+                {%- if has_compare_price -%}
+                    {%- # Product is on sale - show compare price and final price -%}
+                    <x-flex direction="column">
+                        <span class="price-new">{{ item.final_line_price | money }}</span>
+                        <span class="price-old"><s><small>{{ compare_line_price | money }}</small></s></span>
+                    </x-flex>
+
+                {%- elsif has_discount -%}
+                    {%- # Product has discount but not on sale -%}
+                    <x-flex direction="column">
+                        <span class="price-new">{{ item.final_line_price | money }}</span>
+                        <span class="price-old"><s><small>{{ item.original_line_price | money }}</small></s></span>
+                    </x-flex>
+
+                {%- else -%}
+                    {%- # No sale, no discount -%}
+                    {{ item.original_line_price | money }}
+
+                {%- endif -%}
+
+                {%- comment -%} 
+                    Unit price measurement 
+                {%- endcomment -%}
+                {%- if item.variant.available and item.unit_price_measurement -%}
+                <unit-price class="unit-price smaller">
+                    <span class="visually-hidden">{{ 'product.unit_price' | t }}</span>
+                    {{ item.unit_price | money }}
+                    <span aria-hidden="true">/</span>
+                    <span class="visually-hidden">&nbsp;{{ 'product.unit_price_separator' | t }}&nbsp;</span>
+                    {%- liquid 
+                        if item.unit_price_measurement.reference_value != 1
+                            echo item.unit_price_measurement.reference_value
+                        endif
+                        echo item.unit_price_measurement.reference_unit
+                    -%}
+                </unit-price>
+                {%- endif -%}
+
+                {%- comment -%} 
+                    Line discount 
+                {%- endcomment -%}
+                {%- if item.line_level_discount_allocations.size > 0 -%}
+                <ul class="no-style">
+                    {%- for discount in item.line_level_discount_allocations -%}
+                    <li>
+                        <small class="smaller">
+                            <span>{%- render 'global-icon' with 'tag' -%}</span>
+                            <span>{{ discount.discount_application.title | escape }}</span>
+                        </small>
+                    </li>
+                    {%- endfor -%}
+                </ul>
+                {%- endif -%}
+            </x-cell>
+
+            {%- # Actions -%}
+            <x-flex span-s="2-4" ai="start" ai-s="center" jc="around" jc-s="between" wrap="wrap" class="actions">
+                <x-cell>
+                <ajax-cart-quantity class="qty" x-flex ai="center" jc="around" style="gap:.5rem 1rem">
+
+                        {%- # "Minus one" button -%}
+                        <x-cell>
+                            <a data-ajax-cart-quantity-minus href="{{ routes.cart_change_url }}?line={{ line_item_index }}&quantity={{ item.quantity | minus: 1 }}"
+                                class="button is-blank minus" role="button" aria-label="{{ 'product.quantity.decrease' | t }}">
+                                {% render 'global-icon' with 'minus' %}
+                            </a>
+                        </x-cell>
+
+                        {%- # Item quantity input -%}
+                        <x-cell>
+                            <input type="number" name="updates[]" 
+                                data-ajax-cart-quantity-input="{{ line_item_index }}" 
+                                id="coretex-qty-{{ line_item_index }}"
+                                class="qtyinput"
+                                value="{{ item.quantity }}" 
+                                form="{{ cartFormId }}"
+                                min="{{ item.variant.quantity_rule.min }}"
+                                {% if item.variant.quantity_rule.max != null %}
+                                max="{{ item.variant.quantity_rule.max }}"
+                                {% endif %}
+                                step="{{ item.variant.quantity_rule.increment }}"
+                                aria-label="{{ 'product.quantity.qty' | t }}"
+                            >
+                        </x-cell>
+
+                        {%- # "Plus one" button -%}
+                        <x-cell>
+                            <a data-ajax-cart-quantity-plus href="{{ routes.cart_change_url }}?line={{ line_item_index }}&quantity={{ item.quantity | plus: 1 }}" 
+                                class="button is-blank plus" role="button" aria-label="{{ 'product.quantity.increase' | t }}">
+                                {% render 'global-icon' with 'plus' %}
+                            </a>
+                        </x-cell>
+
+                </ajax-cart-quantity>
+            </x-cell>
+
+                {% # "Remove item" button %}
+                <remove-item>
+                    <a data-ajax-cart-request-button href="{{ item.url_to_remove }}" 
+                        class="button is-blank trash" role="button" aria-label="{{ 'cart.remove' | t }}">
+                        {% render 'global-icon' with 'trash' %}
+                    </a>
+                </remove-item>
+            </x-flex>
+        
+            {%- # "Cart quantity line items errors" -%}
+            <x-cell data-ajax-cart-errors="{{ item.key }}" span="row"></x-cell>
+        </cart-item>
+        {% endfor %}
+
+    </cart-body>
+
+    {% comment %}
+        # Cart Action
+    {% endcomment %}
+
+    <cart-footer>
+        <x-flex direction="column" class="gocheckout sticky">
+
+            {% comment %} Discount {% endcomment %}
+            {%- if cart.cart_level_discount_applications.size > 0 -%}
+                <x-cell>
+                    <ul class="no-style subtotal text-end" role="list" aria-label="{{ 'cart.discount' | t }}">
+                        {%- for discount in cart.cart_level_discount_applications -%}
+                            <li x-flex jc="between">
+                                <x-cell><span>{%- render 'global-icon' with 'tag' -%}</span> <small>{{ discount.title | escape }}</small></x-cell>
+                                <x-flex ai="center" style="gap: var(--margin)">
+                                    <x-cell><small>
+                                        {%- liquid
+                                            assign displayMoney = discount.total_allocated_amount | money
+                                            if settings.currency_code_enabled
+                                                assign displayMoney = discount.total_allocated_amount | money_with_currency
+                                            endif
+                        
+                                            echo displayMoney | prepend: '-'
+                                        -%}
+                                    </small></x-cell>
+
+                                    {% comment %} Remove discount button {% endcomment %}
+                                    {%- if discount.type == 'discount_code' -%}
+                                    <x-cell>
+                                        <button type="button"
+                                            class="is-blank has-icon discount-remove-btn" 
+                                            style="padding:0"
+                                            data-discount-code="{{ discount.title | escape }}"
+                                        >{%- render 'global-icon' with 'x' -%}</button>
+                                    </x-cell>
+                                    {%- endif -%}
+                                </x-flex>
+                            </li>
+                        {%- endfor -%}
+                    </ul>
+                </x-cell>
+            {%- endif -%}
+
+            {%- comment %} Total savings {% endcomment %}
+            {%- if settings.cart_total_savings -%}
+                {%- liquid
+                    assign total_savings = 0
+                    
+                    # 1. Compare at price savings (sale prices)
+                    for item in cart.items
+                        if item.variant.compare_at_price and item.variant.compare_at_price > item.original_price
+                            assign compare_savings = item.variant.compare_at_price | minus: item.original_price | times: item.quantity
+                            assign total_savings = total_savings | plus: compare_savings
+                        endif
+                    endfor
+                    
+                    # 2. Line-level discount savings (discounts applied to individual items)
+                    for item in cart.items
+                        if item.line_level_discount_allocations.size > 0
+                            for discount_allocation in item.line_level_discount_allocations
+                                assign total_savings = total_savings | plus: discount_allocation.amount
+                            endfor
+                        endif
+                    endfor
+                    
+                    # 3. Cart-level discount savings (discount codes, cart-wide automatic discounts)
+                    if cart.cart_level_discount_applications.size > 0
+                        for discount in cart.cart_level_discount_applications
+                            assign total_savings = total_savings | plus: discount.total_allocated_amount
+                        endfor
+                    endif
+                -%}
+
+                {%- if total_savings > 0 -%}
+                <x-cell>
+                    <x-flex jc="between" class="totalSavings"> 
+                        <x-cell>{{ 'cart.savings' | t }}</x-cell>
+                        <x-cell>
+                            <strong>{{ total_savings | money }}</strong>
+                        </x-cell>
+                    </x-flex>
+                </x-cell>
+                {%- endif -%}
+            {%- endif -%}
+
+            {% comment %} Total {% endcomment %}
+            <x-cell>
+                <x-flex jc="between" class="subtotal">
+                    <x-cell>{{ 'cart.subtotal' | t }}</x-cell>
+                    <x-cell>
+                        <strong>
+                            {%- liquid
+                                assign displayMoney = cart.total_price | money
+                                if settings.currency_code_enabled
+                                    assign displayMoney = cart.total_price | money_with_currency
+                                endif
+            
+                                echo displayMoney
+                            -%}
+                        </strong>
+                    </x-cell>
+                </x-flex>
+            </x-cell>
+
+            {%- comment -%} Shipping Taxes notice {%- endcomment -%}
+            {%- if showTax -%}
+            <x-cell class="shippingtaxes text-center">
+                <small>
+                    {%- liquid 
+                    if cart.duties_included and cart.taxes_included 
+                        if shop.shipping_policy.body == blank 
+                            echo 'cart.duties_and_taxes_included_shipping_at_checkout_without_policy' | t 
+                        else 
+                            echo 'cart.duties_and_taxes_included_shipping_at_checkout_with_policy_html' | t: link: shop.shipping_policy.url
+                        endif 
+                    elsif cart.duties_included == false and cart.taxes_included 
+                        if shop.shipping_policy.body == blank 
+                            echo 'cart.taxes_included_shipping_at_checkout_without_policy' | t 
+                        else 
+                            echo 'cart.taxes_included_shipping_at_checkout_with_policy_html' | t: link: shop.shipping_policy.url
+                        endif 
+                    elsif cart.duties_included and cart.taxes_included == false 
+                        if shop.shipping_policy.body == blank 
+                            echo 'cart.duties_included_taxes_at_checkout_shipping_at_checkout_without_policy' | t 
+                        else 
+                            echo 'cart.duties_included_taxes_at_checkout_shipping_at_checkout_with_policy_html' | t: link: shop.shipping_policy.url
+                        endif 
+                    elsif cart.duties_included == false and cart.taxes_included == false 
+                        if shop.shipping_policy.body == blank 
+                            echo 'cart.taxes_at_checkout_shipping_at_checkout_without_policy' | t 
+                        else 
+                            echo 'cart.taxes_at_checkout_shipping_at_checkout_with_policy_html' | t: link: shop.shipping_policy.url
+                        endif
+                    endif 
+                    -%}
+                </small>
+            </x-cell>
+            {%- endif -%}
+
+            {%- if showDiscount -%}
+            {% comment %} Discount Code Input {% endcomment %}
+            <x-cell class="cart-discount fullwidth js">
+                <details data-ajax-cart-details="Cart-Discount" id="Detailss-CartDrawer" class="fullwidth"{% if cartLocation != 'drawer' %} open{% endif %}>
+                    <summary class="dropdown-caret button is-blank">{{ 'cart.discount' | t }}</summary>
+                    <component-loader><cart-discount>
+                        <x-flex ai="center" jc="between">
+                            <x-cell span="2">
+                                <label class="visually-hidden" for="cart-discount-code-input">{{ 'cart.discount_code' | t }}</label>
+                                <input type="text" 
+                                    id="cart-discount-code-input" 
+                                    class="fullwidth discount-code-input" 
+                                    placeholder="{{ 'cart.discount_code' | t }}"
+                                >
+                            </x-cell>
+                            <x-cell>
+                                <button type="button" class="discount-apply">
+                                    <span class="default">{{ 'cart.apply' | t }}</span>
+                                    <span class="working">{{ 'cart.applying' | t }}</span>
+                                </button>
+                            </x-cell>
+                        </x-flex>
+                        <div data-ajax-cart-errors class="discount-error"></div>
+                    </cart-discount></component-loader>
+                </details>
+            </x-cell>
+            {%- endif -%}
+
+            {%- if showNotes -%}
+            <x-cell class="cart-notes fullwidth js">
+                <details data-ajax-cart-details="Cart-Notes" id="Detailss-CartDrawer" class="fullwidth"{% if cartLocation != 'drawer' %} open{% endif %}>
+                    <summary class="dropdown-caret button is-blank">{{ 'cart.note' | t }}</summary>
+                    <cart-note>
+                        <label class="visually-hidden" for="CartDrawer-Note">{{ 'cart.notePlaceholder' | t }}</label>
+                        <textarea
+                            data-ajax-cart-property-input 
+                            name="note" 
+                            form="{{ cartFormId }}" 
+                            id="CartDrawer-Note"
+                            class="fullwidth"
+                            placeholder="{{ 'cart.notePlaceholder' | t }}"
+                        >{{ cart.note }}</textarea>
+                    </cart-note>
+                </details>
+            </x-cell>
+            {%- endif -%}
+
+            <x-cell style="padding:var(--margin)">
+                {%- comment -%} Button to checkout {%- endcomment -%}
+                {%- form 'cart', cart, id: cartFormId -%}
+                    <button 
+                        type="submit" 
+                        name="checkout" 
+                        form="{{ cartFormId }}"
+                        id="checkout"
+                        class="fullwidth is-primary"
+                        {% if cart == empty %}disabled{% endif %}
+                    >
+                        {{ 'cart.checkout' | t }} &rarr;
+                    </button>
+
+                    {%- if showExtraButtons -%}
+                    <div class="cart__dynamic-checkout-buttons additional-checkout-buttons">
+                        {{ content_for_additional_checkout_buttons }}
+                    </div>
+                    {%- endif -%}
+
+                    {%- comment -%} [Drawer] - 'checkbox'{%- endcomment -%}
+                    {%- if cartLocation == 'drawer' and settings.cart_termsCheckbox -%}
+                        <x-flex style="gap:var(--margin); padding: var(--mardding) var(--margin)" data-ajax-cart-static-element>
+                            <input type="checkbox" id="CartFormCheckbox-Dialog" form="{{ cartFormId }}" required>
+                            <label for="CartFormCheckbox-Dialog" style="font-weight:100">{{ 'cart.terms_html' | t: link: shop.terms_of_service.url }}</label>
+                        </x-flex>
+                    {%- endif -%}
+
+                    {%- comment -%} [Cart Page] 'checkbox' Block. {%- endcomment -%}
+                    {%- if cartLocation == 'page' -%}
+                    {%- for block in blocks -%}
+                    {%- if block.type == 'checkbox' -%}
+                        <x-flex style="gap:var(--margin); padding: var(--mardding) var(--margin)" data-ajax-cart-static-element>
+                            <input type="checkbox" id="CartFormCheckbox-{{ block.id }}" form="{{ cartFormId }}" {% if block.settings.requiredInputCheckbox %}required{% endif %}>
+                            <label for="CartFormCheckbox-{{ block.id }}" style="font-weight:100">
+                                {%- liquid 
+                                    if block.settings.text != empty
+                                        echo block.settings.text
+                                    else
+                                        echo 'cart.terms_html' | t: link: shop.terms_of_service.url
+                                    endif 
+                                -%}
+                            </label>
+                        </x-flex>
+                    {%- endif -%}
+                    {%- endfor -%}
+                    {%- endif -%}
+
+                {%- endform -%}
+
+                {%- if cartLocation == 'page' -%}
+                    {%- for block in blocks -%}
+                        {% case block.type %}
+                        {%- when 'app' -%}
+                            <x-cell class="itsapp" style="padding:var(--margin)" {{ block.shopify_attributes }}>{%- render block -%}</x-cell>
+                        {%- when 'liquid' -%}
+                            <section class="itsapp liquid" {{ block.shopify_attributes }}>{{- block.settings.liquid -}}</section>
+                        {%- endcase -%}
+                    {%- endfor -%}
+                {% endif %}
+
+                <x-flex direction="row" jc="between" ai="center" wrap="wrap">
+                {%- comment -%} Button to cart {%- endcomment -%}
+                {%- if cartLocation == 'drawer' and showViewCart -%}
+                    <x-cell><a href="{{ routes.cart_url }}" class="button is-blank fullwidth">{{ 'cart.view' | t }}</a></x-cell>
+                {%- endif -%}
+
+                {%- comment -%} Continue shopping {%- endcomment -%}
+                {%- if showContinue -%}
+                    <x-cell>
+                        <a href="{{ routes.all_products_collection_url }}" class="button is-blank fullwidth">{{ 'cart.continue_shopping' | t }}</a>
+                    </x-cell>
+                {%- endif -%}
+                </x-flex>
+            </x-cell>
+
+            {%- comment -%} Cart Page 'app' Block. {%- endcomment -%}
+            {%- if cartLocation == 'page' -%}
+                {%- for block in blocks -%}
+                    {%- if block.type == 'app' %}
+                        <x-cell class="itsapp" style="padding:var(--margin)">{%- render block -%}</x-cell>
+                    {%- endif -%}
+                {%- endfor -%}
+            {% endif %}  
+
+            {%- comment -%} Payment icons {%- endcomment -%}
+            <x-flex direction="row" ai="center" jc="center" style="gap:var(--margin); padding:var(--margin); {% if settings.cart_monoPaymentIcons %}filter:grayscale(1){% endif %}">
+                {%- liquid
+                    if showPaymentIcons 
+                        render 'global-paymenticons'
+                    endif 
+                -%}
+            </x-flex>
+        </x-flex>
+    </cart-footer>
+</x-grid>
+{%- endif -%}
+
+    {% comment %}
+        # Cart Upsell
+    {% endcomment %}
+    {%- if upsellSection -%}
+    {%- liquid
+        # Get cart product IDs for filtering
+        assign cart_product_ids = cart.items | map: 'product_id'
+
+        # Get upsell collection and limit
+        assign upsell_collection = collections[settings.cart_upsell_products]
+        assign upsell_limit = settings.cart_upsell_products_limit | default: 5
+
+        # Count available upsell products (not in cart)
+        assign upsell_count = 0
+        for product in upsell_collection.products limit: upsell_limit
+            unless cart_product_ids contains product.id
+                assign upsell_count = upsell_count | plus: 1
+            endunless
+        endfor
+    -%}
+
+    {%- if upsell_count > 0 -%}
+    {%- render 'inc-stylesheet', src: 's-sections.css' -%}
+    <cart-upsell style="border-block-start:var(--globalBorder)">
+        <component-loader><hscroll-slider>
+            <h3 class="gs-title">
+                {%- liquid
+                    if settings.cart_upsell_products_title != blank
+                        echo settings.cart_upsell_products_title
+                    else
+                        echo upsell_collection.title
+                    endif
+                -%}
+            </h3>
+
+            <div class="product-grid-contained">
+                <x-grid columns="5" columns-m="3" columns-s="2"
+                        class="product-grid card scroll-snap scroll-snap-m"
+                        card-layout="underlay"
+                        clip-meta="true"
+                        card-media-radius="false"
+                        card-media-padding="false"
+                        card-quickbuy-unfloat="false"
+                        card-font-size="small"
+                >
+                    {%- liquid
+                        for product in upsell_collection.products limit: upsell_limit
+                            # Skip products already in cart
+                            unless cart_product_ids contains product.id
+                                render 'c-prod-card', product: product, show_quick_buy: false, show_badges: false, show_rating: false, hscrollElement: 'hscroll-slide', show_main_price: true, show_vendor: false
+                            endunless
+                        endfor
+                    -%}
+                </x-grid>
+            </div>
+        </hscroll-slider></component-loader>
+    </cart-upsell>
+    {%- endif -%}
+    {%- endif -%}
+
+</coretex-cart>

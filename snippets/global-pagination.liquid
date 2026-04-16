@@ -1,0 +1,14 @@
+<section class="loadmore">
+{%- if paginate.pages > 1 -%}
+<div class="no-js-hidden mob-scroller" ai="center" jc="center">
+	{% if section.settings.pagination == 'classic' %}
+		{{ paginate | default_pagination }}
+	{%- else -%}
+    	{%- comment -%} Ajax Pagination {%- endcomment -%}
+		{% if paginate.next %}
+		<div id="ajaxPagination"><a href="{{ paginate.next.url }}">{{ 'collection.load' | t }}</a></div>
+		{%- endif -%}
+	{%- endif -%}
+</div>
+{%- endif -%}
+</section>

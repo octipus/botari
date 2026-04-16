@@ -1,0 +1,363 @@
+{%- render 'inc-stylesheet', src: 's-sections.css' -%}
+
+{%- liquid
+    assign blockName = nil
+    assign videoHeight = nil
+
+    if section.settings.mediaType == 'video'
+        assign blockName = 'html5video'
+        if section.settings.cropVideo
+            assign videoHeight = '--vidCropO:hidden;--vidCropH:var(--heroHeight);'
+        endif
+    endif
+
+    # Hero banner height
+    capture style
+        assign heroHeight = section.settings.heroHeight
+        if section.settings.heroHeight == 'uncropped'
+            assign heroHeight = 'var(--heroHeight-f)'
+        endif
+        echo heroHeight | prepend: '--heroHeight:' | append: ';'
+
+        if section.settings.heroHeightMobile != 'default'
+            echo section.settings.heroHeightMobile | prepend: '--heroHeightMob:' | append: ';'
+        endif
+
+        echo videoHeight
+    endcapture
+-%}
+
+{%- if section.settings.heroHeight == 'uncropped' -%}
+<style>@media (min-width:778px) { .hero.hero[sid="{{ section.id }}"] { --heroHeight-f: auto!important; aspect-ratio: initial; overflow: visible } .hero[sid="{{ section.id }}"] picture img { all: unset; display: block; width: 100% } }</style>
+{%- endif -%}
+
+<section class="hero {{ blockName }}" style="{{ style }}" sid="{{ section.id }}" {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}>
+
+{% if section.settings.mediaType == 'image' %}
+
+    {%- if section.settings.imgClickable and section.settings.url != empty %}
+    <style>.hero[sid="{{ section.id }}"] { --heroMetaPointerEvents: none }</style>
+    <a href="{{ section.settings.url }}" class="no-style" tabindex="-1">{% endif -%}
+	{%- liquid
+		# Optimize first section hero image
+		assign fetchpriority = nil
+		assign preload = false
+        assign loading = 'lazy'
+
+		if section.index == 1
+			assign fetchpriority = 'high'
+			assign preload = true
+            assign loading = 'eager'
+		endif
+
+		assign img = section.settings.image
+        if section.settings.imageMobile
+            assign dynamic = true
+            assign imgMob = section.settings.imageMobile
+        endif
+
+		render 'inc-img' img: img, dynamic: dynamic, imgMob: imgMob, preload: preload, loading: loading, fetchpriority: fetchpriority, fallback: true, svg: 'lifestyle-1'
+	-%}
+    {%- if section.settings.imgClickable and section.settings.url != empty -%}</a>{%- endif -%}
+
+{% elsif section.settings.mediaType == 'video' %}
+
+        {%- liquid
+            assign vid = section.settings.video
+            assign vidMobile = section.settings.videoMobile | default: nil
+
+            assign loop = section.settings.videoLoop
+            assign autoplay = section.settings.videoAutoplay
+            assign muted = section.settings.videoMute
+            assign clickToPlay = section.settings.clickToPlay
+            assign controls = section.settings.playPause
+
+            render 'global-video' vid: vid, vidMobile: vidMobile, loop: loop, autoplay: autoplay, muted: muted, clickToPlay: clickToPlay, controls: controls
+        -%}
+
+{% endif %}
+
+    <div class="meta" {%- if section.settings.imgClickable and section.settings.url != empty -%}style="pointer-events:none"{%- endif -%}>
+    	<x-flex class="box" pi="{{ section.settings.contentPosition }}" pi-s="{{ section.settings.contentPositionMob }}" orientation="{{ section.settings.contentDirection }}" orientation-s="{{ section.settings.contentDirectionMob }}">
+            <x-cell class="content">
+                <x-flex direction="{{ section.settings.contentDirection }}" direction-s="{{ section.settings.contentDirectionMob }}" ai="{{ section.settings.textAlignment | replace: 'left', 'start' | replace: 'right', 'end' }}" ai-s="{{ section.settings.textAlignmentMob | replace: 'left', 'start' | replace: 'right', 'end' }}" style="gap:var(--padding)">
+                    <x-flex direction="column" wrap="wrap" style="gap:var(--space-1)">
+                        {%- if section.settings.title != empty -%}<{{ section.settings.headingTag }} {% if section.settings.heroMetaH1hasBg == true %}class="hasBg"{% endif %}>{{ section.settings.title }}</{{ section.settings.headingTag }}>{%- endif -%}
+                        {%- if section.settings.content != empty -%}<p {% if section.settings.heroMetaH1hasBg == true %}class="hasBg"{% endif %}>{{ section.settings.content }}</p>{%- endif -%}
+                    </x-flex>
+                    <x-cell>{%- if section.settings.cta != empty -%}<a href="{{ section.settings.url }}" class="button is-customized">{{ section.settings.cta }}</a>{%- endif -%}</x-cell>
+                </x-flex>
+            </x-cell>
+    	</x-flex>
+    </div>
+</section>
+
+{% schema %}
+    {
+      "name": "Hero banner",
+      "disabled_on": { "groups": ["header", "footer", "aside"] },
+      "settings": [
+        {
+          "type": "header",
+          "content": "Media"
+        },
+        {
+          "type": "select",
+          "id": "mediaType",
+          "label": "Type",
+          "default": "image",
+          "options": [
+            { "value": "image", "label": "Image" },
+            { "value": "video", "label": "Video" }
+          ]
+        },
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Desktop",
+          "info": "2000 x 1110px recommended",
+          "visible_if": "{{ section.settings.mediaType == 'image' }}"
+        },
+        {
+          "type": "image_picker",
+          "id": "imageMobile",
+          "label": "Mobile",
+          "info": "970 x 1110px recommended",
+          "visible_if": "{{ section.settings.mediaType == 'image' }}"
+        },
+        {
+          "type": "checkbox",
+          "id": "imgClickable",
+          "label": "Clickable image",
+          "default": false,
+          "visible_if": "{{ section.settings.mediaType == 'image' }}"
+        },
+        {
+            "type": "video",
+            "id": "video",
+            "label": "Desktop",
+            "info": "Videos with a 16:9 aspect ratio are recommended.",
+            "visible_if": "{{ section.settings.mediaType == 'video' }}"
+        },
+        {
+            "type": "video",
+            "id": "videoMobile",
+            "label": "Mobile",
+            "info": "Videos with a 9:16 aspect ratio are recommended.",
+            "visible_if": "{{ section.settings.mediaType == 'video' }}"
+        },
+        {
+            "type": "checkbox",
+            "id": "videoLoop",
+            "label": "Loop",
+            "default": true,
+            "visible_if": "{{ section.settings.mediaType == 'video' }}"
+        },
+        {
+            "type": "checkbox",
+            "id": "videoMute",
+            "label": "Mute",
+            "default": true,
+            "visible_if": "{{ section.settings.mediaType == 'video' and section.settings.videoAutoplay == false }}"
+        },
+        {
+            "type": "checkbox",
+            "id": "videoAutoplay",
+            "label": "Autoplay",
+            "default": true,
+            "info": "May not be supported on mobile and is often disabled by browsers.",
+            "visible_if": "{{ section.settings.mediaType == 'video' }}"
+        },
+        {
+            "type": "checkbox",
+            "id": "clickToPlay",
+            "label": "Click to play",
+            "info": "Toggles play and pause when the video container is clicked.",
+            "default": true,
+            "visible_if": "{{ section.settings.mediaType == 'video' }}"
+        },
+        {
+            "type": "checkbox",
+            "id": "playPause",
+            "label": "Enable play/pause button",
+            "default": true,
+            "visible_if": "{{ section.settings.mediaType == 'video' and section.settings.clickToPlay == false }}"
+        },
+        {
+            "type": "checkbox",
+            "id": "cropVideo",
+            "label": "Crop video height",
+            "info": "If enabled and the video is too tall, the video will be cropped and the banner height will reflect the size you selected in the option above.",
+            "default": false,
+            "visible_if": "{{ section.settings.mediaType == 'video' }}"
+        },
+        {
+          "type": "select",
+          "id": "heroHeight",
+          "label": "Height - desktop",
+          "default": "var(--heroHeight-f)",
+          "options": [
+            { "value": "var(--heroHeight-s)", "label": "Small" },
+            { "value": "var(--heroHeight-m)", "label": "Medium" },
+            { "value": "var(--heroHeight-l)", "label": "Large" },
+            { "value": "var(--heroHeight-f)", "label": "Full" },
+            { "value": "uncropped", "label": "Full uncropped" }
+          ]
+        },
+        {
+          "type": "select",
+          "id": "heroHeightMobile",
+          "label": "Height - mobile",
+          "default": "default",
+          "options": [
+            { "value": "default", "label": "Same as desktop" },
+            { "value": "var(--heroHeight-s)", "label": "Small" },
+            { "value": "var(--heroHeight-m)", "label": "Medium" },
+            { "value": "var(--heroHeight-l)", "label": "Large" },
+            { "value": "var(--heroHeight-f)", "label": "Full" }
+          ]
+        },
+        {
+          "type": "header",
+          "content": "Headings"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Heading",
+          "default": "Hero heading",
+          "info": "Leave blank to hide heading."
+        },
+        {
+          "type": "select",
+          "id": "headingTag",
+          "label": "Tag",
+          "default": "h2",
+          "info": "Use H1 for SEO if this is the primary heading on the page.",
+          "options": [
+            { "value": "h1", "label": "H1" },
+            { "value": "h2", "label": "H2" }
+          ]
+        },
+        {
+          "type": "text",
+          "id": "content",
+          "label": "Subheading",
+          "info": "Leave blank to hide heading."
+        },
+        {
+            "type": "header",
+            "content": "Button"
+        },
+        {
+          "type": "text",
+          "id": "cta",
+          "label": "Label",
+          "default": "Shop more",
+          "info": "Leave blank to hide button."
+        },
+        {
+          "type": "url",
+          "id": "url",
+          "label": "Link"
+        },
+        {
+            "type": "header",
+            "content": "Alignment"
+        },
+        {
+            "type": "select",
+            "id": "contentPosition",
+            "label": "Content position - desktop",
+            "default": "center between",
+            "options": [
+                { "value": "top left", "label": "Top left" },
+                { "value": "top center", "label": "Top center" },
+                { "value": "top right", "label": "Top right" },
+                { "value": "center left", "label": "Middle Left" },
+                { "value": "center", "label": "Middle Center" },
+                { "value": "center right", "label": "Middle Right" },
+                { "value": "bottom left", "label": "Bottom left" },
+                { "value": "bottom center", "label": "Bottom center" },
+                { "value": "bottom right", "label": "Bottom right" },
+                { "value": "top between", "label": "Top space-between" },
+                { "value": "center between", "label": "Middle space-between" },
+                { "value": "bottom between", "label": "Bottom space-between" }
+            ]
+        },
+        {
+            "type": "select",
+            "id": "contentDirection",
+            "label": "Content direction - desktop",
+            "default": "row",
+            "options": [
+                { "value": "row", "label": "Row" },
+                { "value": "column", "label": "Column" }
+            ]
+        },
+        {
+            "type": "text_alignment",
+            "id": "textAlignment",
+            "label": "Text alignment - desktop",
+            "default": "left"
+        },
+        {
+            "type": "select",
+            "id": "contentPositionMob",
+            "label": "Content position - mobile",
+            "default": "center between",
+            "options": [
+                { "value": "top center", "label": "Top" },
+                { "value": "center", "label": "Middle" },
+                { "value": "bottom center", "label": "Bottom" },
+                { "value": "center between", "label": "Space between" }
+            ]
+        },
+        {
+            "type": "select",
+            "id": "contentDirectionMob",
+            "label": "Content direction - mobile",
+            "default": "column",
+            "options": [
+                { "value": "row", "label": "Row" },
+                { "value": "column", "label": "Column" }
+            ]
+        },
+        {
+            "type": "text_alignment",
+            "id": "textAlignmentMob",
+            "label": "Text alignment - mobile",
+            "default": "center"
+        },
+        {
+            "type": "header",
+            "content": "Appearance"
+        },
+        {
+          "type": "checkbox",
+          "id": "heroMetaH1hasBg",
+          "label": "Enable heading background",
+          "default": false
+        },
+        {
+            "type": "checkbox",
+            "id": "global_color_scheme",
+            "label": "Use global color scheme",
+            "default": true
+        },
+        {
+            "type": "color_scheme",
+            "id": "color_scheme",
+            "label": "Color scheme",
+            "default": "coretex-1",
+            "visible_if": "{{ section.settings.global_color_scheme == false }}"
+        }
+      ],
+      "presets": [
+        {
+          "name": "Hero banner",
+          "category": "Banners"
+        }
+      ]
+    }
+{% endschema %}
