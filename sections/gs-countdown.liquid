@@ -96,7 +96,7 @@
                 <x-cell {{ block.shopify_attributes }}>
                     <x-flex direction="column" class="newsletter-block">
                         {%- if block.settings.heading != blank -%}
-                        <x-cell><h2 class="gs-title">{{ block.settings.heading }}</h2></x-cell>
+                        <x-cell><h2>{{ block.settings.heading }}</h2></x-cell>
                         {%- endif -%}
                         <x-cell>{%- render 'global-newsletter', class: 'section-newsletter', columns: block.settings.columns -%}</x-cell>
                     </x-flex>
