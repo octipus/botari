@@ -11,7 +11,7 @@
 <section class="countdown" {% unless section.settings.global_color_scheme %}color-scheme="{{ section.settings.color_scheme }}"{% endunless %}>
     <x-grid columns="{{ columns }}" columns-s="1">
         {%- if section.settings.show_image -%}
-        <x-cell class="image" order="{{ section.settings.order }}" order-s="{{ section.settings.orderMob }}">
+        <x-cell class="image section-motif-anchor" order="{{ section.settings.order }}" order-s="{{ section.settings.orderMob }}">
             {%- liquid
                 # Optimize first section image
                 assign fetchpriority = nil
@@ -27,6 +27,20 @@
                 assign img = section.settings.image
                 render 'inc-img' img: img, preload: preload, loading: loading, fetchpriority: fetchpriority, fallback: true
             -%}
+            {%- for block in section.blocks -%}
+                {%- if block.type == 'motif' and block.settings.image != blank -%}
+                <div class="section-motif section-motif--v-{{ block.settings.position_vertical }} section-motif--h-{{ block.settings.position_horizontal }}" {{ block.shopify_attributes }}>
+                    {%- render 'inc-img'
+                        img: block.settings.image,
+                        fallback: false,
+                        widths: '200,360,480',
+                        sizes: '(min-width: 777px) 12rem, min(38vw, 12rem)',
+                        loading: 'lazy',
+                        fetchpriority: 'low'
+                    -%}
+                </div>
+                {%- endif -%}
+            {%- endfor -%}
         </x-cell>
         {%- endif -%}
 
@@ -309,6 +323,48 @@
           "type": "richtext",
           "id": "text",
           "label": "Text"
+        }
+      ]
+    },
+    {
+      "type": "motif",
+      "name": "Motif",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "header",
+          "content": "Motif",
+          "info": "Overlaid on the section image. Only visible when “Show image” is enabled."
+        },
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Image",
+          "visible_if": "{{ section.settings.show_image }}"
+        },
+        {
+          "type": "select",
+          "id": "position_vertical",
+          "label": "Vertical",
+          "default": "top",
+          "visible_if": "{{ section.settings.show_image }}",
+          "options": [
+            { "value": "top", "label": "Top" },
+            { "value": "center", "label": "Center" },
+            { "value": "bottom", "label": "Bottom" }
+          ]
+        },
+        {
+          "type": "select",
+          "id": "position_horizontal",
+          "label": "Horizontal",
+          "default": "start",
+          "visible_if": "{{ section.settings.show_image }}",
+          "options": [
+            { "value": "start", "label": "Left" },
+            { "value": "center", "label": "Center" },
+            { "value": "end", "label": "Right" }
+          ]
         }
       ]
     },

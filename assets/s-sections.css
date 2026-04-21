@@ -1138,6 +1138,91 @@ body[header-type="sticky"][header-boxed="true"] .events .eventHeader { position:
     }
 }
 
+/***
+    * Section motif — reusable decorative overlay on section media
+    * Markup: wrap media in an element with .section-motif-anchor; place .section-motif + .section-motif--v-{top|center|bottom} + .section-motif--h-{start|center|end} as a sibling after the main media.
+    * Override size per section: set --section-motif-width on .section-motif-anchor (inherits into .section-motif)
+***/
+.section-motif-anchor {
+	position: relative;
+	--section-motif-width: min(38%, 12rem);
+}
+
+.section-motif {
+	position: absolute;
+	z-index: 1;
+	width: var(--section-motif-width);
+	pointer-events: none;
+	line-height: 0;
+
+	picture,
+	img {
+		width: 100%;
+		height: auto;
+		display: block;
+	}
+}
+
+.section-motif--v-top.section-motif--h-start {
+	inset-block-start: var(--margin);
+	inset-inline-start: var(--margin);
+	inset-block-end: auto;
+	inset-inline-end: auto;
+}
+.section-motif--v-top.section-motif--h-center {
+	inset-block-start: var(--margin);
+	inset-inline-start: 50%;
+	inset-block-end: auto;
+	inset-inline-end: auto;
+	transform: translateX(-50%);
+}
+.section-motif--v-top.section-motif--h-end {
+	inset-block-start: var(--margin);
+	inset-inline-end: var(--margin);
+	inset-block-end: auto;
+	inset-inline-start: auto;
+}
+.section-motif--v-center.section-motif--h-start {
+	inset-block-start: 50%;
+	inset-inline-start: var(--margin);
+	inset-block-end: auto;
+	inset-inline-end: auto;
+	transform: translateY(-50%);
+}
+.section-motif--v-center.section-motif--h-center {
+	inset-block-start: 50%;
+	inset-inline-start: 50%;
+	inset-block-end: auto;
+	inset-inline-end: auto;
+	transform: translate(-50%, -50%);
+}
+.section-motif--v-center.section-motif--h-end {
+	inset-block-start: 50%;
+	inset-inline-end: var(--margin);
+	inset-block-end: auto;
+	inset-inline-start: auto;
+	transform: translateY(-50%);
+}
+.section-motif--v-bottom.section-motif--h-start {
+	inset-block-end: var(--margin);
+	inset-inline-start: var(--margin);
+	inset-block-start: auto;
+	inset-inline-end: auto;
+}
+.section-motif--v-bottom.section-motif--h-center {
+	inset-block-end: var(--margin);
+	inset-inline-start: 50%;
+	inset-block-start: auto;
+	inset-inline-end: auto;
+	transform: translateX(-50%);
+}
+.section-motif--v-bottom.section-motif--h-end {
+	inset-block-end: var(--margin);
+	inset-inline-end: var(--margin);
+	inset-block-start: auto;
+	inset-inline-start: auto;
+}
+
 /*** 
     * [S] Countdown
 ***/
@@ -1164,6 +1249,7 @@ body[header-type="sticky"][header-boxed="true"] .events .eventHeader { position:
 		&.lg :where(.countdowner span.date, .endMessage) { font-size: clamp(2rem, 4vw, 6rem) }
 		&:not(.lg) .countdowner span.label { font-size: smaller }
 	}
+
 	&.ended .meta > x-flex > x-cell:not(:has(coretex-countdown)) { display: none }
 }
 
