@@ -1141,7 +1141,7 @@ body[header-type="sticky"][header-boxed="true"] .events .eventHeader { position:
 /***
     * Section motif — reusable decorative overlay on section media
     * Markup: wrap media in an element with .section-motif-anchor; place .section-motif + .section-motif--v-{top|center|bottom} + .section-motif--h-{start|center|end} as a sibling after the main media.
-    * Override size per section: set --section-motif-width on .section-motif-anchor (inherits into .section-motif)
+    * Size: default --section-motif-width on .section-motif-anchor; per block override with inline style on .section-motif, e.g. min(38%, 12rem)
 ***/
 .section-motif-anchor {
 	position: relative;

@@ -29,7 +29,11 @@
             -%}
             {%- for block in section.blocks -%}
                 {%- if block.type == 'motif' and block.settings.image != blank -%}
-                <div class="section-motif section-motif--v-{{ block.settings.position_vertical }} section-motif--h-{{ block.settings.position_horizontal }}" {{ block.shopify_attributes }}>
+                <div
+                    class="section-motif section-motif--v-{{ block.settings.position_vertical }} section-motif--h-{{ block.settings.position_horizontal }}"
+                    style="--section-motif-width: min({{ block.settings.motif_width }}%, {{ block.settings.motif_max_width }}rem);"
+                    {{ block.shopify_attributes }}
+                >
                     {%- render 'inc-img'
                         img: block.settings.image,
                         fallback: false,
@@ -365,6 +369,28 @@
             { "value": "center", "label": "Center" },
             { "value": "end", "label": "Right" }
           ]
+        },
+        {
+          "type": "range",
+          "id": "motif_width",
+          "label": "Width",
+          "min": 10,
+          "max": 70,
+          "step": 1,
+          "unit": "%",
+          "default": 38,
+          "visible_if": "{{ section.settings.show_image }}"
+        },
+        {
+          "type": "range",
+          "id": "motif_max_width",
+          "label": "Max width",
+          "min": 6,
+          "max": 28,
+          "step": 0.5,
+          "unit": "rem",
+          "default": 12,
+          "visible_if": "{{ section.settings.show_image }}"
         }
       ]
     },
