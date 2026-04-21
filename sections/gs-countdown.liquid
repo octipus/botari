@@ -74,6 +74,16 @@
                     <div class="rte">{{ block.settings.text }}</div>
                 </x-cell>
 
+                {%- when 'newsletter' -%}
+                <x-cell {{ block.shopify_attributes }}>
+                    <x-flex direction="column" class="newsletter-block">
+                        {%- if block.settings.heading != blank -%}
+                        <x-cell><p>{{ block.settings.heading }}</p></x-cell>
+                        {%- endif -%}
+                        <x-cell>{%- render 'global-newsletter', class: 'section-newsletter', columns: block.settings.columns -%}</x-cell>
+                    </x-flex>
+                </x-cell>
+
                 {%- when 'button' -%}
                 <x-cell {{ block.shopify_attributes }}>
                     {% if block.settings.label != nil %}<a href="{{ block.settings.url }}" class="{% if block.settings.style == 'link' %}is-blank{% else %}button{% endif %}">{{ block.settings.label }}</a>{%- endif -%}
@@ -98,6 +108,7 @@
       "blocks": [
         { "type": "heading" },
         { "type": "countdown" },
+        { "type": "newsletter" },
         { "type": "button" }
       ]
     }
@@ -285,7 +296,7 @@
                 "id": "hide_others",
                 "label": "Only show message",
                 "default": false,
-                "info": "Hide heading, text and button blocks when the countdown is over."
+                "info": "Hide heading, text, newsletter and button blocks when the countdown is over."
             }
         ]
     },
@@ -298,6 +309,34 @@
           "type": "richtext",
           "id": "text",
           "label": "Text"
+        }
+      ]
+    },
+    {
+      "type": "newsletter",
+      "name": "Newsletter",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "header",
+          "content": "Newsletter",
+          "info": "Subscribers will be added to your “accepts marketing” [customer list.](/admin/customers?query=&accepts_marketing=1)"
+        },
+        {
+          "type": "text",
+          "id": "heading",
+          "label": "Heading",
+          "default": "Get 10% off your next purchase. Subscribe to our newsletter."
+        },
+        {
+          "type": "select",
+          "id": "columns",
+          "label": "Columns",
+          "default": "2",
+          "options": [
+            { "value": "1", "label": "One" },
+            { "value": "2", "label": "Two" }
+          ]
         }
       ]
     },
