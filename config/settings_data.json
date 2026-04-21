@@ -9,6 +9,8 @@
  */
 {
   "current": {
+    "overlayBg": "#fcf9f0",
+    "overlayBlur": 8,
     "themeName": "Bullet",
     "themePreset": "Bullet",
     "sections": {
